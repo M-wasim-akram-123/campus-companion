@@ -9,38 +9,186 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated/students/index'
+import { Route as AuthenticatedInquiriesIndexRouteImport } from './routes/_authenticated/inquiries/index'
+import { Route as AuthenticatedStudentsIdRouteImport } from './routes/_authenticated/students/$id'
+import { Route as AuthenticatedInquiriesNewRouteImport } from './routes/_authenticated/inquiries/new'
+import { Route as AuthenticatedInquiriesIdRouteImport } from './routes/_authenticated/inquiries/$id'
+import { Route as AuthenticatedAdmissionsNewRouteImport } from './routes/_authenticated/admissions/new'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedStudentsIndexRoute =
+  AuthenticatedStudentsIndexRouteImport.update({
+    id: '/students/',
+    path: '/students/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedInquiriesIndexRoute =
+  AuthenticatedInquiriesIndexRouteImport.update({
+    id: '/inquiries/',
+    path: '/inquiries/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedStudentsIdRoute = AuthenticatedStudentsIdRouteImport.update({
+  id: '/students/$id',
+  path: '/students/$id',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedInquiriesNewRoute =
+  AuthenticatedInquiriesNewRouteImport.update({
+    id: '/inquiries/new',
+    path: '/inquiries/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedInquiriesIdRoute =
+  AuthenticatedInquiriesIdRouteImport.update({
+    id: '/inquiries/$id',
+    path: '/inquiries/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAdmissionsNewRoute =
+  AuthenticatedAdmissionsNewRouteImport.update({
+    id: '/admissions/new',
+    path: '/admissions/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/admissions/new': typeof AuthenticatedAdmissionsNewRoute
+  '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
+  '/inquiries/new': typeof AuthenticatedInquiriesNewRoute
+  '/students/$id': typeof AuthenticatedStudentsIdRoute
+  '/inquiries/': typeof AuthenticatedInquiriesIndexRoute
+  '/students/': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/admissions/new': typeof AuthenticatedAdmissionsNewRoute
+  '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
+  '/inquiries/new': typeof AuthenticatedInquiriesNewRoute
+  '/students/$id': typeof AuthenticatedStudentsIdRoute
+  '/inquiries': typeof AuthenticatedInquiriesIndexRoute
+  '/students': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/admissions/new': typeof AuthenticatedAdmissionsNewRoute
+  '/_authenticated/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
+  '/_authenticated/inquiries/new': typeof AuthenticatedInquiriesNewRoute
+  '/_authenticated/students/$id': typeof AuthenticatedStudentsIdRoute
+  '/_authenticated/inquiries/': typeof AuthenticatedInquiriesIndexRoute
+  '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/signup'
+    | '/dashboard'
+    | '/admissions/new'
+    | '/inquiries/$id'
+    | '/inquiries/new'
+    | '/students/$id'
+    | '/inquiries/'
+    | '/students/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/signup'
+    | '/dashboard'
+    | '/admissions/new'
+    | '/inquiries/$id'
+    | '/inquiries/new'
+    | '/students/$id'
+    | '/inquiries'
+    | '/students'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/login'
+    | '/signup'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/admissions/new'
+    | '/_authenticated/inquiries/$id'
+    | '/_authenticated/inquiries/new'
+    | '/_authenticated/students/$id'
+    | '/_authenticated/inquiries/'
+    | '/_authenticated/students/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +196,87 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/students/': {
+      id: '/_authenticated/students/'
+      path: '/students'
+      fullPath: '/students/'
+      preLoaderRoute: typeof AuthenticatedStudentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/inquiries/': {
+      id: '/_authenticated/inquiries/'
+      path: '/inquiries'
+      fullPath: '/inquiries/'
+      preLoaderRoute: typeof AuthenticatedInquiriesIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/students/$id': {
+      id: '/_authenticated/students/$id'
+      path: '/students/$id'
+      fullPath: '/students/$id'
+      preLoaderRoute: typeof AuthenticatedStudentsIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/inquiries/new': {
+      id: '/_authenticated/inquiries/new'
+      path: '/inquiries/new'
+      fullPath: '/inquiries/new'
+      preLoaderRoute: typeof AuthenticatedInquiriesNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/inquiries/$id': {
+      id: '/_authenticated/inquiries/$id'
+      path: '/inquiries/$id'
+      fullPath: '/inquiries/$id'
+      preLoaderRoute: typeof AuthenticatedInquiriesIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/admissions/new': {
+      id: '/_authenticated/admissions/new'
+      path: '/admissions/new'
+      fullPath: '/admissions/new'
+      preLoaderRoute: typeof AuthenticatedAdmissionsNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
+interface AuthenticatedRouteChildren {
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedAdmissionsNewRoute: typeof AuthenticatedAdmissionsNewRoute
+  AuthenticatedInquiriesIdRoute: typeof AuthenticatedInquiriesIdRoute
+  AuthenticatedInquiriesNewRoute: typeof AuthenticatedInquiriesNewRoute
+  AuthenticatedStudentsIdRoute: typeof AuthenticatedStudentsIdRoute
+  AuthenticatedInquiriesIndexRoute: typeof AuthenticatedInquiriesIndexRoute
+  AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedAdmissionsNewRoute: AuthenticatedAdmissionsNewRoute,
+  AuthenticatedInquiriesIdRoute: AuthenticatedInquiriesIdRoute,
+  AuthenticatedInquiriesNewRoute: AuthenticatedInquiriesNewRoute,
+  AuthenticatedStudentsIdRoute: AuthenticatedStudentsIdRoute,
+  AuthenticatedInquiriesIndexRoute: AuthenticatedInquiriesIndexRoute,
+  AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

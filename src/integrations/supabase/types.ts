@@ -14,16 +14,330 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      classes: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          program_id: string
+          year_level: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          program_id: string
+          year_level: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          program_id?: string
+          year_level?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classes_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inquiries: {
+        Row: {
+          converted_student_id: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          follow_up_date: string | null
+          full_name: string
+          id: string
+          notes: string | null
+          phone: string
+          photo_url: string | null
+          program_id: string | null
+          status: Database["public"]["Enums"]["inquiry_status"]
+          updated_at: string
+        }
+        Insert: {
+          converted_student_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          follow_up_date?: string | null
+          full_name: string
+          id?: string
+          notes?: string | null
+          phone: string
+          photo_url?: string | null
+          program_id?: string | null
+          status?: Database["public"]["Enums"]["inquiry_status"]
+          updated_at?: string
+        }
+        Update: {
+          converted_student_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          follow_up_date?: string | null
+          full_name?: string
+          id?: string
+          notes?: string | null
+          phone?: string
+          photo_url?: string | null
+          program_id?: string | null
+          status?: Database["public"]["Enums"]["inquiry_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiries_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      programs: {
+        Row: {
+          created_at: string
+          duration_years: number
+          id: string
+          name: string
+          type: Database["public"]["Enums"]["program_type"]
+        }
+        Insert: {
+          created_at?: string
+          duration_years?: number
+          id?: string
+          name: string
+          type: Database["public"]["Enums"]["program_type"]
+        }
+        Update: {
+          created_at?: string
+          duration_years?: number
+          id?: string
+          name?: string
+          type?: Database["public"]["Enums"]["program_type"]
+        }
+        Relationships: []
+      }
+      sections: {
+        Row: {
+          capacity: number | null
+          class_id: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          capacity?: number | null
+          class_id: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          capacity?: number | null
+          class_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sections_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          address: string | null
+          admission_date: string
+          class_id: string | null
+          cnic: string | null
+          created_at: string
+          date_of_birth: string | null
+          email: string | null
+          father_name: string | null
+          full_name: string
+          gender: string | null
+          guardian_name: string | null
+          guardian_phone: string | null
+          id: string
+          inquiry_id: string | null
+          phone: string | null
+          photo_url: string | null
+          program_id: string | null
+          roll_number: string
+          section_id: string | null
+          session: string | null
+          status: Database["public"]["Enums"]["student_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          admission_date?: string
+          class_id?: string | null
+          cnic?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          father_name?: string | null
+          full_name: string
+          gender?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          id?: string
+          inquiry_id?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          program_id?: string | null
+          roll_number: string
+          section_id?: string | null
+          session?: string | null
+          status?: Database["public"]["Enums"]["student_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          admission_date?: string
+          class_id?: string | null
+          cnic?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          father_name?: string | null
+          full_name?: string
+          gender?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
+          id?: string
+          inquiry_id?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          program_id?: string | null
+          roll_number?: string
+          section_id?: string | null
+          session?: string | null
+          status?: Database["public"]["Enums"]["student_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "inquiries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "super_admin"
+        | "admission_officer"
+        | "finance_officer"
+        | "receptionist"
+        | "teacher"
+        | "student"
+      inquiry_status: "new" | "follow_up" | "interested" | "converted" | "lost"
+      program_type: "intermediate" | "bs"
+      student_status: "active" | "inactive" | "graduated" | "dropped"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +464,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "super_admin",
+        "admission_officer",
+        "finance_officer",
+        "receptionist",
+        "teacher",
+        "student",
+      ],
+      inquiry_status: ["new", "follow_up", "interested", "converted", "lost"],
+      program_type: ["intermediate", "bs"],
+      student_status: ["active", "inactive", "graduated", "dropped"],
+    },
   },
 } as const
