@@ -120,7 +120,7 @@ function NewAdmission() {
             setForm((f) => ({
               ...f,
               class_id: sec.class_id,
-              academic_session_id: sec.session_id,
+              academic_session_id: sec.session_id ?? "",
               session: (sec.academic_sessions as { label?: string })?.label || f.session,
             }));
           });
