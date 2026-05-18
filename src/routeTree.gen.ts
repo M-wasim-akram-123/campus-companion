@@ -26,6 +26,7 @@ import { Route as AuthenticatedFinanceDuesRouteImport } from './routes/_authenti
 import { Route as AuthenticatedFinanceCollectRouteImport } from './routes/_authenticated/finance/collect'
 import { Route as AuthenticatedAdmissionsNewRouteImport } from './routes/_authenticated/admissions/new'
 import { Route as AuthenticatedFinanceVouchersIndexRouteImport } from './routes/_authenticated/finance/vouchers/index'
+import { Route as ApiPublicHooksAutoVouchersRouteImport } from './routes/api/public/hooks/auto-vouchers'
 import { Route as AuthenticatedFinanceVouchersNewRouteImport } from './routes/_authenticated/finance/vouchers/new'
 import { Route as AuthenticatedFinanceVouchersLookupRouteImport } from './routes/_authenticated/finance/vouchers/lookup'
 import { Route as AuthenticatedFinanceVouchersIdRouteImport } from './routes/_authenticated/finance/vouchers/$id'
@@ -125,6 +126,12 @@ const AuthenticatedFinanceVouchersIndexRoute =
     path: '/finance/vouchers/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const ApiPublicHooksAutoVouchersRoute =
+  ApiPublicHooksAutoVouchersRouteImport.update({
+    id: '/api/public/hooks/auto-vouchers',
+    path: '/api/public/hooks/auto-vouchers',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedFinanceVouchersNewRoute =
   AuthenticatedFinanceVouchersNewRouteImport.update({
     id: '/finance/vouchers/new',
@@ -163,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/finance/vouchers/$id': typeof AuthenticatedFinanceVouchersIdRoute
   '/finance/vouchers/lookup': typeof AuthenticatedFinanceVouchersLookupRoute
   '/finance/vouchers/new': typeof AuthenticatedFinanceVouchersNewRoute
+  '/api/public/hooks/auto-vouchers': typeof ApiPublicHooksAutoVouchersRoute
   '/finance/vouchers/': typeof AuthenticatedFinanceVouchersIndexRoute
 }
 export interface FileRoutesByTo {
@@ -184,6 +192,7 @@ export interface FileRoutesByTo {
   '/finance/vouchers/$id': typeof AuthenticatedFinanceVouchersIdRoute
   '/finance/vouchers/lookup': typeof AuthenticatedFinanceVouchersLookupRoute
   '/finance/vouchers/new': typeof AuthenticatedFinanceVouchersNewRoute
+  '/api/public/hooks/auto-vouchers': typeof ApiPublicHooksAutoVouchersRoute
   '/finance/vouchers': typeof AuthenticatedFinanceVouchersIndexRoute
 }
 export interface FileRoutesById {
@@ -207,6 +216,7 @@ export interface FileRoutesById {
   '/_authenticated/finance/vouchers/$id': typeof AuthenticatedFinanceVouchersIdRoute
   '/_authenticated/finance/vouchers/lookup': typeof AuthenticatedFinanceVouchersLookupRoute
   '/_authenticated/finance/vouchers/new': typeof AuthenticatedFinanceVouchersNewRoute
+  '/api/public/hooks/auto-vouchers': typeof ApiPublicHooksAutoVouchersRoute
   '/_authenticated/finance/vouchers/': typeof AuthenticatedFinanceVouchersIndexRoute
 }
 export interface FileRouteTypes {
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | '/finance/vouchers/$id'
     | '/finance/vouchers/lookup'
     | '/finance/vouchers/new'
+    | '/api/public/hooks/auto-vouchers'
     | '/finance/vouchers/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -251,6 +262,7 @@ export interface FileRouteTypes {
     | '/finance/vouchers/$id'
     | '/finance/vouchers/lookup'
     | '/finance/vouchers/new'
+    | '/api/public/hooks/auto-vouchers'
     | '/finance/vouchers'
   id:
     | '__root__'
@@ -273,6 +285,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/vouchers/$id'
     | '/_authenticated/finance/vouchers/lookup'
     | '/_authenticated/finance/vouchers/new'
+    | '/api/public/hooks/auto-vouchers'
     | '/_authenticated/finance/vouchers/'
   fileRoutesById: FileRoutesById
 }
@@ -281,6 +294,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  ApiPublicHooksAutoVouchersRoute: typeof ApiPublicHooksAutoVouchersRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -404,6 +418,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceVouchersIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/public/hooks/auto-vouchers': {
+      id: '/api/public/hooks/auto-vouchers'
+      path: '/api/public/hooks/auto-vouchers'
+      fullPath: '/api/public/hooks/auto-vouchers'
+      preLoaderRoute: typeof ApiPublicHooksAutoVouchersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/finance/vouchers/new': {
       id: '/_authenticated/finance/vouchers/new'
       path: '/finance/vouchers/new'
@@ -477,6 +498,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  ApiPublicHooksAutoVouchersRoute: ApiPublicHooksAutoVouchersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
