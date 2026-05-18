@@ -442,7 +442,7 @@ export async function saveStudentFeePlan(
 
   const { data: feePlan, error: planErr } = await supabase
     .from("student_fee_plans")
-    .insert(insertPlan)
+    .insert(insertPlan as never)
     .select()
     .single();
   if (planErr) throw planErr;

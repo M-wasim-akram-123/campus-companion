@@ -118,7 +118,7 @@ function FeePoliciesPage() {
     setSlabs([]);
   };
 
-  const loadPolicy = (p: (typeof policies)[0]) => {
+  const loadPolicy = (p: NonNullable<typeof policies>[number]) => {
     setEditingId(p.id);
     setName(p.name);
     setNameTouched(true);

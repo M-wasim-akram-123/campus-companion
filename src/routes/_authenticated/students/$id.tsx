@@ -167,7 +167,7 @@ function StudentDetail() {
                 <StatTile
                   key={c.key}
                   label={c.label}
-                  value={formatCurrency(Number((feePlan as Record<string, number>)[c.key] ?? 0))}
+                  value={formatCurrency(Number((feePlan as unknown as Record<string, number>)[c.key] ?? 0))}
                 />
               ))}
               <StatTile label="Scholarship" value={formatCurrency(Number(feePlan.scholarship_discount))} />
