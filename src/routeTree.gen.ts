@@ -16,10 +16,19 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated/students/index'
 import { Route as AuthenticatedInquiriesIndexRouteImport } from './routes/_authenticated/inquiries/index'
+import { Route as AuthenticatedFinanceIndexRouteImport } from './routes/_authenticated/finance/index'
 import { Route as AuthenticatedStudentsIdRouteImport } from './routes/_authenticated/students/$id'
+import { Route as AuthenticatedSettingsFeesRouteImport } from './routes/_authenticated/settings/fees'
+import { Route as AuthenticatedSettingsAcademicRouteImport } from './routes/_authenticated/settings/academic'
 import { Route as AuthenticatedInquiriesNewRouteImport } from './routes/_authenticated/inquiries/new'
 import { Route as AuthenticatedInquiriesIdRouteImport } from './routes/_authenticated/inquiries/$id'
+import { Route as AuthenticatedFinanceDuesRouteImport } from './routes/_authenticated/finance/dues'
+import { Route as AuthenticatedFinanceCollectRouteImport } from './routes/_authenticated/finance/collect'
 import { Route as AuthenticatedAdmissionsNewRouteImport } from './routes/_authenticated/admissions/new'
+import { Route as AuthenticatedFinanceVouchersIndexRouteImport } from './routes/_authenticated/finance/vouchers/index'
+import { Route as AuthenticatedFinanceVouchersNewRouteImport } from './routes/_authenticated/finance/vouchers/new'
+import { Route as AuthenticatedFinanceVouchersLookupRouteImport } from './routes/_authenticated/finance/vouchers/lookup'
+import { Route as AuthenticatedFinanceVouchersIdRouteImport } from './routes/_authenticated/finance/vouchers/$id'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -57,11 +66,29 @@ const AuthenticatedInquiriesIndexRoute =
     path: '/inquiries/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFinanceIndexRoute =
+  AuthenticatedFinanceIndexRouteImport.update({
+    id: '/finance/',
+    path: '/finance/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedStudentsIdRoute = AuthenticatedStudentsIdRouteImport.update({
   id: '/students/$id',
   path: '/students/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSettingsFeesRoute =
+  AuthenticatedSettingsFeesRouteImport.update({
+    id: '/settings/fees',
+    path: '/settings/fees',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSettingsAcademicRoute =
+  AuthenticatedSettingsAcademicRouteImport.update({
+    id: '/settings/academic',
+    path: '/settings/academic',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedInquiriesNewRoute =
   AuthenticatedInquiriesNewRouteImport.update({
     id: '/inquiries/new',
@@ -74,10 +101,46 @@ const AuthenticatedInquiriesIdRoute =
     path: '/inquiries/$id',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFinanceDuesRoute =
+  AuthenticatedFinanceDuesRouteImport.update({
+    id: '/finance/dues',
+    path: '/finance/dues',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceCollectRoute =
+  AuthenticatedFinanceCollectRouteImport.update({
+    id: '/finance/collect',
+    path: '/finance/collect',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAdmissionsNewRoute =
   AuthenticatedAdmissionsNewRouteImport.update({
     id: '/admissions/new',
     path: '/admissions/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceVouchersIndexRoute =
+  AuthenticatedFinanceVouchersIndexRouteImport.update({
+    id: '/finance/vouchers/',
+    path: '/finance/vouchers/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceVouchersNewRoute =
+  AuthenticatedFinanceVouchersNewRouteImport.update({
+    id: '/finance/vouchers/new',
+    path: '/finance/vouchers/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceVouchersLookupRoute =
+  AuthenticatedFinanceVouchersLookupRouteImport.update({
+    id: '/finance/vouchers/lookup',
+    path: '/finance/vouchers/lookup',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceVouchersIdRoute =
+  AuthenticatedFinanceVouchersIdRouteImport.update({
+    id: '/finance/vouchers/$id',
+    path: '/finance/vouchers/$id',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 
@@ -87,11 +150,20 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admissions/new': typeof AuthenticatedAdmissionsNewRoute
+  '/finance/collect': typeof AuthenticatedFinanceCollectRoute
+  '/finance/dues': typeof AuthenticatedFinanceDuesRoute
   '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/inquiries/new': typeof AuthenticatedInquiriesNewRoute
+  '/settings/academic': typeof AuthenticatedSettingsAcademicRoute
+  '/settings/fees': typeof AuthenticatedSettingsFeesRoute
   '/students/$id': typeof AuthenticatedStudentsIdRoute
+  '/finance/': typeof AuthenticatedFinanceIndexRoute
   '/inquiries/': typeof AuthenticatedInquiriesIndexRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
+  '/finance/vouchers/$id': typeof AuthenticatedFinanceVouchersIdRoute
+  '/finance/vouchers/lookup': typeof AuthenticatedFinanceVouchersLookupRoute
+  '/finance/vouchers/new': typeof AuthenticatedFinanceVouchersNewRoute
+  '/finance/vouchers/': typeof AuthenticatedFinanceVouchersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -99,11 +171,20 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admissions/new': typeof AuthenticatedAdmissionsNewRoute
+  '/finance/collect': typeof AuthenticatedFinanceCollectRoute
+  '/finance/dues': typeof AuthenticatedFinanceDuesRoute
   '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/inquiries/new': typeof AuthenticatedInquiriesNewRoute
+  '/settings/academic': typeof AuthenticatedSettingsAcademicRoute
+  '/settings/fees': typeof AuthenticatedSettingsFeesRoute
   '/students/$id': typeof AuthenticatedStudentsIdRoute
+  '/finance': typeof AuthenticatedFinanceIndexRoute
   '/inquiries': typeof AuthenticatedInquiriesIndexRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
+  '/finance/vouchers/$id': typeof AuthenticatedFinanceVouchersIdRoute
+  '/finance/vouchers/lookup': typeof AuthenticatedFinanceVouchersLookupRoute
+  '/finance/vouchers/new': typeof AuthenticatedFinanceVouchersNewRoute
+  '/finance/vouchers': typeof AuthenticatedFinanceVouchersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -113,11 +194,20 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/admissions/new': typeof AuthenticatedAdmissionsNewRoute
+  '/_authenticated/finance/collect': typeof AuthenticatedFinanceCollectRoute
+  '/_authenticated/finance/dues': typeof AuthenticatedFinanceDuesRoute
   '/_authenticated/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/_authenticated/inquiries/new': typeof AuthenticatedInquiriesNewRoute
+  '/_authenticated/settings/academic': typeof AuthenticatedSettingsAcademicRoute
+  '/_authenticated/settings/fees': typeof AuthenticatedSettingsFeesRoute
   '/_authenticated/students/$id': typeof AuthenticatedStudentsIdRoute
+  '/_authenticated/finance/': typeof AuthenticatedFinanceIndexRoute
   '/_authenticated/inquiries/': typeof AuthenticatedInquiriesIndexRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
+  '/_authenticated/finance/vouchers/$id': typeof AuthenticatedFinanceVouchersIdRoute
+  '/_authenticated/finance/vouchers/lookup': typeof AuthenticatedFinanceVouchersLookupRoute
+  '/_authenticated/finance/vouchers/new': typeof AuthenticatedFinanceVouchersNewRoute
+  '/_authenticated/finance/vouchers/': typeof AuthenticatedFinanceVouchersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -127,11 +217,20 @@ export interface FileRouteTypes {
     | '/signup'
     | '/dashboard'
     | '/admissions/new'
+    | '/finance/collect'
+    | '/finance/dues'
     | '/inquiries/$id'
     | '/inquiries/new'
+    | '/settings/academic'
+    | '/settings/fees'
     | '/students/$id'
+    | '/finance/'
     | '/inquiries/'
     | '/students/'
+    | '/finance/vouchers/$id'
+    | '/finance/vouchers/lookup'
+    | '/finance/vouchers/new'
+    | '/finance/vouchers/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -139,11 +238,20 @@ export interface FileRouteTypes {
     | '/signup'
     | '/dashboard'
     | '/admissions/new'
+    | '/finance/collect'
+    | '/finance/dues'
     | '/inquiries/$id'
     | '/inquiries/new'
+    | '/settings/academic'
+    | '/settings/fees'
     | '/students/$id'
+    | '/finance'
     | '/inquiries'
     | '/students'
+    | '/finance/vouchers/$id'
+    | '/finance/vouchers/lookup'
+    | '/finance/vouchers/new'
+    | '/finance/vouchers'
   id:
     | '__root__'
     | '/'
@@ -152,11 +260,20 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_authenticated/dashboard'
     | '/_authenticated/admissions/new'
+    | '/_authenticated/finance/collect'
+    | '/_authenticated/finance/dues'
     | '/_authenticated/inquiries/$id'
     | '/_authenticated/inquiries/new'
+    | '/_authenticated/settings/academic'
+    | '/_authenticated/settings/fees'
     | '/_authenticated/students/$id'
+    | '/_authenticated/finance/'
     | '/_authenticated/inquiries/'
     | '/_authenticated/students/'
+    | '/_authenticated/finance/vouchers/$id'
+    | '/_authenticated/finance/vouchers/lookup'
+    | '/_authenticated/finance/vouchers/new'
+    | '/_authenticated/finance/vouchers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -217,11 +334,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInquiriesIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/finance/': {
+      id: '/_authenticated/finance/'
+      path: '/finance'
+      fullPath: '/finance/'
+      preLoaderRoute: typeof AuthenticatedFinanceIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/students/$id': {
       id: '/_authenticated/students/$id'
       path: '/students/$id'
       fullPath: '/students/$id'
       preLoaderRoute: typeof AuthenticatedStudentsIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/fees': {
+      id: '/_authenticated/settings/fees'
+      path: '/settings/fees'
+      fullPath: '/settings/fees'
+      preLoaderRoute: typeof AuthenticatedSettingsFeesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/academic': {
+      id: '/_authenticated/settings/academic'
+      path: '/settings/academic'
+      fullPath: '/settings/academic'
+      preLoaderRoute: typeof AuthenticatedSettingsAcademicRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/inquiries/new': {
@@ -238,11 +376,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInquiriesIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/finance/dues': {
+      id: '/_authenticated/finance/dues'
+      path: '/finance/dues'
+      fullPath: '/finance/dues'
+      preLoaderRoute: typeof AuthenticatedFinanceDuesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/finance/collect': {
+      id: '/_authenticated/finance/collect'
+      path: '/finance/collect'
+      fullPath: '/finance/collect'
+      preLoaderRoute: typeof AuthenticatedFinanceCollectRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admissions/new': {
       id: '/_authenticated/admissions/new'
       path: '/admissions/new'
       fullPath: '/admissions/new'
       preLoaderRoute: typeof AuthenticatedAdmissionsNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/finance/vouchers/': {
+      id: '/_authenticated/finance/vouchers/'
+      path: '/finance/vouchers'
+      fullPath: '/finance/vouchers/'
+      preLoaderRoute: typeof AuthenticatedFinanceVouchersIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/finance/vouchers/new': {
+      id: '/_authenticated/finance/vouchers/new'
+      path: '/finance/vouchers/new'
+      fullPath: '/finance/vouchers/new'
+      preLoaderRoute: typeof AuthenticatedFinanceVouchersNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/finance/vouchers/lookup': {
+      id: '/_authenticated/finance/vouchers/lookup'
+      path: '/finance/vouchers/lookup'
+      fullPath: '/finance/vouchers/lookup'
+      preLoaderRoute: typeof AuthenticatedFinanceVouchersLookupRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/finance/vouchers/$id': {
+      id: '/_authenticated/finance/vouchers/$id'
+      path: '/finance/vouchers/$id'
+      fullPath: '/finance/vouchers/$id'
+      preLoaderRoute: typeof AuthenticatedFinanceVouchersIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
   }
@@ -251,21 +431,41 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedAdmissionsNewRoute: typeof AuthenticatedAdmissionsNewRoute
+  AuthenticatedFinanceCollectRoute: typeof AuthenticatedFinanceCollectRoute
+  AuthenticatedFinanceDuesRoute: typeof AuthenticatedFinanceDuesRoute
   AuthenticatedInquiriesIdRoute: typeof AuthenticatedInquiriesIdRoute
   AuthenticatedInquiriesNewRoute: typeof AuthenticatedInquiriesNewRoute
+  AuthenticatedSettingsAcademicRoute: typeof AuthenticatedSettingsAcademicRoute
+  AuthenticatedSettingsFeesRoute: typeof AuthenticatedSettingsFeesRoute
   AuthenticatedStudentsIdRoute: typeof AuthenticatedStudentsIdRoute
+  AuthenticatedFinanceIndexRoute: typeof AuthenticatedFinanceIndexRoute
   AuthenticatedInquiriesIndexRoute: typeof AuthenticatedInquiriesIndexRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
+  AuthenticatedFinanceVouchersIdRoute: typeof AuthenticatedFinanceVouchersIdRoute
+  AuthenticatedFinanceVouchersLookupRoute: typeof AuthenticatedFinanceVouchersLookupRoute
+  AuthenticatedFinanceVouchersNewRoute: typeof AuthenticatedFinanceVouchersNewRoute
+  AuthenticatedFinanceVouchersIndexRoute: typeof AuthenticatedFinanceVouchersIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedAdmissionsNewRoute: AuthenticatedAdmissionsNewRoute,
+  AuthenticatedFinanceCollectRoute: AuthenticatedFinanceCollectRoute,
+  AuthenticatedFinanceDuesRoute: AuthenticatedFinanceDuesRoute,
   AuthenticatedInquiriesIdRoute: AuthenticatedInquiriesIdRoute,
   AuthenticatedInquiriesNewRoute: AuthenticatedInquiriesNewRoute,
+  AuthenticatedSettingsAcademicRoute: AuthenticatedSettingsAcademicRoute,
+  AuthenticatedSettingsFeesRoute: AuthenticatedSettingsFeesRoute,
   AuthenticatedStudentsIdRoute: AuthenticatedStudentsIdRoute,
+  AuthenticatedFinanceIndexRoute: AuthenticatedFinanceIndexRoute,
   AuthenticatedInquiriesIndexRoute: AuthenticatedInquiriesIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
+  AuthenticatedFinanceVouchersIdRoute: AuthenticatedFinanceVouchersIdRoute,
+  AuthenticatedFinanceVouchersLookupRoute:
+    AuthenticatedFinanceVouchersLookupRoute,
+  AuthenticatedFinanceVouchersNewRoute: AuthenticatedFinanceVouchersNewRoute,
+  AuthenticatedFinanceVouchersIndexRoute:
+    AuthenticatedFinanceVouchersIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -281,3 +481,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

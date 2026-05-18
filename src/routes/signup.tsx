@@ -19,19 +19,44 @@ function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: { full_name: fullName },
-      },
-    });
-    setLoading(false);
-    if (error) return toast.error(error.message);
-    toast.success("Account created — signing you in");
-    navigate({ to: "/dashboard" });
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`,
+          data: { full_name: fullName.trim() },
+        },
+      });
+
+      if (error) {
+        if (error.status === 429 || /rate limit|too many requests/i.test(error.message)) {
+          toast.error(
+            "Too many signup attempts. Wait 10–15 minutes, or create the user in Supabase Dashboard → Authentication → Users, then sign in.",
+            { duration: 8000 },
+          );
+          return;
+        }
+        toast.error(error.message);
+        return;
+      }
+
+      if (data.session) {
+        toast.success("Account created — you are signed in");
+        navigate({ to: "/dashboard" });
+        return;
+      }
+
+      toast.success(
+        "Account created. Check your email to confirm, or disable “Confirm email” in Supabase Auth settings and try signing in.",
+        { duration: 8000 },
+      );
+      navigate({ to: "/login" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

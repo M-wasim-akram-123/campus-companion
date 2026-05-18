@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      academic_sessions: {
+        Row: {
+          created_at: string
+          end_year: number
+          id: string
+          is_active: boolean
+          label: string
+          start_year: number
+        }
+        Insert: {
+          created_at?: string
+          end_year: number
+          id?: string
+          is_active?: boolean
+          label: string
+          start_year: number
+        }
+        Update: {
+          created_at?: string
+          end_year?: number
+          id?: string
+          is_active?: boolean
+          label?: string
+          start_year?: number
+        }
+        Relationships: []
+      }
       classes: {
         Row: {
           created_at: string
@@ -48,51 +75,86 @@ export type Database = {
       }
       inquiries: {
         Row: {
+          assigned_to: string | null
           converted_student_id: string | null
           created_at: string
           created_by: string | null
           email: string | null
+          father_name: string | null
           follow_up_date: string | null
           full_name: string
+          gender: string | null
           id: string
+          matric_marks_obtained: number | null
+          matric_marks_total: number | null
+          matric_school: string | null
           notes: string | null
           phone: string
           photo_url: string | null
+          preferred_section_id: string | null
           program_id: string | null
           status: Database["public"]["Enums"]["inquiry_status"]
           updated_at: string
         }
         Insert: {
+          assigned_to?: string | null
           converted_student_id?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
+          father_name?: string | null
           follow_up_date?: string | null
           full_name: string
+          gender?: string | null
           id?: string
+          matric_marks_obtained?: number | null
+          matric_marks_total?: number | null
+          matric_school?: string | null
           notes?: string | null
           phone: string
           photo_url?: string | null
+          preferred_section_id?: string | null
           program_id?: string | null
           status?: Database["public"]["Enums"]["inquiry_status"]
           updated_at?: string
         }
         Update: {
+          assigned_to?: string | null
           converted_student_id?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
+          father_name?: string | null
           follow_up_date?: string | null
           full_name?: string
+          gender?: string | null
           id?: string
+          matric_marks_obtained?: number | null
+          matric_marks_total?: number | null
+          matric_school?: string | null
           notes?: string | null
           phone?: string
           photo_url?: string | null
+          preferred_section_id?: string | null
           program_id?: string | null
           status?: Database["public"]["Enums"]["inquiry_status"]
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "inquiries_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_preferred_section_id_fkey"
+            columns: ["preferred_section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "inquiries_program_id_fkey"
             columns: ["program_id"]
@@ -158,22 +220,28 @@ export type Database = {
           capacity: number | null
           class_id: string
           created_at: string
+          gender: Database["public"]["Enums"]["section_gender"]
           id: string
           name: string
+          session_id: string
         }
         Insert: {
           capacity?: number | null
           class_id: string
           created_at?: string
+          gender: Database["public"]["Enums"]["section_gender"]
           id?: string
           name: string
+          session_id: string
         }
         Update: {
           capacity?: number | null
           class_id?: string
           created_at?: string
+          gender?: Database["public"]["Enums"]["section_gender"]
           id?: string
           name?: string
+          session_id?: string
         }
         Relationships: [
           {
@@ -183,10 +251,18 @@ export type Database = {
             referencedRelation: "classes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sections_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "academic_sessions"
+            referencedColumns: ["id"]
+          },
         ]
       }
       students: {
         Row: {
+          academic_session_id: string | null
           address: string | null
           admission_date: string
           class_id: string | null
@@ -201,6 +277,9 @@ export type Database = {
           guardian_phone: string | null
           id: string
           inquiry_id: string | null
+          matric_marks_obtained: number | null
+          matric_marks_total: number | null
+          matric_school: string | null
           phone: string | null
           photo_url: string | null
           program_id: string | null
@@ -212,6 +291,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          academic_session_id?: string | null
           address?: string | null
           admission_date?: string
           class_id?: string | null
@@ -226,6 +306,9 @@ export type Database = {
           guardian_phone?: string | null
           id?: string
           inquiry_id?: string | null
+          matric_marks_obtained?: number | null
+          matric_marks_total?: number | null
+          matric_school?: string | null
           phone?: string | null
           photo_url?: string | null
           program_id?: string | null
@@ -237,6 +320,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          academic_session_id?: string | null
           address?: string | null
           admission_date?: string
           class_id?: string | null
@@ -251,6 +335,9 @@ export type Database = {
           guardian_phone?: string | null
           id?: string
           inquiry_id?: string | null
+          matric_marks_obtained?: number | null
+          matric_marks_total?: number | null
+          matric_school?: string | null
           phone?: string | null
           photo_url?: string | null
           program_id?: string | null
@@ -262,6 +349,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "students_academic_session_id_fkey"
+            columns: ["academic_session_id"]
+            isOneToOne: false
+            referencedRelation: "academic_sessions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "students_class_id_fkey"
             columns: ["class_id"]
@@ -326,6 +420,7 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      next_admission_number: { Args: { p_session_id: string }; Returns: string }
     }
     Enums: {
       app_role:
@@ -337,6 +432,7 @@ export type Database = {
         | "student"
       inquiry_status: "new" | "follow_up" | "interested" | "converted" | "lost"
       program_type: "intermediate" | "bs"
+      section_gender: "boys" | "girls"
       student_status: "active" | "inactive" | "graduated" | "dropped"
     }
     CompositeTypes: {
@@ -475,6 +571,7 @@ export const Constants = {
       ],
       inquiry_status: ["new", "follow_up", "interested", "converted", "lost"],
       program_type: ["intermediate", "bs"],
+      section_gender: ["boys", "girls"],
       student_status: ["active", "inactive", "graduated", "dropped"],
     },
   },

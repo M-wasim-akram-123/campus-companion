@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ClipboardList, Users, UserPlus, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ClipboardList, Users, UserPlus, TrendingUp, Layers } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({ component: Dashboard });
@@ -54,6 +55,24 @@ function Dashboard() {
           </Card>
         ))}
       </div>
+
+      <Card className="border-primary/30 bg-primary/5">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Layers className="h-5 w-5" />
+            Sessions &amp; sections setup
+          </CardTitle>
+          <Button asChild size="sm">
+            <Link to="/settings/academic">Open Academic setup</Link>
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <p>1. <strong>Sessions</strong> tab — create e.g. 2025-2026 and click <strong>Set active</strong>.</p>
+          <p>2. <strong>Programs</strong> tab — add BS programs if needed (Intermediate is already seeded).</p>
+          <p>3. <strong>Sections</strong> tab — for each program, year, session, and boys/girls group (e.g. ICS Green).</p>
+          <p>Sessions and sections on inquiry/admission forms come from here.</p>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader><CardTitle>Getting Started</CardTitle></CardHeader>

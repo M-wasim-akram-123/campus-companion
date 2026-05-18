@@ -210,19 +210,11 @@ CREATE POLICY "Staff upload student photos" ON storage.objects FOR INSERT TO aut
 CREATE POLICY "Staff update student photos" ON storage.objects FOR UPDATE TO authenticated
   USING (bucket_id = 'student-photos' AND public.is_staff(auth.uid()));
 
--- ============ SEED ============
+-- ============ SEED (structure only — no sections; BS programs created in app) ============
 INSERT INTO public.programs (id, name, type, duration_years) VALUES
-  (gen_random_uuid(),'Intermediate (FSc/ICS)','intermediate',2),
-  (gen_random_uuid(),'BS Program','bs',4);
+  (gen_random_uuid(), 'Intermediate (FSc/ICS)', 'intermediate', 2);
 
 INSERT INTO public.classes (program_id, name, year_level)
-  SELECT id, '1st Year', 1 FROM public.programs WHERE type='intermediate'
-  UNION ALL SELECT id, '2nd Year', 2 FROM public.programs WHERE type='intermediate'
-  UNION ALL SELECT id, 'BS Year 1', 1 FROM public.programs WHERE type='bs'
-  UNION ALL SELECT id, 'BS Year 2', 2 FROM public.programs WHERE type='bs'
-  UNION ALL SELECT id, 'BS Year 3', 3 FROM public.programs WHERE type='bs'
-  UNION ALL SELECT id, 'BS Year 4', 4 FROM public.programs WHERE type='bs';
-
-INSERT INTO public.sections (class_id, name, capacity)
-  SELECT id, 'A', 50 FROM public.classes
-  UNION ALL SELECT id, 'B', 50 FROM public.classes;
+  SELECT id, '1st Year', 1 FROM public.programs WHERE type = 'intermediate'
+  UNION ALL
+  SELECT id, '2nd Year', 2 FROM public.programs WHERE type = 'intermediate';

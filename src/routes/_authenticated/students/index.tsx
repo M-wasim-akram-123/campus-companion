@@ -25,7 +25,7 @@ function StudentsList() {
   });
 
   const filtered = students?.filter((s) =>
-    !search || s.full_name.toLowerCase().includes(search.toLowerCase()) || s.roll_number.includes(search)
+    !search || s.full_name.toLowerCase().includes(search.toLowerCase()) || s.roll_number.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -40,7 +40,7 @@ function StudentsList() {
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Search by name or roll number..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        <Input placeholder="Search by name or admission number..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
       </div>
 
       <Card>
@@ -56,7 +56,7 @@ function StudentsList() {
                 <div>
                   <div className="font-medium">{s.full_name}</div>
                   <div className="text-sm text-muted-foreground">
-                    Roll: {s.roll_number}
+                    Adm: {s.roll_number}
                     {s.programs ? ` • ${(s.programs as any).name}` : ""}
                     {s.classes ? ` • ${(s.classes as any).name}` : ""}
                     {s.sections ? ` (${(s.sections as any).name})` : ""}

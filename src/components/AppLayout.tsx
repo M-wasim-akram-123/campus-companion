@@ -1,7 +1,7 @@
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  GraduationCap, LayoutDashboard, ClipboardList, UserPlus, Users, LogOut, Settings,
+  GraduationCap, LayoutDashboard, ClipboardList, UserPlus, Users, LogOut, Layers, Wallet, Banknote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -11,12 +11,23 @@ const nav = [
   { to: "/inquiries", label: "Inquiries", icon: ClipboardList },
   { to: "/admissions/new", label: "New Admission", icon: UserPlus },
   { to: "/students", label: "Students", icon: Users },
-];
+  { to: "/settings/academic", label: "Academic setup", icon: Layers },
+  { to: "/settings/fees", label: "Fee policies", icon: Wallet },
+  { to: "/finance", label: "Finance", icon: Banknote },
+] as const;
 
 export function AppLayout() {
   const { user, signOut, roles } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  const navItems = nav;
+
+  const linkClass = (active: boolean) =>
+    cn(
+      "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+      active ? "bg-primary text-primary-foreground" : "hover:bg-accent",
+    );
 
   return (
     <div className="flex min-h-screen bg-muted/20">
@@ -26,14 +37,10 @@ export function AppLayout() {
           <span className="font-semibold">College ERP</span>
         </div>
         <nav className="flex-1 space-y-1 p-2">
-          {nav.map((item) => {
+          {navItems.map((item) => {
             const active = pathname.startsWith(item.to);
             return (
-              <Link key={item.to} to={item.to}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                  active ? "bg-primary text-primary-foreground" : "hover:bg-accent"
-                )}>
+              <Link key={item.to} to={item.to} className={linkClass(active)}>
                 <item.icon className="h-4 w-4" />
                 {item.label}
               </Link>
@@ -51,17 +58,30 @@ export function AppLayout() {
         </div>
       </aside>
 
-      <div className="flex-1">
-        <header className="flex h-16 items-center justify-between border-b bg-card px-4 md:hidden">
-          <div className="flex items-center gap-2">
-            <GraduationCap className="h-5 w-5 text-primary" />
-            <span className="font-semibold">College ERP</span>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="border-b bg-card md:hidden">
+          <div className="flex h-14 items-center justify-between px-4">
+            <div className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-primary" />
+              <span className="font-semibold">College ERP</span>
+            </div>
+            <Button variant="ghost" size="sm" onClick={async () => { await signOut(); navigate({ to: "/login" }); }}>
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
-          <Button variant="ghost" size="sm" onClick={async () => { await signOut(); navigate({ to: "/login" }); }}>
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <nav className="flex gap-1 overflow-x-auto border-t px-2 py-2">
+            {navItems.map((item) => {
+              const active = pathname.startsWith(item.to);
+              return (
+                <Link key={item.to} to={item.to} className={linkClass(active)}>
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  <span className="whitespace-nowrap">{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
         </header>
-        <main className="p-4 md:p-8">
+        <main className="flex-1 p-4 md:p-8">
           <Outlet />
         </main>
       </div>
