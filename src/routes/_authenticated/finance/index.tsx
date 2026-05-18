@@ -34,6 +34,9 @@ function FinanceDashboard() {
             <Link to="/finance/collect"><Banknote className="mr-2 h-4 w-4" />Collect fee</Link>
           </Button>
           <Button asChild variant="outline">
+            <Link to="/finance/reports"><FileText className="mr-2 h-4 w-4" />Reports</Link>
+          </Button>
+          <Button asChild variant="outline">
             <Link to="/finance/vouchers/new"><Plus className="mr-2 h-4 w-4" />Manual voucher</Link>
           </Button>
         </div>
