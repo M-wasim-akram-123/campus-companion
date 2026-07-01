@@ -1,11 +1,19 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { registerAuthSession, sendAuthHeartbeat } from "@/lib/auth-session-api";
+import { toast } from "sonner";
 
 export type AppRole =
   | "super_admin"
+  | "campus_incharge"
+  | "registrar"
   | "admission_officer"
+  | "sub_admission_officer"
+  | "hr"
+  | "finance_admin"
   | "finance_officer"
+  | "cashier"
   | "receptionist"
   | "teacher"
   | "student";
@@ -59,12 +67,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!session?.access_token) return;
+
+    let cancelled = false;
+
+    const runHeartbeat = async () => {
+      try {
+        const result = await sendAuthHeartbeat();
+        if (cancelled) return;
+        if (result.revoked) {
+          toast.error("Signed out — this account logged in on another device.");
+          await supabase.auth.signOut();
+        }
+      } catch {
+        // Network blips should not sign the user out.
+      }
+    };
+
+    void runHeartbeat();
+    const interval = window.setInterval(runHeartbeat, 60_000);
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void runHeartbeat();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [session?.access_token]);
+
   const hasRole = (r: AppRole) => roles.includes(r);
   const hasAnyRole = (rs: AppRole[]) => rs.some((r) => roles.includes(r));
   const isStaff = hasAnyRole([
     "super_admin",
+    "campus_incharge",
+    "registrar",
     "admission_officer",
+    "hr",
+    "finance_admin",
     "finance_officer",
+    "cashier",
     "receptionist",
     "teacher",
   ]);

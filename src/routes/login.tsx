@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { GraduationCap } from "lucide-react";
+import { CAMPUS_NAME } from "@/lib/campus";
 
 export const Route = createFileRoute("/login")({ component: LoginPage });
 
@@ -19,21 +20,44 @@ function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) return toast.error(error.message);
+
+    const userId = data.session?.user?.id;
+    if (userId && data.session?.access_token) {
+      try {
+        const { registerAuthSession } = await import("@/lib/auth-session-api");
+        await registerAuthSession();
+      } catch (e: unknown) {
+        await supabase.auth.signOut();
+        return toast.error(
+          e instanceof Error ? e.message : "Could not start session. Try again.",
+        );
+      }
+
+      const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+      const roles = (roleRows ?? []).map((row) => row.role);
+      const followUpOnly =
+        roles.includes("sub_admission_officer") &&
+        !roles.some((role) => ["super_admin", "admission_officer", "receptionist"].includes(role));
+      toast.success("Signed in");
+      navigate({ to: followUpOnly ? "/inquiries" : "/dashboard" });
+      return;
+    }
+
     toast.success("Signed in");
     navigate({ to: "/dashboard" });
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
+    <div className="app-page-shell flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <GraduationCap className="h-6 w-6 text-primary" />
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-cyan-400 text-primary-foreground shadow-xl shadow-primary/25">
+            <GraduationCap className="h-7 w-7" />
           </div>
-          <CardTitle>Sign in to College ERP</CardTitle>
+          <CardTitle className="text-2xl">Sign in to {CAMPUS_NAME}</CardTitle>
           <CardDescription>Enter your credentials to continue</CardDescription>
         </CardHeader>
         <CardContent>

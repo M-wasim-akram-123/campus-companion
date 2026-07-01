@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { GraduationCap } from "lucide-react";
+import { CAMPUS_NAME } from "@/lib/campus";
 
 export const Route = createFileRoute("/signup")({ component: SignupPage });
 
@@ -44,6 +45,12 @@ function SignupPage() {
       }
 
       if (data.session) {
+        try {
+          const { registerAuthSession } = await import("@/lib/auth-session-api");
+          await registerAuthSession();
+        } catch {
+          // Session tracking optional until DB patch is applied.
+        }
         toast.success("Account created — you are signed in");
         navigate({ to: "/dashboard" });
         return;
@@ -60,14 +67,14 @@ function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
+    <div className="app-page-shell flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <GraduationCap className="h-6 w-6 text-primary" />
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-cyan-400 text-primary-foreground shadow-xl shadow-primary/25">
+            <GraduationCap className="h-7 w-7" />
           </div>
-          <CardTitle>Create your account</CardTitle>
-          <CardDescription>The first account becomes Super Admin</CardDescription>
+          <CardTitle className="text-2xl">Create your account</CardTitle>
+          <CardDescription>{CAMPUS_NAME} admin access</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-4">
