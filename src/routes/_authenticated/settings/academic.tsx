@@ -400,12 +400,16 @@ function SectionsTab() {
   const [gender, setGender] = useState<SectionGender>("boys");
   const [name, setName] = useState("");
   const [capacity, setCapacity] = useState("50");
+  const [meritMinPercentage, setMeritMinPercentage] = useState("");
+  const [meritMaxPercentage, setMeritMaxPercentage] = useState("");
   const [saving, setSaving] = useState(false);
   const [editRow, setEditRow] = useState<{
     id: string;
     name: string;
     capacity: string;
     gender: SectionGender;
+    merit_min_percentage: string;
+    merit_max_percentage: string;
   } | null>(null);
 
   const { data: programs } = useQuery({
@@ -449,6 +453,14 @@ function SectionsTab() {
     if (!classId || !sessionId || !name.trim()) {
       return toast.error("Year, session, and section name are required");
     }
+    const meritMin = meritMinPercentage ? Number(meritMinPercentage) : null;
+    const meritMax = meritMaxPercentage ? Number(meritMaxPercentage) : null;
+    if ((meritMin != null && (meritMin < 0 || meritMin > 100)) || (meritMax != null && (meritMax < 0 || meritMax > 100))) {
+      return toast.error("Merit percentage must be between 0 and 100");
+    }
+    if (meritMin != null && meritMax != null && meritMin > meritMax) {
+      return toast.error("Merit from percentage cannot be greater than merit to percentage");
+    }
     setSaving(true);
     try {
       const { error } = await supabase.from("sections").insert({
@@ -457,10 +469,14 @@ function SectionsTab() {
         gender,
         name: name.trim(),
         capacity: parseInt(capacity, 10) || 50,
+        merit_min_percentage: meritMin,
+        merit_max_percentage: meritMax,
       });
       if (error) throw error;
       toast.success("Section created");
       setName("");
+      setMeritMinPercentage("");
+      setMeritMaxPercentage("");
       qc.invalidateQueries({ queryKey: ["sections-crud"] });
       qc.invalidateQueries({ queryKey: ["sections"] });
     } catch (err: unknown) {
@@ -472,12 +488,22 @@ function SectionsTab() {
 
   const saveEdit = async () => {
     if (!editRow) return;
+    const meritMin = editRow.merit_min_percentage ? Number(editRow.merit_min_percentage) : null;
+    const meritMax = editRow.merit_max_percentage ? Number(editRow.merit_max_percentage) : null;
+    if ((meritMin != null && (meritMin < 0 || meritMin > 100)) || (meritMax != null && (meritMax < 0 || meritMax > 100))) {
+      return toast.error("Merit percentage must be between 0 and 100");
+    }
+    if (meritMin != null && meritMax != null && meritMin > meritMax) {
+      return toast.error("Merit from percentage cannot be greater than merit to percentage");
+    }
     const { error } = await supabase
       .from("sections")
       .update({
         name: editRow.name.trim(),
         capacity: parseInt(editRow.capacity, 10) || 50,
         gender: editRow.gender,
+        merit_min_percentage: meritMin,
+        merit_max_percentage: meritMax,
       })
       .eq("id", editRow.id);
     if (error) return toast.error(error.message);
@@ -499,7 +525,7 @@ function SectionsTab() {
     <Card>
       <CardHeader><CardTitle>Sections</CardTitle></CardHeader>
       <CardContent className="space-y-6">
-        <form onSubmit={add} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <form onSubmit={add} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-2">
             <Label>Program *</Label>
             <Select value={programId} onValueChange={(v) => { setProgramId(v); setClassId(""); }}>
@@ -553,7 +579,34 @@ function SectionsTab() {
             <Label>Capacity</Label>
             <Input type="number" min={1} value={capacity} onChange={(e) => setCapacity(e.target.value)} />
           </div>
-          <div className="sm:col-span-2 lg:col-span-3">
+          <div className="space-y-2">
+            <Label>Merit from %</Label>
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              step="0.01"
+              placeholder="e.g. 50"
+              value={meritMinPercentage}
+              onChange={(e) => setMeritMinPercentage(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Merit to %</Label>
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              step="0.01"
+              placeholder="e.g. 60"
+              value={meritMaxPercentage}
+              onChange={(e) => setMeritMaxPercentage(e.target.value)}
+            />
+          </div>
+          <div className="sm:col-span-2 lg:col-span-4">
+            <p className="mb-3 text-xs text-muted-foreground">
+              These percentage ranges are used to auto-select the section during admission from inquiry marks.
+            </p>
             <Button type="submit" disabled={saving}>{saving ? "Creating..." : "Create section"}</Button>
           </div>
         </form>
@@ -583,6 +636,7 @@ function SectionsTab() {
                 <TableHead>Session</TableHead>
                 <TableHead>Gender</TableHead>
                 <TableHead>Section</TableHead>
+                <TableHead>Merit range</TableHead>
                 <TableHead>Capacity</TableHead>
                 <TableHead className="w-28" />
               </TableRow>
@@ -590,7 +644,7 @@ function SectionsTab() {
             <TableBody>
               {sections?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-muted-foreground">No sections yet.</TableCell>
+                  <TableCell colSpan={7} className="text-muted-foreground">No sections yet.</TableCell>
                 </TableRow>
               ) : (
                 sections?.map((sec) => {
@@ -621,6 +675,31 @@ function SectionsTab() {
                           />
                         </TableCell>
                         <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              className="h-8 w-20"
+                              type="number"
+                              min={0}
+                              max={100}
+                              step="0.01"
+                              placeholder="From"
+                              value={editRow.merit_min_percentage}
+                              onChange={(e) => setEditRow({ ...editRow, merit_min_percentage: e.target.value })}
+                            />
+                            <span className="text-muted-foreground">to</span>
+                            <Input
+                              className="h-8 w-20"
+                              type="number"
+                              min={0}
+                              max={100}
+                              step="0.01"
+                              placeholder="To"
+                              value={editRow.merit_max_percentage}
+                              onChange={(e) => setEditRow({ ...editRow, merit_max_percentage: e.target.value })}
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell>
                           <Input
                             className="h-8 w-20"
                             value={editRow.capacity}
@@ -640,6 +719,11 @@ function SectionsTab() {
                       <TableCell>{sess?.label ?? "—"}</TableCell>
                       <TableCell>{sectionGenderLabel(sec.gender)}</TableCell>
                       <TableCell className="font-medium">{sec.name}</TableCell>
+                      <TableCell>
+                        {sec.merit_min_percentage != null || sec.merit_max_percentage != null
+                          ? `${sec.merit_min_percentage ?? 0}% - ${sec.merit_max_percentage ?? 100}%`
+                          : "—"}
+                      </TableCell>
                       <TableCell>{sec.capacity ?? "—"}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
@@ -652,6 +736,10 @@ function SectionsTab() {
                                 name: sec.name,
                                 capacity: String(sec.capacity ?? 50),
                                 gender: sec.gender,
+                                merit_min_percentage:
+                                  sec.merit_min_percentage != null ? String(sec.merit_min_percentage) : "",
+                                merit_max_percentage:
+                                  sec.merit_max_percentage != null ? String(sec.merit_max_percentage) : "",
                               })
                             }
                           >

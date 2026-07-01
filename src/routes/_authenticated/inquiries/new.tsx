@@ -1,62 +1,68 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { sectionGenderLabel, studentGenderToSectionGender } from "@/lib/academic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { canManageInquiries } from "@/lib/inquiry-permissions";
+import { formatCnicForStorage, validatePakistanCnic } from "@/lib/cnic";
+import { formatPhoneForStorage, validateWhatsAppPhone } from "@/lib/phone";
 import { uploadStudentPhoto } from "@/lib/photo-upload";
-import { fetchStaffProfiles } from "@/lib/staff";
+import { PhoneWhatsAppField } from "@/components/inquiries/PhoneWhatsAppField";
+import { CnicInput } from "@/components/forms/CnicInput";
+import { BoardRollLookup } from "@/components/inquiries/BoardRollLookup";
+import type { BoardGazetteLookupResult } from "@/lib/board-gazette";
 
 export const Route = createFileRoute("/_authenticated/inquiries/new")({ component: NewInquiry });
 
 function NewInquiry() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
+
+  useEffect(() => {
+    if (!canManageInquiries(roles)) navigate({ to: "/inquiries" });
+  }, [roles, navigate]);
   const [form, setForm] = useState({
     full_name: "",
     father_name: "",
+    cnic: "",
     phone: "",
     email: "",
     program_id: "",
     class_id: "",
     academic_session_id: "",
     gender: "",
-    assigned_to: "",
-    preferred_section_id: "",
     matric_school: "",
     matric_marks_obtained: "",
     matric_marks_total: "",
+    board_gazette_import_id: "",
+    board_roll_number: "",
+    guardian_name: "",
+    guardian_phone: "",
+    guardian_occupation: "",
+    guardian_details: "",
     notes: "",
-    follow_up_date: "",
   });
   const [photo, setPhoto] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
-
-  const { data: officerProfile } = useQuery({
-    queryKey: ["profile", user?.id],
-    enabled: !!user?.id,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("id", user!.id)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: staffMembers } = useQuery({
-    queryKey: ["staff-profiles"],
-    queryFn: fetchStaffProfiles,
-  });
+  const matricPercentage = (() => {
+    const obtained = Number(form.matric_marks_obtained);
+    const total = Number(form.matric_marks_total);
+    if (!Number.isFinite(obtained) || !Number.isFinite(total) || total <= 0) return null;
+    return (obtained / total) * 100;
+  })();
 
   const { data: programs } = useQuery({
     queryKey: ["programs"],
@@ -79,26 +85,13 @@ function NewInquiry() {
     queryKey: ["classes", form.program_id],
     enabled: !!form.program_id,
     queryFn: async () =>
-      (await supabase.from("classes").select("*").eq("program_id", form.program_id).order("year_level")).data ?? [],
-  });
-
-  const sectionGender = useMemo(() => studentGenderToSectionGender(form.gender), [form.gender]);
-
-  const { data: sections } = useQuery({
-    queryKey: ["sections", form.class_id, form.academic_session_id, sectionGender],
-    enabled: !!form.class_id && !!form.academic_session_id,
-    queryFn: async () => {
-      let q = supabase
-        .from("sections")
-        .select("*")
-        .eq("class_id", form.class_id)
-        .eq("session_id", form.academic_session_id)
-        .order("name");
-      if (sectionGender) q = q.eq("gender", sectionGender);
-      const { data, error } = await q;
-      if (error) throw error;
-      return data ?? [];
-    },
+      (
+        await supabase
+          .from("classes")
+          .select("*")
+          .eq("program_id", form.program_id)
+          .order("year_level")
+      ).data ?? [],
   });
 
   useEffect(() => {
@@ -120,28 +113,68 @@ function NewInquiry() {
       toast.error("Gender is required");
       return;
     }
+    const marksObtained = Number(form.matric_marks_obtained);
+    const marksTotal = Number(form.matric_marks_total);
+    if (!form.matric_school.trim()) {
+      toast.error("Matric school is required");
+      return;
+    }
+    if (!form.matric_marks_obtained || !Number.isFinite(marksObtained) || marksObtained < 0) {
+      toast.error("Valid matric marks obtained are required");
+      return;
+    }
+    if (!form.matric_marks_total || !Number.isFinite(marksTotal) || marksTotal <= 0) {
+      toast.error("Valid matric total marks are required");
+      return;
+    }
+    if (marksObtained > marksTotal) {
+      toast.error("Matric marks obtained cannot be greater than total marks");
+      return;
+    }
+    const phoneCheck = validateWhatsAppPhone(form.phone);
+    if (!phoneCheck.valid) {
+      toast.error(phoneCheck.error ?? "Enter a valid phone number");
+      return;
+    }
+    if (form.guardian_phone.trim()) {
+      const guardianCheck = validateWhatsAppPhone(form.guardian_phone);
+      if (!guardianCheck.valid) {
+        toast.error(guardianCheck.error ?? "Enter a valid guardian phone number");
+        return;
+      }
+    }
+    if (form.cnic.trim()) {
+      const cnicCheck = validatePakistanCnic(form.cnic);
+      if (!cnicCheck.valid) {
+        toast.error(cnicCheck.error ?? "Enter a valid CNIC / B-Form");
+        return;
+      }
+    }
     setSaving(true);
     try {
       let photo_url: string | null = null;
       if (photo) photo_url = await uploadStudentPhoto(photo, "inquiries");
 
-      const marksObtained = form.matric_marks_obtained ? parseFloat(form.matric_marks_obtained) : null;
-      const marksTotal = form.matric_marks_total ? parseFloat(form.matric_marks_total) : null;
-
       const { error } = await supabase.from("inquiries").insert({
         full_name: form.full_name.trim(),
         father_name: form.father_name.trim() || null,
-        phone: form.phone.trim(),
+        cnic: formatCnicForStorage(form.cnic),
+        phone: formatPhoneForStorage(form.phone),
         email: form.email.trim() || null,
         gender: form.gender,
         program_id: form.program_id || null,
-        preferred_section_id: form.preferred_section_id || null,
-        assigned_to: form.assigned_to || null,
-        matric_school: form.matric_school.trim() || null,
+        academic_session_id: form.academic_session_id || null,
+        class_id: form.class_id || null,
+        guardian_name: form.guardian_name.trim() || null,
+        guardian_phone: form.guardian_phone.trim() ? formatPhoneForStorage(form.guardian_phone) : null,
+        guardian_occupation: form.guardian_occupation.trim() || null,
+        guardian_details: form.guardian_details.trim() || null,
+        matric_school: form.matric_school.trim(),
         matric_marks_obtained: marksObtained,
         matric_marks_total: marksTotal,
+        board_gazette_import_id: form.board_gazette_import_id || null,
+        board_roll_number: form.board_roll_number.trim() || null,
         notes: form.notes || null,
-        follow_up_date: form.follow_up_date || null,
         photo_url,
         created_by: user?.id ?? null,
       });
@@ -156,20 +189,28 @@ function NewInquiry() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
+    <div className="w-full max-w-none space-y-6">
+      <div className="rounded-3xl border bg-gradient-to-br from-primary/10 via-background to-accent/10 p-6 shadow-sm">
         <h1 className="text-3xl font-bold">New Inquiry</h1>
-        <p className="text-muted-foreground">Capture a prospective student inquiry</p>
+        <p className="text-muted-foreground">
+          Capture student, academic, guardian, and marks details in one view.
+        </p>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle>Inquiry details</CardTitle></CardHeader>
-        <CardContent>
-          <form onSubmit={submit} className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2">
+      <form onSubmit={submit} className="space-y-6">
+        <div className="grid gap-6 xl:grid-cols-2">
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle>Student & contact</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Full name *</Label>
-                <Input required value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+                <Input
+                  required
+                  value={form.full_name}
+                  onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Father&apos;s name</Label>
@@ -178,21 +219,32 @@ function NewInquiry() {
                   onChange={(e) => setForm({ ...form, father_name: e.target.value })}
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Phone *</Label>
-                <Input required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-              </div>
+              <CnicInput
+                id="inquiry-cnic"
+                value={form.cnic}
+                onChange={(cnic) => setForm({ ...form, cnic })}
+              />
+              <PhoneWhatsAppField
+                id="inquiry-phone"
+                label="Phone"
+                required
+                value={form.phone}
+                onChange={(phone) => setForm({ ...form, phone })}
+              />
               <div className="space-y-2">
                 <Label>Email (optional)</Label>
-                <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                <Input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Gender *</Label>
-                <Select
-                  value={form.gender}
-                  onValueChange={(v) => setForm({ ...form, gender: v, preferred_section_id: "" })}
-                >
-                  <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
+                <Select value={form.gender} onValueChange={(v) => setForm({ ...form, gender: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="male">Male (Boys)</SelectItem>
                     <SelectItem value="female">Female (Girls)</SelectItem>
@@ -200,56 +252,53 @@ function NewInquiry() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Inquiry officer</Label>
+                <Label>Photo (optional)</Label>
                 <Input
-                  readOnly
-                  disabled
-                  value={officerProfile?.full_name || user?.email || "—"}
-                  className="bg-muted"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
                 />
               </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Assign to (optional)</Label>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle>Academic interest</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Program</Label>
                 <Select
-                  value={form.assigned_to || "__none__"}
-                  onValueChange={(v) => setForm({ ...form, assigned_to: v === "__none__" ? "" : v })}
+                  value={form.program_id}
+                  onValueChange={(v) => setForm({ ...form, program_id: v, class_id: "" })}
                 >
-                  <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select program" />
+                  </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__none__">Unassigned</SelectItem>
-                    {staffMembers?.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.full_name || s.id}
+                    {programs?.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Program</Label>
-                <Select
-                  value={form.program_id}
-                  onValueChange={(v) =>
-                    setForm({ ...form, program_id: v, class_id: "", preferred_section_id: "" })
-                  }
-                >
-                  <SelectTrigger><SelectValue placeholder="Select program" /></SelectTrigger>
-                  <SelectContent>
-                    {programs?.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Academic session (optional)</Label>
+                <Label>Academic session</Label>
                 <Select
                   value={form.academic_session_id}
-                  onValueChange={(v) => setForm({ ...form, academic_session_id: v, preferred_section_id: "" })}
+                  onValueChange={(v) => setForm({ ...form, academic_session_id: v })}
                 >
-                  <SelectTrigger><SelectValue placeholder="Select session" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select session" />
+                  </SelectTrigger>
                   <SelectContent>
                     {sessions?.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
-                        {s.label}{s.is_active ? " (active)" : ""}
+                        {s.label}
+                        {s.is_active ? " (active)" : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -264,112 +313,164 @@ function NewInquiry() {
                   </p>
                 )}
               </div>
-              {form.program_id && (
-                <div className="space-y-2">
-                  <Label>Year / class</Label>
-                  <Select
-                    value={form.class_id}
-                    onValueChange={(v) => setForm({ ...form, class_id: v, preferred_section_id: "" })}
-                  >
-                    <SelectTrigger><SelectValue placeholder="Select year" /></SelectTrigger>
-                    <SelectContent>
-                      {classes?.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              {form.class_id && form.academic_session_id && (
-                <div className="space-y-2 sm:col-span-2">
-                  <Label>Preferred section (optional)</Label>
-                  <Select
-                    value={form.preferred_section_id}
-                    onValueChange={(v) => setForm({ ...form, preferred_section_id: v })}
-                  >
-                    <SelectTrigger><SelectValue placeholder="Select section" /></SelectTrigger>
-                    <SelectContent>
-                      {sections?.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {sectionGenderLabel(s.gender)} — {s.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {sections?.length === 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      Create sections in{" "}
-                      <Link to="/settings/academic" className="text-primary underline">
-                        Academic setup → Sections
-                      </Link>{" "}
-                      (program, year, session, boys/girls).
-                    </p>
-                  )}
-                </div>
-              )}
               <div className="space-y-2">
-                <Label>Photo (optional)</Label>
-                <Input type="file" accept="image/*" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} />
+                <Label>Year / class</Label>
+                <Select
+                  value={form.class_id}
+                  onValueChange={(v) => setForm({ ...form, class_id: v })}
+                  disabled={!form.program_id}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={form.program_id ? "Select year" : "Select program first"}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classes?.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div className="space-y-4 rounded-lg border p-4">
-              <h3 className="font-medium">Matriculation</h3>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2 sm:col-span-2">
-                  <Label>School</Label>
-                  <Input
-                    placeholder="Matric school name"
-                    value={form.matric_school}
-                    onChange={(e) => setForm({ ...form, matric_school: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Marks obtained</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    placeholder="e.g. 950"
-                    value={form.matric_marks_obtained}
-                    onChange={(e) => setForm({ ...form, matric_marks_obtained: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Total marks</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    placeholder="e.g. 1100"
-                    value={form.matric_marks_total}
-                    onChange={(e) => setForm({ ...form, matric_marks_total: e.target.value })}
-                  />
-                </div>
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle>Guardian information</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Guardian name</Label>
+                <Input
+                  value={form.guardian_name}
+                  onChange={(e) => setForm({ ...form, guardian_name: e.target.value })}
+                />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Follow-up date (optional)</Label>
-              <Input
-                type="date"
-                value={form.follow_up_date}
-                onChange={(e) => setForm({ ...form, follow_up_date: e.target.value })}
+              <PhoneWhatsAppField
+                id="inquiry-guardian-phone"
+                label="Guardian phone"
+                value={form.guardian_phone}
+                onChange={(guardian_phone) => setForm({ ...form, guardian_phone })}
               />
-              <p className="text-xs text-muted-foreground">You can set or change this later from the inquiry detail page.</p>
-            </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label>Guardian occupation</Label>
+                <Input
+                  value={form.guardian_occupation}
+                  onChange={(e) => setForm({ ...form, guardian_occupation: e.target.value })}
+                  placeholder="Business, government job, private job, etc."
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label>Guardian details</Label>
+                <Textarea
+                  value={form.guardian_details}
+                  onChange={(e) => setForm({ ...form, guardian_details: e.target.value })}
+                  rows={3}
+                  placeholder="Parent/guardian background, visit context, financial notes, etc."
+                />
+              </div>
+            </CardContent>
+          </Card>
 
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle>Matriculation</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <BoardRollLookup
+                gazetteImportId={form.board_gazette_import_id}
+                rollNumber={form.board_roll_number}
+                onGazetteImportIdChange={(board_gazette_import_id) =>
+                  setForm({ ...form, board_gazette_import_id })
+                }
+                onRollNumberChange={(board_roll_number) => setForm({ ...form, board_roll_number })}
+                onLookupSuccess={(result: BoardGazetteLookupResult) => {
+                  if (result.marksObtained != null) {
+                    setForm((current) => ({
+                      ...current,
+                      matric_marks_obtained: String(result.marksObtained),
+                      matric_marks_total: String(result.marksTotal ?? 1100),
+                      board_roll_number: result.rollNumber ?? current.board_roll_number,
+                    }));
+                  }
+                }}
+              />
+              <div className="space-y-2 sm:col-span-2">
+                <Label>School *</Label>
+                <Input
+                  required
+                  placeholder="Matric school name"
+                  value={form.matric_school}
+                  onChange={(e) => setForm({ ...form, matric_school: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Marks obtained *</Label>
+                <Input
+                  required
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="e.g. 950"
+                  value={form.matric_marks_obtained}
+                  onChange={(e) => setForm({ ...form, matric_marks_obtained: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Total marks *</Label>
+                <Input
+                  required
+                  type="number"
+                  min={1}
+                  step="0.01"
+                  placeholder="e.g. 1100"
+                  value={form.matric_marks_total}
+                  onChange={(e) => setForm({ ...form, matric_marks_total: e.target.value })}
+                />
+              </div>
+              <div className="rounded-2xl border bg-primary/5 p-4 sm:col-span-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Matric percentage
+                </p>
+                <p className="mt-1 text-2xl font-black text-primary">
+                  {matricPercentage == null ? "—" : `${matricPercentage.toFixed(2)}%`}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle>Remarks</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Notes</Label>
-              <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={4} />
+              <Textarea
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                rows={3}
+              />
             </div>
-            <div className="flex gap-2">
-              <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Create inquiry"}</Button>
-              <Button type="button" variant="outline" onClick={() => navigate({ to: "/inquiries" })}>Cancel</Button>
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit" disabled={saving}>
+                {saving ? "Saving..." : "Create inquiry"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate({ to: "/inquiries" })}
+              >
+                Cancel
+              </Button>
             </div>
-          </form>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </form>
     </div>
   );
 }

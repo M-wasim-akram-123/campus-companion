@@ -14,6 +14,74 @@ export function sectionGenderLabel(gender: SectionGender): string {
   return gender === "boys" ? "Boys" : "Girls";
 }
 
+export function ordinalYearLabel(yearLevel: number): string {
+  if (yearLevel === 1) return "1st Year";
+  if (yearLevel === 2) return "2nd Year";
+  if (yearLevel === 3) return "3rd Year";
+  return `${yearLevel}th Year`;
+}
+
+export type AcademicStanding = {
+  label: string;
+  detail: string;
+  isPast: boolean;
+  currentYearLevel: number | null;
+};
+
+export function deriveAcademicStanding({
+  sessionStartYear,
+  sessionEndYear,
+  admissionYearLevel,
+  programDurationYears,
+  now = new Date(),
+}: {
+  sessionStartYear?: number | null;
+  sessionEndYear?: number | null;
+  admissionYearLevel?: number | null;
+  programDurationYears?: number | null;
+  now?: Date;
+}): AcademicStanding {
+  if (!sessionStartYear || !sessionEndYear || !admissionYearLevel) {
+    return {
+      label: "Not assigned",
+      detail: "Session/class is not complete",
+      isPast: false,
+      currentYearLevel: null,
+    };
+  }
+
+  const graduationCutoff = new Date(sessionEndYear, 5, 1);
+  if (now >= graduationCutoff) {
+    return {
+      label: "Past student",
+      detail: `Session completed in ${sessionEndYear}`,
+      isPast: true,
+      currentYearLevel: null,
+    };
+  }
+
+  const academicYearStart = now.getMonth() >= 5 ? now.getFullYear() : now.getFullYear() - 1;
+  const elapsedYears = Math.max(0, academicYearStart - sessionStartYear);
+  const currentYearLevel = admissionYearLevel + elapsedYears;
+  const maxYear = programDurationYears ?? sessionEndYear - sessionStartYear;
+
+  if (currentYearLevel > maxYear) {
+    return {
+      label: "Past student",
+      detail: `Program duration completed`,
+      isPast: true,
+      currentYearLevel: null,
+    };
+  }
+
+  return {
+    label: ordinalYearLabel(currentYearLevel),
+    detail: `${academicYearStart}-${academicYearStart + 1}`,
+    isPast: false,
+    currentYearLevel,
+  };
+}
+
 export async function createProgramWithClasses(
   name: string,
   type: ProgramType,

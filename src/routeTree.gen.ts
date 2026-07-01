@@ -17,14 +17,31 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated/students/index'
 import { Route as AuthenticatedInquiriesIndexRouteImport } from './routes/_authenticated/inquiries/index'
 import { Route as AuthenticatedFinanceIndexRouteImport } from './routes/_authenticated/finance/index'
+import { Route as ApiWhatsappCheckNumberRouteImport } from './routes/api/whatsapp/check-number'
+import { Route as ApiStudentDocumentsZipRouteImport } from './routes/api/student-documents/zip'
+import { Route as ApiStudentDocumentsAccountRouteImport } from './routes/api/student-documents/account'
+import { Route as ApiStaffProfilesRouteImport } from './routes/api/staff/profiles'
+import { Route as ApiStaffByRoleRouteImport } from './routes/api/staff/by-role'
+import { Route as ApiBoardGazetteLookupRouteImport } from './routes/api/board-gazette/lookup'
+import { Route as ApiBoardGazetteImportsRouteImport } from './routes/api/board-gazette/imports'
+import { Route as ApiBoardGazetteImportRouteImport } from './routes/api/board-gazette/import'
+import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
+import { Route as ApiAdminUsersRouteImport } from './routes/api/admin/users'
+import { Route as AuthenticatedStudentsRollNoSlipsRouteImport } from './routes/_authenticated/students/roll-no-slips'
+import { Route as AuthenticatedStudentsDocumentsRouteImport } from './routes/_authenticated/students/documents'
 import { Route as AuthenticatedStudentsIdRouteImport } from './routes/_authenticated/students/$id'
+import { Route as AuthenticatedSettingsUsersRouteImport } from './routes/_authenticated/settings/users'
+import { Route as AuthenticatedSettingsProfileRouteImport } from './routes/_authenticated/settings/profile'
 import { Route as AuthenticatedSettingsFeesRouteImport } from './routes/_authenticated/settings/fees'
+import { Route as AuthenticatedSettingsBoardGazetteRouteImport } from './routes/_authenticated/settings/board-gazette'
 import { Route as AuthenticatedSettingsAcademicRouteImport } from './routes/_authenticated/settings/academic'
 import { Route as AuthenticatedInquiriesNewRouteImport } from './routes/_authenticated/inquiries/new'
 import { Route as AuthenticatedInquiriesIdRouteImport } from './routes/_authenticated/inquiries/$id'
+import { Route as AuthenticatedFinanceScanRouteImport } from './routes/_authenticated/finance/scan'
 import { Route as AuthenticatedFinanceReportsRouteImport } from './routes/_authenticated/finance/reports'
 import { Route as AuthenticatedFinanceDuesRouteImport } from './routes/_authenticated/finance/dues'
 import { Route as AuthenticatedFinanceCollectRouteImport } from './routes/_authenticated/finance/collect'
+import { Route as AuthenticatedFinanceBulkVouchersRouteImport } from './routes/_authenticated/finance/bulk-vouchers'
 import { Route as AuthenticatedAdmissionsNewRouteImport } from './routes/_authenticated/admissions/new'
 import { Route as AuthenticatedFinanceVouchersIndexRouteImport } from './routes/_authenticated/finance/vouchers/index'
 import { Route as ApiPublicHooksAutoVouchersRouteImport } from './routes/api/public/hooks/auto-vouchers'
@@ -74,15 +91,96 @@ const AuthenticatedFinanceIndexRoute =
     path: '/finance/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const ApiWhatsappCheckNumberRoute = ApiWhatsappCheckNumberRouteImport.update({
+  id: '/api/whatsapp/check-number',
+  path: '/api/whatsapp/check-number',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStudentDocumentsZipRoute = ApiStudentDocumentsZipRouteImport.update({
+  id: '/api/student-documents/zip',
+  path: '/api/student-documents/zip',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStudentDocumentsAccountRoute =
+  ApiStudentDocumentsAccountRouteImport.update({
+    id: '/api/student-documents/account',
+    path: '/api/student-documents/account',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiStaffProfilesRoute = ApiStaffProfilesRouteImport.update({
+  id: '/api/staff/profiles',
+  path: '/api/staff/profiles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStaffByRoleRoute = ApiStaffByRoleRouteImport.update({
+  id: '/api/staff/by-role',
+  path: '/api/staff/by-role',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBoardGazetteLookupRoute = ApiBoardGazetteLookupRouteImport.update({
+  id: '/api/board-gazette/lookup',
+  path: '/api/board-gazette/lookup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBoardGazetteImportsRoute = ApiBoardGazetteImportsRouteImport.update({
+  id: '/api/board-gazette/imports',
+  path: '/api/board-gazette/imports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBoardGazetteImportRoute = ApiBoardGazetteImportRouteImport.update({
+  id: '/api/board-gazette/import',
+  path: '/api/board-gazette/import',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSessionRoute = ApiAuthSessionRouteImport.update({
+  id: '/api/auth/session',
+  path: '/api/auth/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminUsersRoute = ApiAdminUsersRouteImport.update({
+  id: '/api/admin/users',
+  path: '/api/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedStudentsRollNoSlipsRoute =
+  AuthenticatedStudentsRollNoSlipsRouteImport.update({
+    id: '/students/roll-no-slips',
+    path: '/students/roll-no-slips',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedStudentsDocumentsRoute =
+  AuthenticatedStudentsDocumentsRouteImport.update({
+    id: '/students/documents',
+    path: '/students/documents',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedStudentsIdRoute = AuthenticatedStudentsIdRouteImport.update({
   id: '/students/$id',
   path: '/students/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSettingsUsersRoute =
+  AuthenticatedSettingsUsersRouteImport.update({
+    id: '/settings/users',
+    path: '/settings/users',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSettingsProfileRoute =
+  AuthenticatedSettingsProfileRouteImport.update({
+    id: '/settings/profile',
+    path: '/settings/profile',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSettingsFeesRoute =
   AuthenticatedSettingsFeesRouteImport.update({
     id: '/settings/fees',
     path: '/settings/fees',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSettingsBoardGazetteRoute =
+  AuthenticatedSettingsBoardGazetteRouteImport.update({
+    id: '/settings/board-gazette',
+    path: '/settings/board-gazette',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedSettingsAcademicRoute =
@@ -103,6 +201,12 @@ const AuthenticatedInquiriesIdRoute =
     path: '/inquiries/$id',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFinanceScanRoute =
+  AuthenticatedFinanceScanRouteImport.update({
+    id: '/finance/scan',
+    path: '/finance/scan',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedFinanceReportsRoute =
   AuthenticatedFinanceReportsRouteImport.update({
     id: '/finance/reports',
@@ -119,6 +223,12 @@ const AuthenticatedFinanceCollectRoute =
   AuthenticatedFinanceCollectRouteImport.update({
     id: '/finance/collect',
     path: '/finance/collect',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceBulkVouchersRoute =
+  AuthenticatedFinanceBulkVouchersRouteImport.update({
+    id: '/finance/bulk-vouchers',
+    path: '/finance/bulk-vouchers',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAdmissionsNewRoute =
@@ -164,14 +274,31 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admissions/new': typeof AuthenticatedAdmissionsNewRoute
+  '/finance/bulk-vouchers': typeof AuthenticatedFinanceBulkVouchersRoute
   '/finance/collect': typeof AuthenticatedFinanceCollectRoute
   '/finance/dues': typeof AuthenticatedFinanceDuesRoute
   '/finance/reports': typeof AuthenticatedFinanceReportsRoute
+  '/finance/scan': typeof AuthenticatedFinanceScanRoute
   '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/inquiries/new': typeof AuthenticatedInquiriesNewRoute
   '/settings/academic': typeof AuthenticatedSettingsAcademicRoute
+  '/settings/board-gazette': typeof AuthenticatedSettingsBoardGazetteRoute
   '/settings/fees': typeof AuthenticatedSettingsFeesRoute
+  '/settings/profile': typeof AuthenticatedSettingsProfileRoute
+  '/settings/users': typeof AuthenticatedSettingsUsersRoute
   '/students/$id': typeof AuthenticatedStudentsIdRoute
+  '/students/documents': typeof AuthenticatedStudentsDocumentsRoute
+  '/students/roll-no-slips': typeof AuthenticatedStudentsRollNoSlipsRoute
+  '/api/admin/users': typeof ApiAdminUsersRoute
+  '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/board-gazette/import': typeof ApiBoardGazetteImportRoute
+  '/api/board-gazette/imports': typeof ApiBoardGazetteImportsRoute
+  '/api/board-gazette/lookup': typeof ApiBoardGazetteLookupRoute
+  '/api/staff/by-role': typeof ApiStaffByRoleRoute
+  '/api/staff/profiles': typeof ApiStaffProfilesRoute
+  '/api/student-documents/account': typeof ApiStudentDocumentsAccountRoute
+  '/api/student-documents/zip': typeof ApiStudentDocumentsZipRoute
+  '/api/whatsapp/check-number': typeof ApiWhatsappCheckNumberRoute
   '/finance/': typeof AuthenticatedFinanceIndexRoute
   '/inquiries/': typeof AuthenticatedInquiriesIndexRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
@@ -187,14 +314,31 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admissions/new': typeof AuthenticatedAdmissionsNewRoute
+  '/finance/bulk-vouchers': typeof AuthenticatedFinanceBulkVouchersRoute
   '/finance/collect': typeof AuthenticatedFinanceCollectRoute
   '/finance/dues': typeof AuthenticatedFinanceDuesRoute
   '/finance/reports': typeof AuthenticatedFinanceReportsRoute
+  '/finance/scan': typeof AuthenticatedFinanceScanRoute
   '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/inquiries/new': typeof AuthenticatedInquiriesNewRoute
   '/settings/academic': typeof AuthenticatedSettingsAcademicRoute
+  '/settings/board-gazette': typeof AuthenticatedSettingsBoardGazetteRoute
   '/settings/fees': typeof AuthenticatedSettingsFeesRoute
+  '/settings/profile': typeof AuthenticatedSettingsProfileRoute
+  '/settings/users': typeof AuthenticatedSettingsUsersRoute
   '/students/$id': typeof AuthenticatedStudentsIdRoute
+  '/students/documents': typeof AuthenticatedStudentsDocumentsRoute
+  '/students/roll-no-slips': typeof AuthenticatedStudentsRollNoSlipsRoute
+  '/api/admin/users': typeof ApiAdminUsersRoute
+  '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/board-gazette/import': typeof ApiBoardGazetteImportRoute
+  '/api/board-gazette/imports': typeof ApiBoardGazetteImportsRoute
+  '/api/board-gazette/lookup': typeof ApiBoardGazetteLookupRoute
+  '/api/staff/by-role': typeof ApiStaffByRoleRoute
+  '/api/staff/profiles': typeof ApiStaffProfilesRoute
+  '/api/student-documents/account': typeof ApiStudentDocumentsAccountRoute
+  '/api/student-documents/zip': typeof ApiStudentDocumentsZipRoute
+  '/api/whatsapp/check-number': typeof ApiWhatsappCheckNumberRoute
   '/finance': typeof AuthenticatedFinanceIndexRoute
   '/inquiries': typeof AuthenticatedInquiriesIndexRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
@@ -212,14 +356,31 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/admissions/new': typeof AuthenticatedAdmissionsNewRoute
+  '/_authenticated/finance/bulk-vouchers': typeof AuthenticatedFinanceBulkVouchersRoute
   '/_authenticated/finance/collect': typeof AuthenticatedFinanceCollectRoute
   '/_authenticated/finance/dues': typeof AuthenticatedFinanceDuesRoute
   '/_authenticated/finance/reports': typeof AuthenticatedFinanceReportsRoute
+  '/_authenticated/finance/scan': typeof AuthenticatedFinanceScanRoute
   '/_authenticated/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/_authenticated/inquiries/new': typeof AuthenticatedInquiriesNewRoute
   '/_authenticated/settings/academic': typeof AuthenticatedSettingsAcademicRoute
+  '/_authenticated/settings/board-gazette': typeof AuthenticatedSettingsBoardGazetteRoute
   '/_authenticated/settings/fees': typeof AuthenticatedSettingsFeesRoute
+  '/_authenticated/settings/profile': typeof AuthenticatedSettingsProfileRoute
+  '/_authenticated/settings/users': typeof AuthenticatedSettingsUsersRoute
   '/_authenticated/students/$id': typeof AuthenticatedStudentsIdRoute
+  '/_authenticated/students/documents': typeof AuthenticatedStudentsDocumentsRoute
+  '/_authenticated/students/roll-no-slips': typeof AuthenticatedStudentsRollNoSlipsRoute
+  '/api/admin/users': typeof ApiAdminUsersRoute
+  '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/board-gazette/import': typeof ApiBoardGazetteImportRoute
+  '/api/board-gazette/imports': typeof ApiBoardGazetteImportsRoute
+  '/api/board-gazette/lookup': typeof ApiBoardGazetteLookupRoute
+  '/api/staff/by-role': typeof ApiStaffByRoleRoute
+  '/api/staff/profiles': typeof ApiStaffProfilesRoute
+  '/api/student-documents/account': typeof ApiStudentDocumentsAccountRoute
+  '/api/student-documents/zip': typeof ApiStudentDocumentsZipRoute
+  '/api/whatsapp/check-number': typeof ApiWhatsappCheckNumberRoute
   '/_authenticated/finance/': typeof AuthenticatedFinanceIndexRoute
   '/_authenticated/inquiries/': typeof AuthenticatedInquiriesIndexRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
@@ -237,14 +398,31 @@ export interface FileRouteTypes {
     | '/signup'
     | '/dashboard'
     | '/admissions/new'
+    | '/finance/bulk-vouchers'
     | '/finance/collect'
     | '/finance/dues'
     | '/finance/reports'
+    | '/finance/scan'
     | '/inquiries/$id'
     | '/inquiries/new'
     | '/settings/academic'
+    | '/settings/board-gazette'
     | '/settings/fees'
+    | '/settings/profile'
+    | '/settings/users'
     | '/students/$id'
+    | '/students/documents'
+    | '/students/roll-no-slips'
+    | '/api/admin/users'
+    | '/api/auth/session'
+    | '/api/board-gazette/import'
+    | '/api/board-gazette/imports'
+    | '/api/board-gazette/lookup'
+    | '/api/staff/by-role'
+    | '/api/staff/profiles'
+    | '/api/student-documents/account'
+    | '/api/student-documents/zip'
+    | '/api/whatsapp/check-number'
     | '/finance/'
     | '/inquiries/'
     | '/students/'
@@ -260,14 +438,31 @@ export interface FileRouteTypes {
     | '/signup'
     | '/dashboard'
     | '/admissions/new'
+    | '/finance/bulk-vouchers'
     | '/finance/collect'
     | '/finance/dues'
     | '/finance/reports'
+    | '/finance/scan'
     | '/inquiries/$id'
     | '/inquiries/new'
     | '/settings/academic'
+    | '/settings/board-gazette'
     | '/settings/fees'
+    | '/settings/profile'
+    | '/settings/users'
     | '/students/$id'
+    | '/students/documents'
+    | '/students/roll-no-slips'
+    | '/api/admin/users'
+    | '/api/auth/session'
+    | '/api/board-gazette/import'
+    | '/api/board-gazette/imports'
+    | '/api/board-gazette/lookup'
+    | '/api/staff/by-role'
+    | '/api/staff/profiles'
+    | '/api/student-documents/account'
+    | '/api/student-documents/zip'
+    | '/api/whatsapp/check-number'
     | '/finance'
     | '/inquiries'
     | '/students'
@@ -284,14 +479,31 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_authenticated/dashboard'
     | '/_authenticated/admissions/new'
+    | '/_authenticated/finance/bulk-vouchers'
     | '/_authenticated/finance/collect'
     | '/_authenticated/finance/dues'
     | '/_authenticated/finance/reports'
+    | '/_authenticated/finance/scan'
     | '/_authenticated/inquiries/$id'
     | '/_authenticated/inquiries/new'
     | '/_authenticated/settings/academic'
+    | '/_authenticated/settings/board-gazette'
     | '/_authenticated/settings/fees'
+    | '/_authenticated/settings/profile'
+    | '/_authenticated/settings/users'
     | '/_authenticated/students/$id'
+    | '/_authenticated/students/documents'
+    | '/_authenticated/students/roll-no-slips'
+    | '/api/admin/users'
+    | '/api/auth/session'
+    | '/api/board-gazette/import'
+    | '/api/board-gazette/imports'
+    | '/api/board-gazette/lookup'
+    | '/api/staff/by-role'
+    | '/api/staff/profiles'
+    | '/api/student-documents/account'
+    | '/api/student-documents/zip'
+    | '/api/whatsapp/check-number'
     | '/_authenticated/finance/'
     | '/_authenticated/inquiries/'
     | '/_authenticated/students/'
@@ -307,6 +519,16 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  ApiAdminUsersRoute: typeof ApiAdminUsersRoute
+  ApiAuthSessionRoute: typeof ApiAuthSessionRoute
+  ApiBoardGazetteImportRoute: typeof ApiBoardGazetteImportRoute
+  ApiBoardGazetteImportsRoute: typeof ApiBoardGazetteImportsRoute
+  ApiBoardGazetteLookupRoute: typeof ApiBoardGazetteLookupRoute
+  ApiStaffByRoleRoute: typeof ApiStaffByRoleRoute
+  ApiStaffProfilesRoute: typeof ApiStaffProfilesRoute
+  ApiStudentDocumentsAccountRoute: typeof ApiStudentDocumentsAccountRoute
+  ApiStudentDocumentsZipRoute: typeof ApiStudentDocumentsZipRoute
+  ApiWhatsappCheckNumberRoute: typeof ApiWhatsappCheckNumberRoute
   ApiPublicHooksAutoVouchersRoute: typeof ApiPublicHooksAutoVouchersRoute
 }
 
@@ -368,6 +590,90 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/whatsapp/check-number': {
+      id: '/api/whatsapp/check-number'
+      path: '/api/whatsapp/check-number'
+      fullPath: '/api/whatsapp/check-number'
+      preLoaderRoute: typeof ApiWhatsappCheckNumberRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/student-documents/zip': {
+      id: '/api/student-documents/zip'
+      path: '/api/student-documents/zip'
+      fullPath: '/api/student-documents/zip'
+      preLoaderRoute: typeof ApiStudentDocumentsZipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/student-documents/account': {
+      id: '/api/student-documents/account'
+      path: '/api/student-documents/account'
+      fullPath: '/api/student-documents/account'
+      preLoaderRoute: typeof ApiStudentDocumentsAccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/staff/profiles': {
+      id: '/api/staff/profiles'
+      path: '/api/staff/profiles'
+      fullPath: '/api/staff/profiles'
+      preLoaderRoute: typeof ApiStaffProfilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/staff/by-role': {
+      id: '/api/staff/by-role'
+      path: '/api/staff/by-role'
+      fullPath: '/api/staff/by-role'
+      preLoaderRoute: typeof ApiStaffByRoleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/board-gazette/lookup': {
+      id: '/api/board-gazette/lookup'
+      path: '/api/board-gazette/lookup'
+      fullPath: '/api/board-gazette/lookup'
+      preLoaderRoute: typeof ApiBoardGazetteLookupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/board-gazette/imports': {
+      id: '/api/board-gazette/imports'
+      path: '/api/board-gazette/imports'
+      fullPath: '/api/board-gazette/imports'
+      preLoaderRoute: typeof ApiBoardGazetteImportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/board-gazette/import': {
+      id: '/api/board-gazette/import'
+      path: '/api/board-gazette/import'
+      fullPath: '/api/board-gazette/import'
+      preLoaderRoute: typeof ApiBoardGazetteImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/session': {
+      id: '/api/auth/session'
+      path: '/api/auth/session'
+      fullPath: '/api/auth/session'
+      preLoaderRoute: typeof ApiAuthSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/users': {
+      id: '/api/admin/users'
+      path: '/api/admin/users'
+      fullPath: '/api/admin/users'
+      preLoaderRoute: typeof ApiAdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/students/roll-no-slips': {
+      id: '/_authenticated/students/roll-no-slips'
+      path: '/students/roll-no-slips'
+      fullPath: '/students/roll-no-slips'
+      preLoaderRoute: typeof AuthenticatedStudentsRollNoSlipsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/students/documents': {
+      id: '/_authenticated/students/documents'
+      path: '/students/documents'
+      fullPath: '/students/documents'
+      preLoaderRoute: typeof AuthenticatedStudentsDocumentsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/students/$id': {
       id: '/_authenticated/students/$id'
       path: '/students/$id'
@@ -375,11 +681,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudentsIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings/users': {
+      id: '/_authenticated/settings/users'
+      path: '/settings/users'
+      fullPath: '/settings/users'
+      preLoaderRoute: typeof AuthenticatedSettingsUsersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/profile': {
+      id: '/_authenticated/settings/profile'
+      path: '/settings/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof AuthenticatedSettingsProfileRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/settings/fees': {
       id: '/_authenticated/settings/fees'
       path: '/settings/fees'
       fullPath: '/settings/fees'
       preLoaderRoute: typeof AuthenticatedSettingsFeesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/board-gazette': {
+      id: '/_authenticated/settings/board-gazette'
+      path: '/settings/board-gazette'
+      fullPath: '/settings/board-gazette'
+      preLoaderRoute: typeof AuthenticatedSettingsBoardGazetteRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/settings/academic': {
@@ -403,6 +730,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInquiriesIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/finance/scan': {
+      id: '/_authenticated/finance/scan'
+      path: '/finance/scan'
+      fullPath: '/finance/scan'
+      preLoaderRoute: typeof AuthenticatedFinanceScanRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/finance/reports': {
       id: '/_authenticated/finance/reports'
       path: '/finance/reports'
@@ -422,6 +756,13 @@ declare module '@tanstack/react-router' {
       path: '/finance/collect'
       fullPath: '/finance/collect'
       preLoaderRoute: typeof AuthenticatedFinanceCollectRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/finance/bulk-vouchers': {
+      id: '/_authenticated/finance/bulk-vouchers'
+      path: '/finance/bulk-vouchers'
+      fullPath: '/finance/bulk-vouchers'
+      preLoaderRoute: typeof AuthenticatedFinanceBulkVouchersRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admissions/new': {
@@ -472,14 +813,21 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedAdmissionsNewRoute: typeof AuthenticatedAdmissionsNewRoute
+  AuthenticatedFinanceBulkVouchersRoute: typeof AuthenticatedFinanceBulkVouchersRoute
   AuthenticatedFinanceCollectRoute: typeof AuthenticatedFinanceCollectRoute
   AuthenticatedFinanceDuesRoute: typeof AuthenticatedFinanceDuesRoute
   AuthenticatedFinanceReportsRoute: typeof AuthenticatedFinanceReportsRoute
+  AuthenticatedFinanceScanRoute: typeof AuthenticatedFinanceScanRoute
   AuthenticatedInquiriesIdRoute: typeof AuthenticatedInquiriesIdRoute
   AuthenticatedInquiriesNewRoute: typeof AuthenticatedInquiriesNewRoute
   AuthenticatedSettingsAcademicRoute: typeof AuthenticatedSettingsAcademicRoute
+  AuthenticatedSettingsBoardGazetteRoute: typeof AuthenticatedSettingsBoardGazetteRoute
   AuthenticatedSettingsFeesRoute: typeof AuthenticatedSettingsFeesRoute
+  AuthenticatedSettingsProfileRoute: typeof AuthenticatedSettingsProfileRoute
+  AuthenticatedSettingsUsersRoute: typeof AuthenticatedSettingsUsersRoute
   AuthenticatedStudentsIdRoute: typeof AuthenticatedStudentsIdRoute
+  AuthenticatedStudentsDocumentsRoute: typeof AuthenticatedStudentsDocumentsRoute
+  AuthenticatedStudentsRollNoSlipsRoute: typeof AuthenticatedStudentsRollNoSlipsRoute
   AuthenticatedFinanceIndexRoute: typeof AuthenticatedFinanceIndexRoute
   AuthenticatedInquiriesIndexRoute: typeof AuthenticatedInquiriesIndexRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
@@ -492,14 +840,22 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedAdmissionsNewRoute: AuthenticatedAdmissionsNewRoute,
+  AuthenticatedFinanceBulkVouchersRoute: AuthenticatedFinanceBulkVouchersRoute,
   AuthenticatedFinanceCollectRoute: AuthenticatedFinanceCollectRoute,
   AuthenticatedFinanceDuesRoute: AuthenticatedFinanceDuesRoute,
   AuthenticatedFinanceReportsRoute: AuthenticatedFinanceReportsRoute,
+  AuthenticatedFinanceScanRoute: AuthenticatedFinanceScanRoute,
   AuthenticatedInquiriesIdRoute: AuthenticatedInquiriesIdRoute,
   AuthenticatedInquiriesNewRoute: AuthenticatedInquiriesNewRoute,
   AuthenticatedSettingsAcademicRoute: AuthenticatedSettingsAcademicRoute,
+  AuthenticatedSettingsBoardGazetteRoute:
+    AuthenticatedSettingsBoardGazetteRoute,
   AuthenticatedSettingsFeesRoute: AuthenticatedSettingsFeesRoute,
+  AuthenticatedSettingsProfileRoute: AuthenticatedSettingsProfileRoute,
+  AuthenticatedSettingsUsersRoute: AuthenticatedSettingsUsersRoute,
   AuthenticatedStudentsIdRoute: AuthenticatedStudentsIdRoute,
+  AuthenticatedStudentsDocumentsRoute: AuthenticatedStudentsDocumentsRoute,
+  AuthenticatedStudentsRollNoSlipsRoute: AuthenticatedStudentsRollNoSlipsRoute,
   AuthenticatedFinanceIndexRoute: AuthenticatedFinanceIndexRoute,
   AuthenticatedInquiriesIndexRoute: AuthenticatedInquiriesIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
@@ -520,8 +876,28 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  ApiAdminUsersRoute: ApiAdminUsersRoute,
+  ApiAuthSessionRoute: ApiAuthSessionRoute,
+  ApiBoardGazetteImportRoute: ApiBoardGazetteImportRoute,
+  ApiBoardGazetteImportsRoute: ApiBoardGazetteImportsRoute,
+  ApiBoardGazetteLookupRoute: ApiBoardGazetteLookupRoute,
+  ApiStaffByRoleRoute: ApiStaffByRoleRoute,
+  ApiStaffProfilesRoute: ApiStaffProfilesRoute,
+  ApiStudentDocumentsAccountRoute: ApiStudentDocumentsAccountRoute,
+  ApiStudentDocumentsZipRoute: ApiStudentDocumentsZipRoute,
+  ApiWhatsappCheckNumberRoute: ApiWhatsappCheckNumberRoute,
   ApiPublicHooksAutoVouchersRoute: ApiPublicHooksAutoVouchersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

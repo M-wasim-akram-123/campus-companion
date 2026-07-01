@@ -1,6 +1,16 @@
 export type VoucherStatus = "draft" | "issued" | "partial" | "paid" | "cancelled";
 export type PaymentMethod = "cash" | "bank" | "online" | "other";
 export type VoucherSource = "manual" | "installment";
+export type FinanceLedgerEntryType =
+  | "fee_charge"
+  | "fine"
+  | "late_fee"
+  | "payment"
+  | "waiver"
+  | "adjustment"
+  | "reversal"
+  | "bad_debt";
+export type CashierSessionStatus = "open" | "closed" | "cancelled";
 
 export type FeeInstallment = {
   id: string;
@@ -45,10 +55,45 @@ export type FeePayment = {
   receipt_number: string;
   student_id: string;
   voucher_id: string | null;
+  cashier_session_id?: string | null;
   amount: number;
   payment_method: PaymentMethod;
   paid_at: string;
   notes: string | null;
+};
+
+export type StudentFinanceLedgerEntry = {
+  id: string;
+  student_id: string;
+  installment_id: string | null;
+  voucher_id: string | null;
+  payment_id: string | null;
+  entry_type: FinanceLedgerEntryType;
+  component_type: string | null;
+  label: string;
+  debit: number;
+  credit: number;
+  effective_date: string;
+  status: string;
+  notes: string | null;
+  created_at: string;
+};
+
+export type CashierSession = {
+  id: string;
+  cashier_id: string;
+  status: CashierSessionStatus;
+  opened_at: string;
+  closed_at: string | null;
+  opening_cash: number;
+  expected_cash: number;
+  counted_cash: number | null;
+  variance: number | null;
+  notes: string | null;
+  closed_by?: string | null;
+  approved_by?: string | null;
+  approved_at?: string | null;
+  signoff_notes?: string | null;
 };
 
 export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [

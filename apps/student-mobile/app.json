@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Campus Companion Student",
+    "slug": "campus-companion-student",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "campusstudent",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Campus Companion to upload student documents.",
+          "cameraPermission": "Allow Campus Companion to scan student documents."
+        }
+      ]
+    ]
+  }
+}
