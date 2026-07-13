@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
-  allocatePaymentAcrossInstallments,
+  allocatePaymentFifo,
   fetchOpenCashierSession,
   fetchStudentInstallments,
   formatCurrency,
@@ -60,17 +60,13 @@ export function RecordPaymentDialog({ open, onOpenChange, studentId, installment
   const payAmount = parseFloat(amount) || 0;
 
   const allocationPreview = useMemo(() => {
-    if (payAmount <= 0) return [];
-    if (payAmount <= balance + 0.01) {
-      return [{ installmentId: installment.id, amount: payAmount, label: installment.label }];
-    }
-    if (!allInstallments.length) return null;
+    if (payAmount <= 0 || !allInstallments.length) return [];
     try {
-      return allocatePaymentAcrossInstallments(allInstallments, installment.id, payAmount);
+      return allocatePaymentFifo(allInstallments, payAmount);
     } catch {
       return null;
     }
-  }, [allInstallments, balance, installment.id, installment.label, payAmount]);
+  }, [allInstallments, payAmount]);
 
   const submit = async () => {
     if (payAmount <= 0) return toast.error("Enter a payment amount greater than zero.");
@@ -78,19 +74,18 @@ export function RecordPaymentDialog({ open, onOpenChange, studentId, installment
     if (method === "cash" && !cashierSession) {
       return toast.error("Open a cashier session before recording cash payments.");
     }
+    if (!allInstallments.length) {
+      return toast.error("Student installments are not loaded yet.");
+    }
 
     let allocations: { installmentId: string; amount: number }[];
     try {
-      if (payAmount <= balance + 0.01) {
-        allocations = [{ installmentId: installment.id, amount: payAmount }];
-      } else {
-        allocations = allocatePaymentAcrossInstallments(allInstallments, installment.id, payAmount).map(
-          ({ installmentId, amount: allocAmount }) => ({
-            installmentId,
-            amount: allocAmount,
-          }),
-        );
-      }
+      allocations = allocatePaymentFifo(allInstallments, payAmount).map(
+        ({ installmentId, amount: allocAmount }) => ({
+          installmentId,
+          amount: allocAmount,
+        }),
+      );
     } catch (e: unknown) {
       return toast.error(e instanceof Error ? e.message : "Could not allocate payment");
     }
@@ -106,10 +101,11 @@ export function RecordPaymentDialog({ open, onOpenChange, studentId, installment
         cashierSessionId: cashierSession?.id,
         allocations,
       });
-      const surplus = payAmount - balance;
+      const appliedElsewhere =
+        allocationPreview?.filter((row) => row.installmentId !== installment.id).length ?? 0;
       toast.success(
-        surplus > 0.01
-          ? `Payment recorded. ${formatCurrency(surplus)} applied to later installment(s).`
+        appliedElsewhere > 0
+          ? `Payment recorded. Oldest dues cleared first across ${allocationPreview?.length ?? 0} installment(s).`
           : "Payment recorded",
       );
       setReceiptNumber("");
@@ -146,9 +142,10 @@ export function RecordPaymentDialog({ open, onOpenChange, studentId, installment
             {installment.label} · Due {installment.due_date} · Balance {formatCurrency(balance)}
           </p>
           <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+            Payments always apply to the oldest unpaid installment first (Year 1 arrears before Year 2).
             {cashierSession
-              ? `Cashier session open since ${new Date(cashierSession.opened_at).toLocaleString()}. Cash receipts will be added to session closing.`
-              : "No open cashier session found. Cash payments are blocked until a session is opened."}
+              ? ` Cashier session open since ${new Date(cashierSession.opened_at).toLocaleString()}.`
+              : " No open cashier session — cash payments are blocked until a session is opened."}
           </p>
           <div className="space-y-2">
             <Label>Amount received (PKR)</Label>
@@ -158,15 +155,11 @@ export function RecordPaymentDialog({ open, onOpenChange, studentId, installment
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">
-              If you receive more than this installment&apos;s balance, the extra amount is applied to the next
-              unpaid installment(s) automatically.
-            </p>
           </div>
 
-          {allocationPreview && allocationPreview.length > 1 && (
+          {allocationPreview && allocationPreview.length > 0 && (
             <div className="rounded-lg border bg-muted/30 px-3 py-2 text-xs">
-              <p className="font-medium">Payment allocation</p>
+              <p className="font-medium">FIFO payment allocation</p>
               <ul className="mt-2 space-y-1 text-muted-foreground">
                 {allocationPreview.map((row) => (
                   <li key={row.installmentId}>
@@ -177,9 +170,9 @@ export function RecordPaymentDialog({ open, onOpenChange, studentId, installment
             </div>
           )}
 
-          {allocationPreview === null && payAmount > balance + 0.01 && allInstallments.length > 0 && (
+          {allocationPreview === null && payAmount > 0 && allInstallments.length > 0 && (
             <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              Amount exceeds total outstanding balance for this and later installments.
+              Amount exceeds total outstanding balance.
             </p>
           )}
 
@@ -221,7 +214,8 @@ export function RecordPaymentDialog({ open, onOpenChange, studentId, installment
               saving ||
               (method === "cash" && !cashierSession) ||
               payAmount <= 0 ||
-              (payAmount > balance + 0.01 && (allInstallments.length === 0 || allocationPreview === null))
+              allInstallments.length === 0 ||
+              allocationPreview === null
             }
           >
             {saving ? "Saving…" : "Record payment"}

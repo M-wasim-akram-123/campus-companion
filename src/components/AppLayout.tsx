@@ -16,11 +16,13 @@ import {
   FileArchive,
   BookOpenCheck,
   ClipboardCheck,
+  Megaphone,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CAMPUS_NAME } from "@/lib/campus";
+import { defaultHomePathForRoles } from "@/lib/auth-routing";
 
 const nav: {
   to: string;
@@ -54,6 +56,18 @@ const nav: {
     roles: ["super_admin", "registrar", "finance_admin", "finance_officer"],
   },
   {
+    to: "/exams",
+    label: "Exams",
+    icon: GraduationCap,
+    roles: ["super_admin", "exam_officer"],
+  },
+  {
+    to: "/announcements",
+    label: "Announcements",
+    icon: Megaphone,
+    roles: ["super_admin", "exam_officer", "campus_incharge", "registrar"],
+  },
+  {
     to: "/students/documents",
     label: "Student Documents",
     icon: FileArchive,
@@ -73,6 +87,12 @@ const nav: {
     icon: Wallet,
     roles: ["super_admin", "finance_admin", "finance_officer"],
   },
+  {
+    to: "/settings/collection-plans",
+    label: "Collection plans",
+    icon: Wallet,
+    roles: ["super_admin", "finance_admin"],
+  },
   { to: "/settings/users", label: "User Management", icon: UserCog, roles: ["super_admin"] },
   { to: "/settings/profile", label: "My Profile", icon: CircleUserRound },
 ] as const;
@@ -86,11 +106,7 @@ export function AppLayout() {
   const navItems = nav.filter(
     (item) => !item.roles || item.roles.some((role) => roles.includes(role)),
   );
-  const homePath =
-    roles.includes("sub_admission_officer") &&
-    !roles.some((role) => ["super_admin", "admission_officer", "receptionist"].includes(role))
-      ? "/inquiries"
-      : "/dashboard";
+  const homePath = defaultHomePathForRoles(roles);
   const showBackButton = pathname !== homePath;
   const goBack = () => {
     if (window.history.length > 1) {

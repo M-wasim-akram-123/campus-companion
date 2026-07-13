@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -293,6 +293,12 @@ function FeePoliciesPage() {
         <h1 className="text-3xl font-bold">Fee policies</h1>
         <p className="text-muted-foreground">
           Set standard fees for each program and session (e.g. ICS 2025–26). Used automatically at admission.
+        </p>
+        <p className="mt-2 text-sm">
+          <Link to="/settings/collection-plans" className="text-primary underline">
+            Manage fee collection plans
+          </Link>{" "}
+          (month-based installment schedules for annual fee).
         </p>
       </div>
 

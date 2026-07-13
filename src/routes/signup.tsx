@@ -45,12 +45,6 @@ function SignupPage() {
       }
 
       if (data.session) {
-        try {
-          const { registerAuthSession } = await import("@/lib/auth-session-api");
-          await registerAuthSession();
-        } catch {
-          // Session tracking optional until DB patch is applied.
-        }
         toast.success("Account created — you are signed in");
         navigate({ to: "/dashboard" });
         return;

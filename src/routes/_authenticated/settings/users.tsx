@@ -56,7 +56,7 @@ const ROLE_OPTIONS: { role: AppRole; label: string; level: string; access: strin
     role: "campus_incharge",
     label: "Campus Incharge",
     level: "Campus oversight",
-    access: "View-only students in assigned classes; fee ledger; phone & defaulter exports",
+    access: "View-only students in assigned sections; fee ledger; phone & defaulter exports",
   },
   {
     role: "registrar",
@@ -100,6 +100,12 @@ const ROLE_OPTIONS: { role: AppRole; label: string; level: string; access: strin
     label: "Cashier",
     level: "Collection access",
     access: "Open cashier session, collect fees, scan vouchers, close own cash drawer",
+  },
+  {
+    role: "exam_officer",
+    label: "Exam Officer",
+    level: "Exam branch",
+    access: "Create internal tests, upload marks, and publish results to student mobile",
   },
   {
     role: "receptionist",
@@ -544,7 +550,7 @@ function UserManagement() {
                                 onClick={() => setClassAssignUser(u)}
                               >
                                 <Layers className="mr-1 h-3.5 w-3.5" />
-                                Classes
+                                Sections
                               </Button>
                             )}
                             <Button

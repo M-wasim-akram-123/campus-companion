@@ -1,7 +1,21 @@
 import { supabase } from "@/integrations/supabase/client";
-import { installmentBalance } from "@/lib/finance";
+import { currentAcademicYearStart } from "@/lib/academic";
+import { academicYearLabel } from "@/lib/academic-year-close";
+import { installmentBalance, fetchBadDebtByInstallment } from "@/lib/finance";
 import { budgetTargetForComponent, fetchSessionFinanceBudget } from "@/lib/finance-budget";
 import { FEE_COMPONENTS, type FeeComponentType } from "@/lib/fees-types";
+
+export type AcademicYearFinanceSummary = {
+  academicYearStart: number;
+  label: string;
+  feeCycle: number;
+  isClosed: boolean;
+  closedAt?: string;
+  totalPayable: number;
+  totalCollected: number;
+  totalOutstanding: number;
+  arrears?: number;
+};
 
 export type SessionRevenueAnalytics = {
   sessionId: string;
@@ -10,8 +24,19 @@ export type SessionRevenueAnalytics = {
   totalPayable: number;
   totalCollected: number;
   totalOutstanding: number;
-  collectedThisMonth: number;
-  componentEstimates: { key: string; label: string; estimated: number; collected: number }[];
+  currentAcademicYearStart: number;
+  years: AcademicYearFinanceSummary[];
+  sessionTotal: { payable: number; collected: number; outstanding: number };
+  yearEndCloses: {
+    academicYearStart: number;
+    closedAt: string;
+    feeCycle: number;
+    totalPayable: number;
+    totalCollected: number;
+    totalOutstanding: number;
+    totalBadDebt: number;
+  }[];
+  collectedThisMonth: number;  componentEstimates: { key: string; label: string; estimated: number; collected: number }[];
   monthlyCollected: { month: string; label: string; amount: number; count: number }[];
   monthlyExpected: { month: string; label: string; amount: number; count: number }[];
   sectionSummary: {
@@ -59,25 +84,86 @@ function throwSupabaseError(error: { message?: string; code?: string; details?: 
   throw new Error(parts.join(" ") || error.code || "Supabase query failed");
 }
 
+const EMPTY_LEDGER_SUMMARY = { fines: 0, lateFees: 0, adjustments: 0, waivers: 0, badDebt: 0 };
+
+function summarizeFinanceLedger(
+  rows: { entry_type: string; debit: number | null; credit: number | null; student_id?: string }[],
+) {
+  return rows.reduce(
+    (acc, row) => {
+      const net = Number(row.debit ?? 0) - Number(row.credit ?? 0);
+      if (row.entry_type === "fine") acc.fines += net;
+      if (row.entry_type === "late_fee") acc.lateFees += net;
+      if (row.entry_type === "adjustment") acc.adjustments += net;
+      if (row.entry_type === "waiver") acc.waivers += Number(row.credit ?? 0);
+      if (row.entry_type === "bad_debt") acc.badDebt += Number(row.credit ?? 0);
+      return acc;
+    },
+    { ...EMPTY_LEDGER_SUMMARY },
+  );
+}
+
+function ledgerCreditsByStudent(
+  rows: { entry_type: string; credit: number | null; student_id?: string }[],
+) {
+  const badDebt = new Map<string, number>();
+  const waivers = new Map<string, number>();
+  for (const row of rows) {
+    if (!row.student_id) continue;
+    const credit = Number(row.credit ?? 0);
+    if (credit <= 0) continue;
+    if (row.entry_type === "bad_debt") {
+      badDebt.set(row.student_id, (badDebt.get(row.student_id) ?? 0) + credit);
+    }
+    if (row.entry_type === "waiver") {
+      waivers.set(row.student_id, (waivers.get(row.student_id) ?? 0) + credit);
+    }
+  }
+  return { badDebt, waivers };
+}
+
+/** Collectible outstanding: estimated − received − bad debt − waivers */
+function collectibleOutstanding(
+  payable: number,
+  collected: number,
+  badDebt: number,
+  waivers: number,
+): number {
+  return Math.max(0, payable - collected - badDebt - waivers);
+}
+
 /** All finance numbers for a session — single source: installments + payments per student */
 export async function fetchSessionRevenueAnalytics(sessionId: string): Promise<SessionRevenueAnalytics> {
   const { data: session } = await supabase
     .from("academic_sessions")
-    .select("label")
+    .select("label, start_year, end_year")
     .eq("id", sessionId)
     .single();
 
-  const { data: students, error: stErr } = await supabase
-    .from("students")
-    .select("id, section_id, sections(name, gender), classes(name), programs(name)")
-    .eq("academic_session_id", sessionId)
-    .eq("status", "active");
-  if (stErr) throwSupabaseError(stErr);
+  const sessionStartYear = session?.start_year ?? currentAcademicYearStart();
+  const currentYearStart = currentAcademicYearStart();
+  const [{ data: sessionStudents, error: sessionStErr }, { data: activeStudents, error: activeStErr }] =
+    await Promise.all([
+      supabase
+        .from("students")
+        .select("id, status, section_id, sections(name, gender), classes(name), programs(name)")
+        .eq("academic_session_id", sessionId),
+      supabase
+        .from("students")
+        .select("id")
+        .eq("academic_session_id", sessionId)
+        .eq("status", "active"),
+    ]);
+  if (sessionStErr) throwSupabaseError(sessionStErr);
+  if (activeStErr) throwSupabaseError(activeStErr);
 
-  const studentIds = (students ?? []).map((s) => s.id);
+  const students = sessionStudents ?? [];
+  const sessionStudentIds = students.map((s) => s.id);
+  const activeStudentIds = (activeStudents ?? []).map((s) => s.id);
+  const activeStudentCount = activeStudentIds.length;
   const budgetRow = await fetchSessionFinanceBudget(sessionId);
 
-  if (!studentIds.length) {
+  if (!sessionStudentIds.length) {
     return {
       sessionId,
       sessionLabel: session?.label ?? "",
@@ -85,36 +171,45 @@ export async function fetchSessionRevenueAnalytics(sessionId: string): Promise<S
       totalPayable: 0,
       totalCollected: 0,
       totalOutstanding: 0,
-      collectedThisMonth: 0,
-      componentEstimates: FEE_COMPONENTS.map((c) => ({ key: c.key, label: c.label, estimated: 0, collected: 0 })),
+      currentAcademicYearStart: currentYearStart,
+      years: [],
+      sessionTotal: { payable: 0, collected: 0, outstanding: 0 },
+      yearEndCloses: [],
+      collectedThisMonth: 0,      componentEstimates: FEE_COMPONENTS.map((c) => ({ key: c.key, label: c.label, estimated: 0, collected: 0 })),
       monthlyCollected: [],
       monthlyExpected: [],
       sectionSummary: [],
       budget: buildBudgetSummary(budgetRow, [], 0),
-      ledgerSummary: { fines: 0, lateFees: 0, adjustments: 0, waivers: 0, badDebt: 0 },
+      ledgerSummary: { ...EMPTY_LEDGER_SUMMARY },
     };
   }
 
-  const [installmentsRes, paymentsRes, plansRes, ledgerRes] = await Promise.all([
+  const [installmentsRes, paymentsRes, plansRes, ledgerRes, badDebtByInstallment, yearClosesRes] =
+    await Promise.all([
     supabase
       .from("student_fee_installments")
-      .select("id, student_id, amount, paid_amount, due_date, status, component_type")
-      .in("student_id", studentIds),
+      .select("id, student_id, amount, paid_amount, due_date, status, component_type, fee_cycle, academic_year_start")
+      .in("student_id", sessionStudentIds),
     supabase
       .from("fee_payments")
       .select("id, student_id, amount, paid_at, payment_method")
-      .in("student_id", studentIds)
+      .in("student_id", sessionStudentIds)
       .order("paid_at", { ascending: false }),
     supabase
       .from("student_fee_plans")
       .select("student_id, admission_fee, annual_fund, annual_fee, semester_fee, scholarship_discount")
-      .in("student_id", studentIds),
+      .in("student_id", sessionStudentIds),
     supabase
       .from("student_finance_ledger")
-      .select("entry_type, debit, credit")
-      .in("student_id", studentIds),
+      .select("entry_type, debit, credit, student_id")
+      .in("student_id", sessionStudentIds),
+    fetchBadDebtByInstallment(sessionStudentIds),
+    supabase
+      .from("session_academic_year_closes")
+      .select("*")
+      .eq("academic_session_id", sessionId)
+      .order("academic_year_start"),
   ]);
-
   if (installmentsRes.error) throwSupabaseError(installmentsRes.error);
   if (paymentsRes.error) throwSupabaseError(paymentsRes.error);
   if (plansRes.error) throwSupabaseError(plansRes.error);
@@ -126,18 +221,8 @@ export async function fetchSessionRevenueAnalytics(sessionId: string): Promise<S
   const payments = paymentsRes.data ?? [];
   const plans = plansRes.data ?? [];
   const ledgerRows = ledgerRes.error ? [] : ledgerRes.data ?? [];
-  const ledgerSummary = ledgerRows.reduce(
-    (acc, row) => {
-      const net = Number(row.debit ?? 0) - Number(row.credit ?? 0);
-      if (row.entry_type === "fine") acc.fines += net;
-      if (row.entry_type === "late_fee") acc.lateFees += net;
-      if (row.entry_type === "adjustment") acc.adjustments += net;
-      if (row.entry_type === "waiver") acc.waivers += Number(row.credit ?? 0);
-      if (row.entry_type === "bad_debt") acc.badDebt += net;
-      return acc;
-    },
-    { fines: 0, lateFees: 0, adjustments: 0, waivers: 0, badDebt: 0 },
-  );
+  const ledgerSummary = summarizeFinanceLedger(ledgerRows);
+  const { badDebt: badDebtByStudent, waivers: waiversByStudent } = ledgerCreditsByStudent(ledgerRows);
 
   let totalPayable = 0;
   let totalCollected = 0;
@@ -184,7 +269,7 @@ export async function fetchSessionRevenueAnalytics(sessionId: string): Promise<S
   const monthlyExpectedMap = new Map<string, { amount: number; count: number }>();
   const today = new Date().toISOString().slice(0, 10);
   for (const inst of installments) {
-    const bal = installmentBalance(inst);
+    const bal = installmentBalance(inst, badDebtByInstallment.get(inst.id) ?? 0);
     if (bal <= 0) continue;
     const k = monthKey(inst.due_date);
     const cur = monthlyExpectedMap.get(k) ?? { amount: 0, count: 0 };
@@ -207,10 +292,17 @@ export async function fetchSessionRevenueAnalytics(sessionId: string): Promise<S
 
   const sectionMap = new Map<
     string,
-    { sectionName: string; className: string; programName: string; students: Set<string>; payable: number; collected: number }
+    {
+      sectionName: string;
+      className: string;
+      programName: string;
+      students: Set<string>;
+      payable: number;
+      collected: number;
+    }
   >();
 
-  for (const st of students ?? []) {
+  for (const st of students) {
     const sec = st.sections as { name?: string; gender?: string } | null;
     const sid = st.section_id ?? "none";
     const label = sec ? `${sec.gender === "girls" ? "Girls" : "Boys"} — ${sec.name}` : "Unassigned";
@@ -224,27 +316,44 @@ export async function fetchSessionRevenueAnalytics(sessionId: string): Promise<S
         collected: 0,
       });
     }
-    sectionMap.get(sid)!.students.add(st.id);
+    if (st.status === "active") {
+      sectionMap.get(sid)!.students.add(st.id);
+    }
   }
 
   for (const inst of installments) {
-    const sid = students!.find((s) => s.id === inst.student_id)?.section_id ?? "none";
+    const sid = students.find((s) => s.id === inst.student_id)?.section_id ?? "none";
     const row = sectionMap.get(sid);
     if (!row) continue;
     row.payable += Number(inst.amount);
     row.collected += Number(inst.paid_amount);
   }
 
-  const sectionSummary = [...sectionMap.entries()].map(([sectionId, r]) => ({
-    sectionId,
-    sectionName: r.sectionName,
-    className: r.className,
-    programName: r.programName,
-    students: r.students.size,
-    payable: r.payable,
-    collected: r.collected,
-    outstanding: r.payable - r.collected,
-  }));
+  const sectionLedgerCredits = new Map<string, { badDebt: number; waivers: number }>();
+  for (const st of students) {
+    const studentBadDebt = badDebtByStudent.get(st.id) ?? 0;
+    const studentWaivers = waiversByStudent.get(st.id) ?? 0;
+    if (studentBadDebt <= 0 && studentWaivers <= 0) continue;
+    const sid = st.section_id ?? "none";
+    const credits = sectionLedgerCredits.get(sid) ?? { badDebt: 0, waivers: 0 };
+    credits.badDebt += studentBadDebt;
+    credits.waivers += studentWaivers;
+    sectionLedgerCredits.set(sid, credits);
+  }
+
+  const sectionSummary = [...sectionMap.entries()].map(([sectionId, r]) => {
+    const credits = sectionLedgerCredits.get(sectionId) ?? { badDebt: 0, waivers: 0 };
+    return {
+      sectionId,
+      sectionName: r.sectionName,
+      className: r.className,
+      programName: r.programName,
+      students: r.students.size,
+      payable: r.payable,
+      collected: r.collected,
+      outstanding: collectibleOutstanding(r.payable, r.collected, credits.badDebt, credits.waivers),
+    };
+  });
 
   const componentEstimates = FEE_COMPONENTS.map((c) => ({
     key: c.key,
@@ -253,15 +362,94 @@ export async function fetchSessionRevenueAnalytics(sessionId: string): Promise<S
     collected: componentEst[c.key]?.collected ?? 0,
   })).filter((c) => c.estimated > 0 || c.collected > 0);
 
+  const totalOutstanding = collectibleOutstanding(
+    totalPayable,
+    totalCollected,
+    ledgerSummary.badDebt,
+    ledgerSummary.waivers,
+  );
+
+  const yearCloses = yearClosesRes.error ? [] : yearClosesRes.data ?? [];
+  const closesByYear = new Map(yearCloses.map((row) => [row.academic_year_start, row]));
+
+  const installmentsByCycle = new Map<number, typeof installments>();
+  for (const inst of installments) {
+    const cycle = Number(inst.fee_cycle ?? 1);
+    const list = installmentsByCycle.get(cycle) ?? [];
+    list.push(inst);
+    installmentsByCycle.set(cycle, list);
+  }
+
+  const liveCycleTotals = (cycleInsts: typeof installments) => {
+    let payable = 0;
+    let collected = 0;
+    let outstanding = 0;
+    for (const inst of cycleInsts) {
+      payable += Number(inst.amount);
+      collected += Number(inst.paid_amount);
+      outstanding += installmentBalance(inst, badDebtByInstallment.get(inst.id) ?? 0);
+    }
+    return { payable, collected, outstanding };
+  };
+
+  const yearStarts = new Set<number>();
+  for (let y = sessionStartYear; y <= Math.min(session?.end_year ?? currentYearStart, currentYearStart); y += 1) {
+    yearStarts.add(y);
+  }
+  for (const inst of installments) {
+    if (inst.academic_year_start) yearStarts.add(inst.academic_year_start);
+  }
+  for (const close of yearCloses) {
+    yearStarts.add(close.academic_year_start);
+  }
+
+  const years: AcademicYearFinanceSummary[] = [...yearStarts]
+    .sort((a, b) => a - b)
+    .map((academicYearStart) => {
+      const feeCycle = academicYearStart - sessionStartYear + 1;
+      const cycleInsts = installmentsByCycle.get(feeCycle) ?? [];
+      const live = liveCycleTotals(cycleInsts);
+      const close = closesByYear.get(academicYearStart);
+      const isClosed = !!close;
+      return {
+        academicYearStart,
+        label: academicYearLabel(academicYearStart),
+        feeCycle,
+        isClosed,
+        closedAt: close?.closed_at,
+        totalPayable: isClosed ? Number(close.total_payable) : live.payable,
+        totalCollected: isClosed ? Number(close.total_collected) : live.collected,
+        totalOutstanding: isClosed ? Number(close.total_outstanding) : live.outstanding,
+        arrears: isClosed ? live.outstanding : undefined,
+      };
+    });
+
+  const yearEndCloses = yearCloses.map((row) => ({
+    academicYearStart: row.academic_year_start,
+    closedAt: row.closed_at,
+    feeCycle: row.fee_cycle,
+    totalPayable: Number(row.total_payable),
+    totalCollected: Number(row.total_collected),
+    totalOutstanding: Number(row.total_outstanding),
+    totalBadDebt: Number(row.total_bad_debt),
+  }));
+
   return {
     sessionId,
     sessionLabel: session?.label ?? "",
-    studentCount: studentIds.length,
+    studentCount: activeStudentCount,
     totalPayable,
     totalCollected,
-    totalOutstanding: totalPayable - totalCollected,
-    collectedThisMonth,
-    componentEstimates,
+    totalOutstanding,
+    currentAcademicYearStart: currentYearStart,
+    years,
+    sessionTotal: {
+      payable: totalPayable,
+      collected: totalCollected,
+      outstanding: totalOutstanding,
+    },
+    yearEndCloses,
+    collectedThisMonth,    componentEstimates,
     monthlyCollected,
     monthlyExpected,
     sectionSummary,
@@ -323,6 +511,43 @@ export type StudentFeeLedger = {
   }[];
 };
 
+export async function fetchYearEndLedgerRows(sessionId: string, academicYearStart?: number) {
+  let query = supabase
+    .from("student_academic_year_closes")
+    .select(
+      `
+      academic_year_start,
+      fee_cycle,
+      payable,
+      collected,
+      outstanding,
+      closed_at,
+      class_year_level,
+      students(
+        full_name,
+        roll_number,
+        father_name,
+        phone,
+        guardian_phone,
+        programs(name),
+        classes(name),
+        sections(name, gender)
+      )
+    `,
+    )
+    .eq("academic_session_id", sessionId)
+    .order("academic_year_start")
+    .order("roll_number", { referencedTable: "students" });
+
+  if (academicYearStart != null) {
+    query = query.eq("academic_year_start", academicYearStart);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function fetchStudentFeeLedger(studentId: string): Promise<StudentFeeLedger | null> {
   const { data: installments, error: iErr } = await supabase
     .from("student_fee_installments")
@@ -339,21 +564,25 @@ export async function fetchStudentFeeLedger(studentId: string): Promise<StudentF
     .order("paid_at", { ascending: false });
   if (pErr) throw pErr;
 
+  const badDebtByInstallment = await fetchBadDebtByInstallment([studentId]);
+
   let totalPayable = 0;
   let totalPaid = 0;
+  let balance = 0;
   const rows = installments.map((inst) => {
     const amount = Number(inst.amount);
     const paid_amount = Number(inst.paid_amount);
-    const balance = installmentBalance(inst);
+    const instBalance = installmentBalance(inst, badDebtByInstallment.get(inst.id) ?? 0);
     totalPayable += amount;
     totalPaid += paid_amount;
+    balance += instBalance;
     return {
       id: inst.id,
       label: inst.label,
       due_date: inst.due_date,
       amount,
       paid_amount,
-      balance,
+      balance: instBalance,
       status: inst.status,
       component_type: inst.component_type,
     };
@@ -362,7 +591,7 @@ export async function fetchStudentFeeLedger(studentId: string): Promise<StudentF
   return {
     totalPayable,
     totalPaid,
-    balance: totalPayable - totalPaid,
+    balance,
     paidPercent: totalPayable > 0 ? Math.round((totalPaid / totalPayable) * 100) : 0,
     installments: rows,
     payments: (payments ?? []).map((p) => ({

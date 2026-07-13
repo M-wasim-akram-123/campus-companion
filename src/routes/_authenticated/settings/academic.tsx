@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { runAcademicPromotionsIfDue } from "@/lib/student-promotion-api";
 
 type ProgramType = Database["public"]["Enums"]["program_type"];
 
@@ -68,6 +69,7 @@ function AcademicSetup() {
           Sessions, programs (including BS), and sections by year with separate boys and girls groups
         </p>
       </div>
+      <PromotionPanel />
       <Tabs defaultValue="sessions">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="sessions">Sessions</TabsTrigger>
@@ -258,6 +260,58 @@ function SessionsTab() {
             </TableBody>
           </Table>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function PromotionPanel() {
+  const [running, setRunning] = useState(false);
+
+  const runNow = async () => {
+    setRunning(true);
+    try {
+      const result = await runAcademicPromotionsIfDue();
+      if (result.closeResult?.closedYears > 0) {
+        toast.success(
+          `Year-end ledger closed for ${result.closeResult.closedYears} academic year(s). ${result.closeResult.studentsSnapshotted} snapshot(s) saved.`,
+        );
+      }
+      if (result.promoted > 0) {
+        toast.success(
+          `Promoted ${result.promoted} student(s). Mirrored ${result.inchargeSectionsMirrored} campus incharge assignment(s).`,
+        );
+      } else if (result.errors.length) {
+        toast.error(`${result.errors.length} student(s) failed promotion. See console for details.`);
+        console.warn("Promotion errors", result.errors);
+      } else {
+        toast.info("No students due for promotion right now (runs automatically from 1 July each year).");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Promotion failed");
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Annual student promotion</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm text-muted-foreground">
+        <p>
+          From <strong>1 July</strong> each academic year, active students move to the next class/section,
+          2nd-year fee installments are created from saved projections, and campus incharge assignments are
+          mirrored to the matching 2nd-year section.
+        </p>
+        <p>
+          Create matching 2nd-year sections (same names as 1st year) before promotion runs. Promotion also runs
+          automatically once per day when staff log in.
+        </p>
+        <Button type="button" variant="outline" onClick={runNow} disabled={running}>
+          {running ? "Running…" : "Run promotion now"}
+        </Button>
       </CardContent>
     </Card>
   );

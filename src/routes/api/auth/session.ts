@@ -136,6 +136,33 @@ export const Route = createFileRoute("/api/auth/session")({
           return json({ error: message }, 500);
         }
       },
+
+      /** Logout — release the active session slot so the same user can sign in again. */
+      DELETE: async ({ request }) => {
+        try {
+          const { user } = await requireUser(request);
+          const now = new Date().toISOString();
+
+          const { error: updateErr } = await supabaseAdmin
+            .from("profiles")
+            .update({
+              active_auth_session_id: null,
+              last_seen_at: now,
+              updated_at: now,
+            })
+            .eq("id", user.id);
+
+          if (updateErr) return json({ error: updateErr.message }, 500);
+
+          return json({ ok: true });
+        } catch (error) {
+          if (error instanceof Response) {
+            return json({ error: await error.text() }, error.status);
+          }
+          const message = error instanceof Error ? error.message : "Session clear failed.";
+          return json({ error: message }, 500);
+        }
+      },
     },
   },
 });

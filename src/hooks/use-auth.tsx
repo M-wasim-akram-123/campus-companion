@@ -1,7 +1,12 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { registerAuthSession, sendAuthHeartbeat } from "@/lib/auth-session-api";
+import {
+  clearAuthSession,
+  registerAuthSession,
+  sendAuthHeartbeat,
+} from "@/lib/auth-session-api";
+import { STAFF_ROLES } from "@/lib/auth-routing";
 import { toast } from "sonner";
 
 export type AppRole =
@@ -14,6 +19,7 @@ export type AppRole =
   | "finance_admin"
   | "finance_officer"
   | "cashier"
+  | "exam_officer"
   | "receptionist"
   | "teacher"
   | "student";
@@ -37,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sessionReady, setSessionReady] = useState(false);
 
   const fetchRoles = async (userId: string) => {
     const { data } = await supabase
@@ -47,28 +54,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) {
-        setTimeout(() => fetchRoles(s.user.id), 0);
-      } else {
-        setRoles([]);
-      }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, s) => {
+      void (async () => {
+        if (event === "SIGNED_OUT" || !s) {
+          setSessionReady(false);
+          setSession(null);
+          setUser(null);
+          setRoles([]);
+          return;
+        }
+
+        if (event === "SIGNED_IN" && s) {
+          setSession(s);
+          setUser(s.user);
+          setSessionReady(false);
+          try {
+            await registerAuthSession();
+          } catch (e: unknown) {
+            setSession(null);
+            setUser(null);
+            setSessionReady(false);
+            await supabase.auth.signOut();
+            toast.error(
+              e instanceof Error ? e.message : "Could not start session. Try signing in again.",
+            );
+            return;
+          }
+          setSessionReady(true);
+          await fetchRoles(s.user.id);
+          return;
+        }
+
+        setSession(s);
+        setUser(s.user);
+        setSessionReady(true);
+        await fetchRoles(s.user.id);
+      })();
     });
 
     supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) fetchRoles(s.user.id).finally(() => setLoading(false));
-      else setLoading(false);
+      if (s?.user) {
+        setSession(s);
+        setUser(s.user);
+        setSessionReady(true);
+        fetchRoles(s.user.id).finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!session?.access_token) return;
+    if (!session?.access_token || !sessionReady) return;
 
     let cancelled = false;
 
@@ -98,24 +139,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [session?.access_token]);
+  }, [session?.access_token, sessionReady]);
 
   const hasRole = (r: AppRole) => roles.includes(r);
   const hasAnyRole = (rs: AppRole[]) => rs.some((r) => roles.includes(r));
-  const isStaff = hasAnyRole([
-    "super_admin",
-    "campus_incharge",
-    "registrar",
-    "admission_officer",
-    "hr",
-    "finance_admin",
-    "finance_officer",
-    "cashier",
-    "receptionist",
-    "teacher",
-  ]);
+  const isStaff = hasAnyRole(STAFF_ROLES);
 
   const signOut = async () => {
+    try {
+      await clearAuthSession();
+    } catch {
+      // Best effort — still sign out locally.
+    }
+    setSessionReady(false);
     await supabase.auth.signOut();
   };
 

@@ -148,7 +148,7 @@ function StudentsList() {
         <div>
           <h1 className="text-3xl font-bold">Students</h1>
           <p className="text-muted-foreground">
-            {campusScoped ? "Students in your assigned classes" : "All admitted students"}
+            {campusScoped ? "Students in your assigned sections" : "All admitted students"}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -178,7 +178,7 @@ function StudentsList() {
 
       {campusScoped && !isLoading && students?.length === 0 && (
         <Card className="border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
-          No classes are assigned to your account yet. Ask Super Admin to assign classes in User Management.
+          No sections are assigned to your account yet. Ask Super Admin to assign sections in User Management.
         </Card>
       )}
 
@@ -282,7 +282,9 @@ function StudentsList() {
                 const standing = deriveAcademicStanding({
                   sessionStartYear: session?.start_year,
                   sessionEndYear: session?.end_year,
-                  admissionYearLevel: cls?.year_level,
+                  admissionYearLevel:
+                    (s as { admission_year_level?: number | null }).admission_year_level ??
+                    cls?.year_level,
                   programDurationYears: program?.duration_years,
                 });
 

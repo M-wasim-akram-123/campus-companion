@@ -16,6 +16,7 @@ const APP_ROLES: AppRole[] = [
   "finance_admin",
   "finance_officer",
   "cashier",
+  "exam_officer",
   "receptionist",
   "teacher",
   "student",

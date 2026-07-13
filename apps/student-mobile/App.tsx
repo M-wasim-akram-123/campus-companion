@@ -36,6 +36,25 @@ type StudentDocument = {
   version: number;
 };
 
+type StudentExamResult = {
+  testId: string;
+  subjectName: string;
+  testName: string;
+  testDate: string;
+  maxMarks: number;
+  marksObtained: number | null;
+  isAbsent: boolean;
+};
+
+type StudentExamSchedule = {
+  testId: string;
+  seriesName: string;
+  subjectName: string;
+  testDate: string;
+  maxMarks: number;
+  teacherName: string | null;
+};
+
 type StudentProfile = {
   id: string;
   full_name: string;
@@ -86,7 +105,17 @@ type FeeVoucher = {
   status: string;
 };
 
-type ActiveTab = "home" | "documents" | "profile" | "fees" | "vouchers" | "account";
+type ActiveTab = "home" | "documents" | "profile" | "fees" | "vouchers" | "exams" | "announcements" | "account";
+
+type StudentAnnouncement = {
+  id: string;
+  title: string;
+  body_text: string | null;
+  content_type: "text" | "voice" | "video";
+  media_path: string | null;
+  media_mime_type: string | null;
+  published_at: string | null;
+};
 
 const theme = {
   green: "#00843d",
@@ -223,6 +252,9 @@ export default function App() {
   const [installments, setInstallments] = useState<FeeInstallment[]>([]);
   const [payments, setPayments] = useState<FeePayment[]>([]);
   const [vouchers, setVouchers] = useState<FeeVoucher[]>([]);
+  const [examResults, setExamResults] = useState<StudentExamResult[]>([]);
+  const [examSchedule, setExamSchedule] = useState<StudentExamSchedule[]>([]);
+  const [announcements, setAnnouncements] = useState<StudentAnnouncement[]>([]);
 
   useEffect(() => {
     Animated.parallel([
@@ -251,6 +283,33 @@ export default function App() {
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession));
     return () => data.subscription.unsubscribe();
   }, []);
+
+  const upcomingBySeries = useMemo(() => {
+    return examSchedule.reduce<Record<string, StudentExamSchedule[]>>((groups, row) => {
+      groups[row.seriesName] = groups[row.seriesName] ?? [];
+      groups[row.seriesName].push(row);
+      return groups;
+    }, {});
+  }, [examSchedule]);
+
+  const resultsBySeries = useMemo(() => {
+    return examResults.reduce<Record<string, StudentExamResult[]>>((groups, row) => {
+      groups[row.testName] = groups[row.testName] ?? [];
+      groups[row.testName].push(row);
+      return groups;
+    }, {});
+  }, [examResults]);
+
+  const formatTestDate = (iso: string) => {
+    const [y, m, d] = iso.split("-").map(Number);
+    if (!y || !m || !d) return iso;
+    return new Date(y, m - 1, d).toLocaleDateString("en-PK", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
 
   const byType = useMemo(() => {
     const map = new Map<DocumentType, StudentDocument>();
@@ -284,11 +343,15 @@ export default function App() {
       guardian_details: studentRow.guardian_details ?? "",
     });
 
+    const today = new Date().toISOString().slice(0, 10);
     const [
       { data: docs, error: docsError },
       { data: feeRows, error: feeError },
       { data: paymentRows, error: paymentError },
       { data: voucherRows, error: voucherError },
+      { data: examRows, error: examError },
+      { data: scheduleRows, error: scheduleError },
+      { data: announcementRows, error: announcementError },
     ] = await Promise.all([
       supabase
         .from("student_documents")
@@ -311,15 +374,81 @@ export default function App() {
         .eq("student_id", studentRow.id)
         .in("status", ["issued", "partial"])
         .order("due_date"),
+      supabase
+        .from("internal_test_marks")
+        .select(
+          "marks_obtained, is_absent, internal_tests!inner(id, subject_name, test_name, test_date, max_marks, status)",
+        )
+        .eq("student_id", studentRow.id)
+        .eq("internal_tests.status", "published")
+        .order("test_date", { referencedTable: "internal_tests", ascending: false }),
+      supabase
+        .from("internal_tests")
+        .select(
+          "id, subject_name, test_name, test_date, max_marks, teacher_name, internal_test_series!inner(name)",
+        )
+        .eq("status", "draft")
+        .not("series_id", "is", null)
+        .gte("test_date", today)
+        .order("test_date", { ascending: true })
+        .order("subject_name", { ascending: true }),
+      supabase
+        .from("announcements")
+        .select("id, title, body_text, content_type, media_path, media_mime_type, published_at")
+        .eq("status", "published")
+        .order("published_at", { ascending: false }),
     ]);
     if (docsError) throw docsError;
     if (feeError) throw feeError;
     if (paymentError) throw paymentError;
     if (voucherError) throw voucherError;
+    if (examError) throw examError;
+    if (scheduleError) throw scheduleError;
+    if (announcementError) throw announcementError;
     setDocuments((docs ?? []) as StudentDocument[]);
     setInstallments((feeRows ?? []) as FeeInstallment[]);
     setPayments((paymentRows ?? []) as FeePayment[]);
     setVouchers((voucherRows ?? []) as FeeVoucher[]);
+    setExamResults(
+      (examRows ?? []).map((row) => {
+        const test = row.internal_tests as {
+          id: string;
+          subject_name: string;
+          test_name: string;
+          test_date: string;
+          max_marks: number;
+        };
+        return {
+          testId: test.id,
+          subjectName: test.subject_name,
+          testName: test.test_name,
+          testDate: test.test_date,
+          maxMarks: Number(test.max_marks),
+          marksObtained: row.marks_obtained != null ? Number(row.marks_obtained) : null,
+          isAbsent: row.is_absent,
+        };
+      }),
+    );
+    setExamSchedule(
+      (scheduleRows ?? []).map((row) => {
+        const series = row.internal_test_series as { name?: string } | null;
+        return {
+          testId: row.id,
+          seriesName: series?.name ?? row.test_name,
+          subjectName: row.subject_name,
+          testDate: row.test_date,
+          maxMarks: Number(row.max_marks),
+          teacherName: row.teacher_name ?? null,
+        };
+      }),
+    );
+    setAnnouncements((announcementRows ?? []) as StudentAnnouncement[]);
+  };
+
+  const openAnnouncementMedia = async (path: string) => {
+    const { data, error } = await supabase.storage.from("announcement-media").createSignedUrl(path, 600);
+    if (error) return Alert.alert("Could not open media", error.message);
+    await Linking.openURL(data.signedUrl);
   };
 
   useEffect(() => {
@@ -548,7 +677,7 @@ export default function App() {
       </View>
 
       <View style={styles.tabs}>
-        {(["home", "documents", "profile", "fees", "vouchers", "account"] as ActiveTab[]).map((tab) => (
+        {(["home", "documents", "profile", "fees", "vouchers", "exams", "announcements", "account"] as ActiveTab[]).map((tab) => (
           <Pressable
             key={tab}
             style={[styles.tab, activeTab === tab && styles.activeTab]}
@@ -581,6 +710,8 @@ export default function App() {
                 ["Documents approved", `${requiredDocuments.filter((item) => byType.get(item.type)?.status === "approved").length}/${requiredDocuments.length}`],
                 ["Open vouchers", String(vouchers.length)],
                 ["Paid receipts", String(payments.length)],
+                ["Upcoming tests", String(examSchedule.length)],
+                ["Announcements", String(announcements.length)],
                 ["Fee balance", formatCurrency(installments.reduce((sum, row) => sum + Math.max(0, Number(row.amount || 0) - Number(row.paid_amount || 0)), 0))],
               ]}
             />
@@ -717,6 +848,114 @@ export default function App() {
                 </View>
               );
             }) : <Text style={styles.muted}>No open vouchers right now.</Text>}
+          </>
+        )}
+
+        {activeTab === "exams" && (
+          <>
+            <Text style={styles.sectionTitle}>Upcoming tests</Text>
+            <Text style={styles.sectionHint}>Scheduled college tests for your section.</Text>
+            {examSchedule.length ? (
+              Object.entries(upcomingBySeries).map(([seriesName, rows]) => (
+                <View key={`upcoming-${seriesName}`} style={styles.docCard}>
+                  <Text style={styles.docTitle}>{seriesName}</Text>
+                  {[...rows]
+                    .sort((a, b) => a.testDate.localeCompare(b.testDate) || a.subjectName.localeCompare(b.subjectName))
+                    .map((row) => (
+                      <View key={row.testId} style={{ marginTop: 10 }}>
+                        <View style={styles.docHeader}>
+                          <Text style={styles.sectionTitle}>{row.subjectName}</Text>
+                          <Text style={[styles.statusPill, { color: theme.blue, backgroundColor: `${theme.blue}18` }]}>
+                            Upcoming
+                          </Text>
+                        </View>
+                        <InfoRow label="Date" value={formatTestDate(row.testDate)} />
+                        <InfoRow label="Max marks" value={row.maxMarks} />
+                        {row.teacherName ? <InfoRow label="Teacher" value={row.teacherName} /> : null}
+                      </View>
+                    ))}
+                </View>
+              ))
+            ) : (
+              <Text style={styles.muted}>No upcoming tests scheduled right now.</Text>
+            )}
+
+            <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Published results</Text>
+            <Text style={styles.sectionHint}>Marks released by the exam branch.</Text>
+            {examResults.length ? (
+              Object.entries(resultsBySeries).map(([seriesName, rows]) => (
+                <View key={`results-${seriesName}`} style={styles.docCard}>
+                  <Text style={styles.docTitle}>{seriesName}</Text>
+                  {[...rows]
+                    .sort((a, b) => a.subjectName.localeCompare(b.subjectName))
+                    .map((row) => (
+                    <View key={row.testId} style={{ marginTop: 10 }}>
+                      <View style={styles.docHeader}>
+                        <Text style={styles.sectionTitle}>{row.subjectName}</Text>
+                        <Text style={styles.statusPill}>
+                          {row.isAbsent ? "Absent" : `${row.marksObtained ?? 0} / ${row.maxMarks}`}
+                        </Text>
+                      </View>
+                      <InfoRow label="Date" value={formatTestDate(row.testDate)} />
+                    </View>
+                  ))}
+                </View>
+              ))
+            ) : (
+              <Text style={styles.muted}>No published test results yet.</Text>
+            )}
+          </>
+        )}
+
+        {activeTab === "announcements" && (
+          <>
+            <Text style={styles.sectionTitle}>College announcements</Text>
+            <Text style={styles.sectionHint}>Messages from the college for your class and section.</Text>
+            {announcements.length ? (
+              announcements.map((item) => (
+                <View key={item.id} style={styles.docCard}>
+                  <View style={styles.docHeader}>
+                    <Text style={styles.docTitle}>{item.title}</Text>
+                    <Text style={[styles.statusPill, { color: theme.green, backgroundColor: `${theme.green}18` }]}>
+                      {item.content_type}
+                    </Text>
+                  </View>
+                  {item.published_at ? (
+                    <InfoRow
+                      label="Posted"
+                      value={new Date(item.published_at).toLocaleString("en-PK", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    />
+                  ) : null}
+                  {item.body_text ? (
+                    <Text style={{ marginTop: 8, lineHeight: 22, color: theme.ink }}>{item.body_text}</Text>
+                  ) : null}
+                  {item.content_type === "voice" && item.media_path ? (
+                    <Pressable
+                      style={[styles.secondaryButton, { marginTop: 10 }]}
+                      onPress={() => void openAnnouncementMedia(item.media_path!)}
+                    >
+                      <Text style={styles.secondaryButtonText}>Play voice message</Text>
+                    </Pressable>
+                  ) : null}
+                  {item.content_type === "video" && item.media_path ? (
+                    <Pressable
+                      style={[styles.secondaryButton, { marginTop: 10 }]}
+                      onPress={() => void openAnnouncementMedia(item.media_path!)}
+                    >
+                      <Text style={styles.secondaryButtonText}>Watch video</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              ))
+            ) : (
+              <Text style={styles.muted}>No announcements right now.</Text>
+            )}
           </>
         )}
 

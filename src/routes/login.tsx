@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { GraduationCap } from "lucide-react";
 import { CAMPUS_NAME } from "@/lib/campus";
+import { defaultHomePathForRoles } from "@/lib/auth-routing";
 
 export const Route = createFileRoute("/login")({ component: LoginPage });
 
@@ -21,33 +22,35 @@ function LoginPage() {
     e.preventDefault();
     setLoading(true);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      setLoading(false);
+      return toast.error(error.message);
+    }
 
     const userId = data.session?.user?.id;
-    if (userId && data.session?.access_token) {
-      try {
-        const { registerAuthSession } = await import("@/lib/auth-session-api");
-        await registerAuthSession();
-      } catch (e: unknown) {
-        await supabase.auth.signOut();
-        return toast.error(
-          e instanceof Error ? e.message : "Could not start session. Try again.",
-        );
-      }
-
-      const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-      const roles = (roleRows ?? []).map((row) => row.role);
-      const followUpOnly =
-        roles.includes("sub_admission_officer") &&
-        !roles.some((role) => ["super_admin", "admission_officer", "receptionist"].includes(role));
+    if (!userId || !data.session?.access_token) {
+      setLoading(false);
       toast.success("Signed in");
-      navigate({ to: followUpOnly ? "/inquiries" : "/dashboard" });
+      navigate({ to: "/dashboard" });
       return;
     }
 
+    try {
+      const { registerAuthSession } = await import("@/lib/auth-session-api");
+      await registerAuthSession();
+    } catch (e: unknown) {
+      await supabase.auth.signOut();
+      setLoading(false);
+      return toast.error(
+        e instanceof Error ? e.message : "Could not start session. Try again.",
+      );
+    }
+
+    const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const roles = (roleRows ?? []).map((row) => row.role as import("@/hooks/use-auth").AppRole);
+    setLoading(false);
     toast.success("Signed in");
-    navigate({ to: "/dashboard" });
+    navigate({ to: defaultHomePathForRoles(roles) });
   };
 
   return (

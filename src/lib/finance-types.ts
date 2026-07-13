@@ -23,6 +23,8 @@ export type FeeInstallment = {
   due_date: string;
   status: string;
   sort_order: number;
+  fee_cycle?: number;
+  academic_year_start?: number | null;
 };
 
 export type FeeVoucher = {

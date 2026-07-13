@@ -17,22 +17,27 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated/students/index'
 import { Route as AuthenticatedInquiriesIndexRouteImport } from './routes/_authenticated/inquiries/index'
 import { Route as AuthenticatedFinanceIndexRouteImport } from './routes/_authenticated/finance/index'
+import { Route as AuthenticatedExamsIndexRouteImport } from './routes/_authenticated/exams/index'
+import { Route as AuthenticatedAnnouncementsIndexRouteImport } from './routes/_authenticated/announcements/index'
 import { Route as ApiWhatsappCheckNumberRouteImport } from './routes/api/whatsapp/check-number'
 import { Route as ApiStudentDocumentsZipRouteImport } from './routes/api/student-documents/zip'
 import { Route as ApiStudentDocumentsAccountRouteImport } from './routes/api/student-documents/account'
 import { Route as ApiStaffProfilesRouteImport } from './routes/api/staff/profiles'
 import { Route as ApiStaffByRoleRouteImport } from './routes/api/staff/by-role'
+import { Route as ApiFinanceCampusInchargeCollectionRouteImport } from './routes/api/finance/campus-incharge-collection'
 import { Route as ApiBoardGazetteLookupRouteImport } from './routes/api/board-gazette/lookup'
 import { Route as ApiBoardGazetteImportsRouteImport } from './routes/api/board-gazette/imports'
 import { Route as ApiBoardGazetteImportRouteImport } from './routes/api/board-gazette/import'
 import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
 import { Route as ApiAdminUsersRouteImport } from './routes/api/admin/users'
+import { Route as ApiAcademicRunPromotionsRouteImport } from './routes/api/academic/run-promotions'
 import { Route as AuthenticatedStudentsRollNoSlipsRouteImport } from './routes/_authenticated/students/roll-no-slips'
 import { Route as AuthenticatedStudentsDocumentsRouteImport } from './routes/_authenticated/students/documents'
 import { Route as AuthenticatedStudentsIdRouteImport } from './routes/_authenticated/students/$id'
 import { Route as AuthenticatedSettingsUsersRouteImport } from './routes/_authenticated/settings/users'
 import { Route as AuthenticatedSettingsProfileRouteImport } from './routes/_authenticated/settings/profile'
 import { Route as AuthenticatedSettingsFeesRouteImport } from './routes/_authenticated/settings/fees'
+import { Route as AuthenticatedSettingsCollectionPlansRouteImport } from './routes/_authenticated/settings/collection-plans'
 import { Route as AuthenticatedSettingsBoardGazetteRouteImport } from './routes/_authenticated/settings/board-gazette'
 import { Route as AuthenticatedSettingsAcademicRouteImport } from './routes/_authenticated/settings/academic'
 import { Route as AuthenticatedInquiriesNewRouteImport } from './routes/_authenticated/inquiries/new'
@@ -42,12 +47,17 @@ import { Route as AuthenticatedFinanceReportsRouteImport } from './routes/_authe
 import { Route as AuthenticatedFinanceDuesRouteImport } from './routes/_authenticated/finance/dues'
 import { Route as AuthenticatedFinanceCollectRouteImport } from './routes/_authenticated/finance/collect'
 import { Route as AuthenticatedFinanceBulkVouchersRouteImport } from './routes/_authenticated/finance/bulk-vouchers'
+import { Route as AuthenticatedAnnouncementsNewRouteImport } from './routes/_authenticated/announcements/new'
 import { Route as AuthenticatedAdmissionsNewRouteImport } from './routes/_authenticated/admissions/new'
 import { Route as AuthenticatedFinanceVouchersIndexRouteImport } from './routes/_authenticated/finance/vouchers/index'
 import { Route as ApiPublicHooksAutoVouchersRouteImport } from './routes/api/public/hooks/auto-vouchers'
 import { Route as AuthenticatedFinanceVouchersNewRouteImport } from './routes/_authenticated/finance/vouchers/new'
 import { Route as AuthenticatedFinanceVouchersLookupRouteImport } from './routes/_authenticated/finance/vouchers/lookup'
 import { Route as AuthenticatedFinanceVouchersIdRouteImport } from './routes/_authenticated/finance/vouchers/$id'
+import { Route as AuthenticatedExamsTestsNewRouteImport } from './routes/_authenticated/exams/tests/new'
+import { Route as AuthenticatedExamsTestsIdRouteImport } from './routes/_authenticated/exams/tests/$id'
+import { Route as AuthenticatedExamsSeriesNewRouteImport } from './routes/_authenticated/exams/series/new'
+import { Route as AuthenticatedExamsSeriesIdRouteImport } from './routes/_authenticated/exams/series/$id'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -91,6 +101,17 @@ const AuthenticatedFinanceIndexRoute =
     path: '/finance/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedExamsIndexRoute = AuthenticatedExamsIndexRouteImport.update({
+  id: '/exams/',
+  path: '/exams/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAnnouncementsIndexRoute =
+  AuthenticatedAnnouncementsIndexRouteImport.update({
+    id: '/announcements/',
+    path: '/announcements/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const ApiWhatsappCheckNumberRoute = ApiWhatsappCheckNumberRouteImport.update({
   id: '/api/whatsapp/check-number',
   path: '/api/whatsapp/check-number',
@@ -117,6 +138,12 @@ const ApiStaffByRoleRoute = ApiStaffByRoleRouteImport.update({
   path: '/api/staff/by-role',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiFinanceCampusInchargeCollectionRoute =
+  ApiFinanceCampusInchargeCollectionRouteImport.update({
+    id: '/api/finance/campus-incharge-collection',
+    path: '/api/finance/campus-incharge-collection',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiBoardGazetteLookupRoute = ApiBoardGazetteLookupRouteImport.update({
   id: '/api/board-gazette/lookup',
   path: '/api/board-gazette/lookup',
@@ -142,6 +169,12 @@ const ApiAdminUsersRoute = ApiAdminUsersRouteImport.update({
   path: '/api/admin/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAcademicRunPromotionsRoute =
+  ApiAcademicRunPromotionsRouteImport.update({
+    id: '/api/academic/run-promotions',
+    path: '/api/academic/run-promotions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedStudentsRollNoSlipsRoute =
   AuthenticatedStudentsRollNoSlipsRouteImport.update({
     id: '/students/roll-no-slips',
@@ -175,6 +208,12 @@ const AuthenticatedSettingsFeesRoute =
   AuthenticatedSettingsFeesRouteImport.update({
     id: '/settings/fees',
     path: '/settings/fees',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSettingsCollectionPlansRoute =
+  AuthenticatedSettingsCollectionPlansRouteImport.update({
+    id: '/settings/collection-plans',
+    path: '/settings/collection-plans',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedSettingsBoardGazetteRoute =
@@ -231,6 +270,12 @@ const AuthenticatedFinanceBulkVouchersRoute =
     path: '/finance/bulk-vouchers',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAnnouncementsNewRoute =
+  AuthenticatedAnnouncementsNewRouteImport.update({
+    id: '/announcements/new',
+    path: '/announcements/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAdmissionsNewRoute =
   AuthenticatedAdmissionsNewRouteImport.update({
     id: '/admissions/new',
@@ -267,6 +312,30 @@ const AuthenticatedFinanceVouchersIdRoute =
     path: '/finance/vouchers/$id',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedExamsTestsNewRoute =
+  AuthenticatedExamsTestsNewRouteImport.update({
+    id: '/exams/tests/new',
+    path: '/exams/tests/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedExamsTestsIdRoute =
+  AuthenticatedExamsTestsIdRouteImport.update({
+    id: '/exams/tests/$id',
+    path: '/exams/tests/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedExamsSeriesNewRoute =
+  AuthenticatedExamsSeriesNewRouteImport.update({
+    id: '/exams/series/new',
+    path: '/exams/series/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedExamsSeriesIdRoute =
+  AuthenticatedExamsSeriesIdRouteImport.update({
+    id: '/exams/series/$id',
+    path: '/exams/series/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -274,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admissions/new': typeof AuthenticatedAdmissionsNewRoute
+  '/announcements/new': typeof AuthenticatedAnnouncementsNewRoute
   '/finance/bulk-vouchers': typeof AuthenticatedFinanceBulkVouchersRoute
   '/finance/collect': typeof AuthenticatedFinanceCollectRoute
   '/finance/dues': typeof AuthenticatedFinanceDuesRoute
@@ -283,25 +353,34 @@ export interface FileRoutesByFullPath {
   '/inquiries/new': typeof AuthenticatedInquiriesNewRoute
   '/settings/academic': typeof AuthenticatedSettingsAcademicRoute
   '/settings/board-gazette': typeof AuthenticatedSettingsBoardGazetteRoute
+  '/settings/collection-plans': typeof AuthenticatedSettingsCollectionPlansRoute
   '/settings/fees': typeof AuthenticatedSettingsFeesRoute
   '/settings/profile': typeof AuthenticatedSettingsProfileRoute
   '/settings/users': typeof AuthenticatedSettingsUsersRoute
   '/students/$id': typeof AuthenticatedStudentsIdRoute
   '/students/documents': typeof AuthenticatedStudentsDocumentsRoute
   '/students/roll-no-slips': typeof AuthenticatedStudentsRollNoSlipsRoute
+  '/api/academic/run-promotions': typeof ApiAcademicRunPromotionsRoute
   '/api/admin/users': typeof ApiAdminUsersRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/board-gazette/import': typeof ApiBoardGazetteImportRoute
   '/api/board-gazette/imports': typeof ApiBoardGazetteImportsRoute
   '/api/board-gazette/lookup': typeof ApiBoardGazetteLookupRoute
+  '/api/finance/campus-incharge-collection': typeof ApiFinanceCampusInchargeCollectionRoute
   '/api/staff/by-role': typeof ApiStaffByRoleRoute
   '/api/staff/profiles': typeof ApiStaffProfilesRoute
   '/api/student-documents/account': typeof ApiStudentDocumentsAccountRoute
   '/api/student-documents/zip': typeof ApiStudentDocumentsZipRoute
   '/api/whatsapp/check-number': typeof ApiWhatsappCheckNumberRoute
+  '/announcements/': typeof AuthenticatedAnnouncementsIndexRoute
+  '/exams/': typeof AuthenticatedExamsIndexRoute
   '/finance/': typeof AuthenticatedFinanceIndexRoute
   '/inquiries/': typeof AuthenticatedInquiriesIndexRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
+  '/exams/series/$id': typeof AuthenticatedExamsSeriesIdRoute
+  '/exams/series/new': typeof AuthenticatedExamsSeriesNewRoute
+  '/exams/tests/$id': typeof AuthenticatedExamsTestsIdRoute
+  '/exams/tests/new': typeof AuthenticatedExamsTestsNewRoute
   '/finance/vouchers/$id': typeof AuthenticatedFinanceVouchersIdRoute
   '/finance/vouchers/lookup': typeof AuthenticatedFinanceVouchersLookupRoute
   '/finance/vouchers/new': typeof AuthenticatedFinanceVouchersNewRoute
@@ -314,6 +393,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admissions/new': typeof AuthenticatedAdmissionsNewRoute
+  '/announcements/new': typeof AuthenticatedAnnouncementsNewRoute
   '/finance/bulk-vouchers': typeof AuthenticatedFinanceBulkVouchersRoute
   '/finance/collect': typeof AuthenticatedFinanceCollectRoute
   '/finance/dues': typeof AuthenticatedFinanceDuesRoute
@@ -323,25 +403,34 @@ export interface FileRoutesByTo {
   '/inquiries/new': typeof AuthenticatedInquiriesNewRoute
   '/settings/academic': typeof AuthenticatedSettingsAcademicRoute
   '/settings/board-gazette': typeof AuthenticatedSettingsBoardGazetteRoute
+  '/settings/collection-plans': typeof AuthenticatedSettingsCollectionPlansRoute
   '/settings/fees': typeof AuthenticatedSettingsFeesRoute
   '/settings/profile': typeof AuthenticatedSettingsProfileRoute
   '/settings/users': typeof AuthenticatedSettingsUsersRoute
   '/students/$id': typeof AuthenticatedStudentsIdRoute
   '/students/documents': typeof AuthenticatedStudentsDocumentsRoute
   '/students/roll-no-slips': typeof AuthenticatedStudentsRollNoSlipsRoute
+  '/api/academic/run-promotions': typeof ApiAcademicRunPromotionsRoute
   '/api/admin/users': typeof ApiAdminUsersRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/board-gazette/import': typeof ApiBoardGazetteImportRoute
   '/api/board-gazette/imports': typeof ApiBoardGazetteImportsRoute
   '/api/board-gazette/lookup': typeof ApiBoardGazetteLookupRoute
+  '/api/finance/campus-incharge-collection': typeof ApiFinanceCampusInchargeCollectionRoute
   '/api/staff/by-role': typeof ApiStaffByRoleRoute
   '/api/staff/profiles': typeof ApiStaffProfilesRoute
   '/api/student-documents/account': typeof ApiStudentDocumentsAccountRoute
   '/api/student-documents/zip': typeof ApiStudentDocumentsZipRoute
   '/api/whatsapp/check-number': typeof ApiWhatsappCheckNumberRoute
+  '/announcements': typeof AuthenticatedAnnouncementsIndexRoute
+  '/exams': typeof AuthenticatedExamsIndexRoute
   '/finance': typeof AuthenticatedFinanceIndexRoute
   '/inquiries': typeof AuthenticatedInquiriesIndexRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
+  '/exams/series/$id': typeof AuthenticatedExamsSeriesIdRoute
+  '/exams/series/new': typeof AuthenticatedExamsSeriesNewRoute
+  '/exams/tests/$id': typeof AuthenticatedExamsTestsIdRoute
+  '/exams/tests/new': typeof AuthenticatedExamsTestsNewRoute
   '/finance/vouchers/$id': typeof AuthenticatedFinanceVouchersIdRoute
   '/finance/vouchers/lookup': typeof AuthenticatedFinanceVouchersLookupRoute
   '/finance/vouchers/new': typeof AuthenticatedFinanceVouchersNewRoute
@@ -356,6 +445,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/admissions/new': typeof AuthenticatedAdmissionsNewRoute
+  '/_authenticated/announcements/new': typeof AuthenticatedAnnouncementsNewRoute
   '/_authenticated/finance/bulk-vouchers': typeof AuthenticatedFinanceBulkVouchersRoute
   '/_authenticated/finance/collect': typeof AuthenticatedFinanceCollectRoute
   '/_authenticated/finance/dues': typeof AuthenticatedFinanceDuesRoute
@@ -365,25 +455,34 @@ export interface FileRoutesById {
   '/_authenticated/inquiries/new': typeof AuthenticatedInquiriesNewRoute
   '/_authenticated/settings/academic': typeof AuthenticatedSettingsAcademicRoute
   '/_authenticated/settings/board-gazette': typeof AuthenticatedSettingsBoardGazetteRoute
+  '/_authenticated/settings/collection-plans': typeof AuthenticatedSettingsCollectionPlansRoute
   '/_authenticated/settings/fees': typeof AuthenticatedSettingsFeesRoute
   '/_authenticated/settings/profile': typeof AuthenticatedSettingsProfileRoute
   '/_authenticated/settings/users': typeof AuthenticatedSettingsUsersRoute
   '/_authenticated/students/$id': typeof AuthenticatedStudentsIdRoute
   '/_authenticated/students/documents': typeof AuthenticatedStudentsDocumentsRoute
   '/_authenticated/students/roll-no-slips': typeof AuthenticatedStudentsRollNoSlipsRoute
+  '/api/academic/run-promotions': typeof ApiAcademicRunPromotionsRoute
   '/api/admin/users': typeof ApiAdminUsersRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/board-gazette/import': typeof ApiBoardGazetteImportRoute
   '/api/board-gazette/imports': typeof ApiBoardGazetteImportsRoute
   '/api/board-gazette/lookup': typeof ApiBoardGazetteLookupRoute
+  '/api/finance/campus-incharge-collection': typeof ApiFinanceCampusInchargeCollectionRoute
   '/api/staff/by-role': typeof ApiStaffByRoleRoute
   '/api/staff/profiles': typeof ApiStaffProfilesRoute
   '/api/student-documents/account': typeof ApiStudentDocumentsAccountRoute
   '/api/student-documents/zip': typeof ApiStudentDocumentsZipRoute
   '/api/whatsapp/check-number': typeof ApiWhatsappCheckNumberRoute
+  '/_authenticated/announcements/': typeof AuthenticatedAnnouncementsIndexRoute
+  '/_authenticated/exams/': typeof AuthenticatedExamsIndexRoute
   '/_authenticated/finance/': typeof AuthenticatedFinanceIndexRoute
   '/_authenticated/inquiries/': typeof AuthenticatedInquiriesIndexRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
+  '/_authenticated/exams/series/$id': typeof AuthenticatedExamsSeriesIdRoute
+  '/_authenticated/exams/series/new': typeof AuthenticatedExamsSeriesNewRoute
+  '/_authenticated/exams/tests/$id': typeof AuthenticatedExamsTestsIdRoute
+  '/_authenticated/exams/tests/new': typeof AuthenticatedExamsTestsNewRoute
   '/_authenticated/finance/vouchers/$id': typeof AuthenticatedFinanceVouchersIdRoute
   '/_authenticated/finance/vouchers/lookup': typeof AuthenticatedFinanceVouchersLookupRoute
   '/_authenticated/finance/vouchers/new': typeof AuthenticatedFinanceVouchersNewRoute
@@ -398,6 +497,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/dashboard'
     | '/admissions/new'
+    | '/announcements/new'
     | '/finance/bulk-vouchers'
     | '/finance/collect'
     | '/finance/dues'
@@ -407,25 +507,34 @@ export interface FileRouteTypes {
     | '/inquiries/new'
     | '/settings/academic'
     | '/settings/board-gazette'
+    | '/settings/collection-plans'
     | '/settings/fees'
     | '/settings/profile'
     | '/settings/users'
     | '/students/$id'
     | '/students/documents'
     | '/students/roll-no-slips'
+    | '/api/academic/run-promotions'
     | '/api/admin/users'
     | '/api/auth/session'
     | '/api/board-gazette/import'
     | '/api/board-gazette/imports'
     | '/api/board-gazette/lookup'
+    | '/api/finance/campus-incharge-collection'
     | '/api/staff/by-role'
     | '/api/staff/profiles'
     | '/api/student-documents/account'
     | '/api/student-documents/zip'
     | '/api/whatsapp/check-number'
+    | '/announcements/'
+    | '/exams/'
     | '/finance/'
     | '/inquiries/'
     | '/students/'
+    | '/exams/series/$id'
+    | '/exams/series/new'
+    | '/exams/tests/$id'
+    | '/exams/tests/new'
     | '/finance/vouchers/$id'
     | '/finance/vouchers/lookup'
     | '/finance/vouchers/new'
@@ -438,6 +547,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/dashboard'
     | '/admissions/new'
+    | '/announcements/new'
     | '/finance/bulk-vouchers'
     | '/finance/collect'
     | '/finance/dues'
@@ -447,25 +557,34 @@ export interface FileRouteTypes {
     | '/inquiries/new'
     | '/settings/academic'
     | '/settings/board-gazette'
+    | '/settings/collection-plans'
     | '/settings/fees'
     | '/settings/profile'
     | '/settings/users'
     | '/students/$id'
     | '/students/documents'
     | '/students/roll-no-slips'
+    | '/api/academic/run-promotions'
     | '/api/admin/users'
     | '/api/auth/session'
     | '/api/board-gazette/import'
     | '/api/board-gazette/imports'
     | '/api/board-gazette/lookup'
+    | '/api/finance/campus-incharge-collection'
     | '/api/staff/by-role'
     | '/api/staff/profiles'
     | '/api/student-documents/account'
     | '/api/student-documents/zip'
     | '/api/whatsapp/check-number'
+    | '/announcements'
+    | '/exams'
     | '/finance'
     | '/inquiries'
     | '/students'
+    | '/exams/series/$id'
+    | '/exams/series/new'
+    | '/exams/tests/$id'
+    | '/exams/tests/new'
     | '/finance/vouchers/$id'
     | '/finance/vouchers/lookup'
     | '/finance/vouchers/new'
@@ -479,6 +598,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_authenticated/dashboard'
     | '/_authenticated/admissions/new'
+    | '/_authenticated/announcements/new'
     | '/_authenticated/finance/bulk-vouchers'
     | '/_authenticated/finance/collect'
     | '/_authenticated/finance/dues'
@@ -488,25 +608,34 @@ export interface FileRouteTypes {
     | '/_authenticated/inquiries/new'
     | '/_authenticated/settings/academic'
     | '/_authenticated/settings/board-gazette'
+    | '/_authenticated/settings/collection-plans'
     | '/_authenticated/settings/fees'
     | '/_authenticated/settings/profile'
     | '/_authenticated/settings/users'
     | '/_authenticated/students/$id'
     | '/_authenticated/students/documents'
     | '/_authenticated/students/roll-no-slips'
+    | '/api/academic/run-promotions'
     | '/api/admin/users'
     | '/api/auth/session'
     | '/api/board-gazette/import'
     | '/api/board-gazette/imports'
     | '/api/board-gazette/lookup'
+    | '/api/finance/campus-incharge-collection'
     | '/api/staff/by-role'
     | '/api/staff/profiles'
     | '/api/student-documents/account'
     | '/api/student-documents/zip'
     | '/api/whatsapp/check-number'
+    | '/_authenticated/announcements/'
+    | '/_authenticated/exams/'
     | '/_authenticated/finance/'
     | '/_authenticated/inquiries/'
     | '/_authenticated/students/'
+    | '/_authenticated/exams/series/$id'
+    | '/_authenticated/exams/series/new'
+    | '/_authenticated/exams/tests/$id'
+    | '/_authenticated/exams/tests/new'
     | '/_authenticated/finance/vouchers/$id'
     | '/_authenticated/finance/vouchers/lookup'
     | '/_authenticated/finance/vouchers/new'
@@ -519,11 +648,13 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  ApiAcademicRunPromotionsRoute: typeof ApiAcademicRunPromotionsRoute
   ApiAdminUsersRoute: typeof ApiAdminUsersRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiBoardGazetteImportRoute: typeof ApiBoardGazetteImportRoute
   ApiBoardGazetteImportsRoute: typeof ApiBoardGazetteImportsRoute
   ApiBoardGazetteLookupRoute: typeof ApiBoardGazetteLookupRoute
+  ApiFinanceCampusInchargeCollectionRoute: typeof ApiFinanceCampusInchargeCollectionRoute
   ApiStaffByRoleRoute: typeof ApiStaffByRoleRoute
   ApiStaffProfilesRoute: typeof ApiStaffProfilesRoute
   ApiStudentDocumentsAccountRoute: typeof ApiStudentDocumentsAccountRoute
@@ -590,6 +721,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/exams/': {
+      id: '/_authenticated/exams/'
+      path: '/exams'
+      fullPath: '/exams/'
+      preLoaderRoute: typeof AuthenticatedExamsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/announcements/': {
+      id: '/_authenticated/announcements/'
+      path: '/announcements'
+      fullPath: '/announcements/'
+      preLoaderRoute: typeof AuthenticatedAnnouncementsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/api/whatsapp/check-number': {
       id: '/api/whatsapp/check-number'
       path: '/api/whatsapp/check-number'
@@ -625,6 +770,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStaffByRoleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/finance/campus-incharge-collection': {
+      id: '/api/finance/campus-incharge-collection'
+      path: '/api/finance/campus-incharge-collection'
+      fullPath: '/api/finance/campus-incharge-collection'
+      preLoaderRoute: typeof ApiFinanceCampusInchargeCollectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/board-gazette/lookup': {
       id: '/api/board-gazette/lookup'
       path: '/api/board-gazette/lookup'
@@ -658,6 +810,13 @@ declare module '@tanstack/react-router' {
       path: '/api/admin/users'
       fullPath: '/api/admin/users'
       preLoaderRoute: typeof ApiAdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/academic/run-promotions': {
+      id: '/api/academic/run-promotions'
+      path: '/api/academic/run-promotions'
+      fullPath: '/api/academic/run-promotions'
+      preLoaderRoute: typeof ApiAcademicRunPromotionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/students/roll-no-slips': {
@@ -700,6 +859,13 @@ declare module '@tanstack/react-router' {
       path: '/settings/fees'
       fullPath: '/settings/fees'
       preLoaderRoute: typeof AuthenticatedSettingsFeesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/collection-plans': {
+      id: '/_authenticated/settings/collection-plans'
+      path: '/settings/collection-plans'
+      fullPath: '/settings/collection-plans'
+      preLoaderRoute: typeof AuthenticatedSettingsCollectionPlansRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/settings/board-gazette': {
@@ -765,6 +931,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceBulkVouchersRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/announcements/new': {
+      id: '/_authenticated/announcements/new'
+      path: '/announcements/new'
+      fullPath: '/announcements/new'
+      preLoaderRoute: typeof AuthenticatedAnnouncementsNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admissions/new': {
       id: '/_authenticated/admissions/new'
       path: '/admissions/new'
@@ -807,12 +980,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceVouchersIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/exams/tests/new': {
+      id: '/_authenticated/exams/tests/new'
+      path: '/exams/tests/new'
+      fullPath: '/exams/tests/new'
+      preLoaderRoute: typeof AuthenticatedExamsTestsNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/exams/tests/$id': {
+      id: '/_authenticated/exams/tests/$id'
+      path: '/exams/tests/$id'
+      fullPath: '/exams/tests/$id'
+      preLoaderRoute: typeof AuthenticatedExamsTestsIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/exams/series/new': {
+      id: '/_authenticated/exams/series/new'
+      path: '/exams/series/new'
+      fullPath: '/exams/series/new'
+      preLoaderRoute: typeof AuthenticatedExamsSeriesNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/exams/series/$id': {
+      id: '/_authenticated/exams/series/$id'
+      path: '/exams/series/$id'
+      fullPath: '/exams/series/$id'
+      preLoaderRoute: typeof AuthenticatedExamsSeriesIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedAdmissionsNewRoute: typeof AuthenticatedAdmissionsNewRoute
+  AuthenticatedAnnouncementsNewRoute: typeof AuthenticatedAnnouncementsNewRoute
   AuthenticatedFinanceBulkVouchersRoute: typeof AuthenticatedFinanceBulkVouchersRoute
   AuthenticatedFinanceCollectRoute: typeof AuthenticatedFinanceCollectRoute
   AuthenticatedFinanceDuesRoute: typeof AuthenticatedFinanceDuesRoute
@@ -822,15 +1024,22 @@ interface AuthenticatedRouteChildren {
   AuthenticatedInquiriesNewRoute: typeof AuthenticatedInquiriesNewRoute
   AuthenticatedSettingsAcademicRoute: typeof AuthenticatedSettingsAcademicRoute
   AuthenticatedSettingsBoardGazetteRoute: typeof AuthenticatedSettingsBoardGazetteRoute
+  AuthenticatedSettingsCollectionPlansRoute: typeof AuthenticatedSettingsCollectionPlansRoute
   AuthenticatedSettingsFeesRoute: typeof AuthenticatedSettingsFeesRoute
   AuthenticatedSettingsProfileRoute: typeof AuthenticatedSettingsProfileRoute
   AuthenticatedSettingsUsersRoute: typeof AuthenticatedSettingsUsersRoute
   AuthenticatedStudentsIdRoute: typeof AuthenticatedStudentsIdRoute
   AuthenticatedStudentsDocumentsRoute: typeof AuthenticatedStudentsDocumentsRoute
   AuthenticatedStudentsRollNoSlipsRoute: typeof AuthenticatedStudentsRollNoSlipsRoute
+  AuthenticatedAnnouncementsIndexRoute: typeof AuthenticatedAnnouncementsIndexRoute
+  AuthenticatedExamsIndexRoute: typeof AuthenticatedExamsIndexRoute
   AuthenticatedFinanceIndexRoute: typeof AuthenticatedFinanceIndexRoute
   AuthenticatedInquiriesIndexRoute: typeof AuthenticatedInquiriesIndexRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
+  AuthenticatedExamsSeriesIdRoute: typeof AuthenticatedExamsSeriesIdRoute
+  AuthenticatedExamsSeriesNewRoute: typeof AuthenticatedExamsSeriesNewRoute
+  AuthenticatedExamsTestsIdRoute: typeof AuthenticatedExamsTestsIdRoute
+  AuthenticatedExamsTestsNewRoute: typeof AuthenticatedExamsTestsNewRoute
   AuthenticatedFinanceVouchersIdRoute: typeof AuthenticatedFinanceVouchersIdRoute
   AuthenticatedFinanceVouchersLookupRoute: typeof AuthenticatedFinanceVouchersLookupRoute
   AuthenticatedFinanceVouchersNewRoute: typeof AuthenticatedFinanceVouchersNewRoute
@@ -840,6 +1049,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedAdmissionsNewRoute: AuthenticatedAdmissionsNewRoute,
+  AuthenticatedAnnouncementsNewRoute: AuthenticatedAnnouncementsNewRoute,
   AuthenticatedFinanceBulkVouchersRoute: AuthenticatedFinanceBulkVouchersRoute,
   AuthenticatedFinanceCollectRoute: AuthenticatedFinanceCollectRoute,
   AuthenticatedFinanceDuesRoute: AuthenticatedFinanceDuesRoute,
@@ -850,15 +1060,23 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsAcademicRoute: AuthenticatedSettingsAcademicRoute,
   AuthenticatedSettingsBoardGazetteRoute:
     AuthenticatedSettingsBoardGazetteRoute,
+  AuthenticatedSettingsCollectionPlansRoute:
+    AuthenticatedSettingsCollectionPlansRoute,
   AuthenticatedSettingsFeesRoute: AuthenticatedSettingsFeesRoute,
   AuthenticatedSettingsProfileRoute: AuthenticatedSettingsProfileRoute,
   AuthenticatedSettingsUsersRoute: AuthenticatedSettingsUsersRoute,
   AuthenticatedStudentsIdRoute: AuthenticatedStudentsIdRoute,
   AuthenticatedStudentsDocumentsRoute: AuthenticatedStudentsDocumentsRoute,
   AuthenticatedStudentsRollNoSlipsRoute: AuthenticatedStudentsRollNoSlipsRoute,
+  AuthenticatedAnnouncementsIndexRoute: AuthenticatedAnnouncementsIndexRoute,
+  AuthenticatedExamsIndexRoute: AuthenticatedExamsIndexRoute,
   AuthenticatedFinanceIndexRoute: AuthenticatedFinanceIndexRoute,
   AuthenticatedInquiriesIndexRoute: AuthenticatedInquiriesIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
+  AuthenticatedExamsSeriesIdRoute: AuthenticatedExamsSeriesIdRoute,
+  AuthenticatedExamsSeriesNewRoute: AuthenticatedExamsSeriesNewRoute,
+  AuthenticatedExamsTestsIdRoute: AuthenticatedExamsTestsIdRoute,
+  AuthenticatedExamsTestsNewRoute: AuthenticatedExamsTestsNewRoute,
   AuthenticatedFinanceVouchersIdRoute: AuthenticatedFinanceVouchersIdRoute,
   AuthenticatedFinanceVouchersLookupRoute:
     AuthenticatedFinanceVouchersLookupRoute,
@@ -876,11 +1094,14 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  ApiAcademicRunPromotionsRoute: ApiAcademicRunPromotionsRoute,
   ApiAdminUsersRoute: ApiAdminUsersRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiBoardGazetteImportRoute: ApiBoardGazetteImportRoute,
   ApiBoardGazetteImportsRoute: ApiBoardGazetteImportsRoute,
   ApiBoardGazetteLookupRoute: ApiBoardGazetteLookupRoute,
+  ApiFinanceCampusInchargeCollectionRoute:
+    ApiFinanceCampusInchargeCollectionRoute,
   ApiStaffByRoleRoute: ApiStaffByRoleRoute,
   ApiStaffProfilesRoute: ApiStaffProfilesRoute,
   ApiStudentDocumentsAccountRoute: ApiStudentDocumentsAccountRoute,

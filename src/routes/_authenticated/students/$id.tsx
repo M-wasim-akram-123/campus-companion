@@ -45,6 +45,7 @@ import { formatCnicForStorage, formatPakistanCnic, validatePakistanCnic } from "
 import { CnicInput } from "@/components/forms/CnicInput";
 import { StudentFeePlanCard } from "@/components/finance/StudentFeePlanCard";
 import { StudentFinanceLedgerCard } from "@/components/finance/StudentFinanceLedgerCard";
+import { StudentTestResultsCard } from "@/components/exams/StudentTestResultsCard";
 import { StudentBasicInfoSection } from "@/components/students/StudentBasicInfoSection";
 import { StudentDocumentsCard } from "@/components/students/StudentDocumentsCard";
 import { FeeStructureSection } from "@/components/admission/FeeStructureSection";
@@ -55,7 +56,7 @@ import type { FeeStructurePayload } from "@/lib/fees-types";
 import { Pencil, Printer, Trash2, User, Wallet, BookOpen, FileArchive } from "lucide-react";
 import { toast } from "sonner";
 import { CAMPUS_ADDRESS, CAMPUS_LOGO_URL, CAMPUS_NAME, CAMPUS_TAGLINE } from "@/lib/campus";
-import { formatCurrency } from "@/lib/finance";
+import { formatCurrency, isTerminalStudentStatus, writeOffStudentRemainingFees } from "@/lib/finance";
 import {
   DetailPage,
   DetailHeader,
@@ -240,7 +241,7 @@ function StudentDetail() {
         <p className="text-lg font-semibold">Student not available</p>
         <p className="text-sm text-muted-foreground">
           {campusViewOnly
-            ? "This student is not in one of your assigned classes."
+            ? "This student is not in one of your assigned sections."
             : "The student could not be found or you do not have access."}
         </p>
         <Button variant="outline" onClick={() => navigate({ to: "/students" })}>
@@ -266,7 +267,8 @@ function StudentDetail() {
   const academicStanding = deriveAcademicStanding({
     sessionStartYear: session?.start_year,
     sessionEndYear: session?.end_year,
-    admissionYearLevel: cls?.year_level,
+    admissionYearLevel:
+      (s as { admission_year_level?: number | null }).admission_year_level ?? cls?.year_level,
     programDurationYears: program?.duration_years,
   });
   const matricMarks =
@@ -463,6 +465,7 @@ function StudentDetail() {
             annual_fee_schedule: feePayload.schedule,
             installment_count: feePayload.installmentCount,
             start_after_months: feePayload.startAfterMonths,
+            collection_plan_id: feePayload.collectionPlanId,
             admission_payment_breakdown: feePayload.admissionPayments,
           },
           feePayload.installments,
@@ -511,25 +514,43 @@ function StudentDetail() {
     }
     if (status === s.status) return;
     setStatusSaving(true);
-    const { error } = await supabase
-      .from("students")
-      .update({
-        status,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id);
-    setStatusSaving(false);
-    if (error) {
-      const message = error.message.includes("invalid input value for enum student_status")
-        ? "This status is not enabled in the database yet. Run supabase/patch-student-status-left-bad-debt.sql in Supabase SQL Editor."
-        : error.message;
-      return toast.error(message);
+    try {
+      if (isTerminalStudentStatus(status)) {
+        const writtenOff = await writeOffStudentRemainingFees(
+          id,
+          `Student marked as ${studentStatusLabel(status)}`,
+        );
+        if (writtenOff > 0) {
+          toast.info(`${formatCurrency(writtenOff)} written off as bad debt.`);
+        }
+      }
+
+      const { error } = await supabase
+        .from("students")
+        .update({
+          status,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+      if (error) {
+        const message = error.message.includes("invalid input value for enum student_status")
+          ? "This status is not enabled in the database yet. Run supabase/patch-student-status-left-bad-debt.sql in Supabase SQL Editor."
+          : error.message;
+        return toast.error(message);
+      }
+
+      toast.success(`Student marked as ${studentStatusLabel(status)}`);
+      setEditForm((current) => ({ ...current, status }));
+      qc.invalidateQueries({ queryKey: ["student", id] });
+      qc.invalidateQueries({ queryKey: ["students"] });
+      qc.invalidateQueries({ queryKey: ["session-revenue"] });
+      qc.invalidateQueries({ queryKey: ["student-fee-ledger", id] });
+      qc.invalidateQueries({ queryKey: ["student-finance-ledger", id] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not update student status.");
+    } finally {
+      setStatusSaving(false);
     }
-    toast.success(`Student marked as ${studentStatusLabel(status)}`);
-    setEditForm((current) => ({ ...current, status }));
-    qc.invalidateQueries({ queryKey: ["student", id] });
-    qc.invalidateQueries({ queryKey: ["students"] });
-    qc.invalidateQueries({ queryKey: ["session-revenue"] });
   };
 
   return (
@@ -971,6 +992,7 @@ function StudentDetail() {
             admissionDate={s.admission_date}
             enrollmentTypeLabel={enrollmentTypeLabel((s as { enrollment_type?: string }).enrollment_type)}
           />
+          <StudentTestResultsCard studentId={id} />
         </TabsContent>
 
         <TabsContent value="fee-plan" className="mt-0 space-y-4">

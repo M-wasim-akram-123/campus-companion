@@ -11,6 +11,10 @@ import type {
   ScholarshipSlab,
 } from "@/lib/fees-types";
 import { FEE_COMPONENTS } from "@/lib/fees-types";
+import {
+  generateCollectionPlanDueDates,
+  type FeeCollectionPlan,
+} from "@/lib/fee-collection-plans";
 
 export { FEE_COMPONENTS };
 
@@ -392,6 +396,37 @@ export function balanceAnnualInstallmentAmounts(
   return { rows: next, ok: true };
 }
 
+export function generateAnnualInstallmentRowsFromCollectionPlan(params: {
+  annualFee: number;
+  collectionPlan: Pick<FeeCollectionPlan, "collection_months" | "due_day">;
+  sessionStartYear: number;
+  startOrder: number;
+}): InstallmentPreview[] {
+  const annual = params.annualFee;
+  if (annual <= 0) return [];
+
+  const dueDates = generateCollectionPlanDueDates(params.collectionPlan, params.sessionStartYear);
+  const count = dueDates.length;
+  if (!count) return [];
+
+  const amounts = roundedInstallmentAmounts(annual, count);
+  const rows: InstallmentPreview[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const due_date = dueDates[i];
+    const dueDateForLabel = parseDateString(due_date);
+    rows.push({
+      label: `Annual fee - ${monthName(dueDateForLabel)}`,
+      component_type: "annual_fee",
+      amount: amounts[i] ?? 0,
+      due_date,
+      sort_order: params.startOrder + i,
+    });
+  }
+
+  return rows;
+}
+
 export function generateAnnualInstallmentRows(params: {
   annualFee: number;
   schedule: AnnualFeeScheduleType;
@@ -472,6 +507,8 @@ export function buildFutureInstallmentSchedule(params: {
   startAfterMonths: number;
   admissionDate?: Date;
   customAnnualDueDates?: string[];
+  collectionPlan?: Pick<FeeCollectionPlan, "collection_months" | "due_day"> | null;
+  sessionStartYear?: number;
 }): InstallmentPreview[] {
   const base = params.admissionDate ?? new Date();
   const paidAtAdmission = new Set(
@@ -507,15 +544,25 @@ export function buildFutureInstallmentSchedule(params: {
 
   // Annual fee — split into installments (only if not fully paid at admission)
   if (!paidAtAdmission.has("annual_fee")) {
-    const annualRows = generateAnnualInstallmentRows({
-      annualFee: params.fees.annual_fee ?? 0,
-      schedule: params.schedule,
-      installmentCount: params.installmentCount,
-      firstDueDate: params.firstInstallmentDate,
-      startOrder: order,
-      customDueDates: params.customAnnualDueDates,
-    });
-    rows.push(...annualRows);
+    if (params.collectionPlan && params.sessionStartYear) {
+      const annualRows = generateAnnualInstallmentRowsFromCollectionPlan({
+        annualFee: params.fees.annual_fee ?? 0,
+        collectionPlan: params.collectionPlan,
+        sessionStartYear: params.sessionStartYear,
+        startOrder: order,
+      });
+      rows.push(...annualRows);
+    } else {
+      const annualRows = generateAnnualInstallmentRows({
+        annualFee: params.fees.annual_fee ?? 0,
+        schedule: params.schedule,
+        installmentCount: params.installmentCount,
+        firstDueDate: params.firstInstallmentDate,
+        startOrder: order,
+        customDueDates: params.customAnnualDueDates,
+      });
+      rows.push(...annualRows);
+    }
   }
 
   return rows;
@@ -533,6 +580,8 @@ export function buildSavedInstallmentSchedule(params: {
   admissionDate?: Date;
   scholarship?: { applies_to: FeeComponentType; discount: number; label: string } | null;
   futureInstallments?: InstallmentPreview[];
+  collectionPlan?: Pick<FeeCollectionPlan, "collection_months" | "due_day"> | null;
+  sessionStartYear?: number;
 }): InstallmentPreview[] {
   const base = params.admissionDate ?? new Date();
   const due = toDateString(base);
@@ -565,10 +614,17 @@ export function buildSavedInstallmentSchedule(params: {
       firstInstallmentDate: params.firstInstallmentDate,
       startAfterMonths: params.startAfterMonths,
       admissionDate: base,
+      collectionPlan: params.collectionPlan,
+      sessionStartYear: params.sessionStartYear,
     })
   ).map((r, i) => ({ ...r, sort_order: order + i }));
 
-  return [...admissionRows, ...future];
+  const sessionYear = params.sessionStartYear;
+  return [...admissionRows, ...future].map((row) => ({
+    ...row,
+    fee_cycle: 1,
+    academic_year_start: sessionYear,
+  }));
 }
 
 export type StudentFeeStructure = {
@@ -590,6 +646,7 @@ export type StudentFeeStructure = {
     annual_fee_schedule: AnnualFeeScheduleType;
     installment_count: number;
     start_after_months: number;
+    collection_plan_id?: string | null;
     admission_payment_breakdown?: AdmissionPaymentLine[] | null;
     notes?: string | null;
   };
@@ -630,6 +687,7 @@ export async function fetchStudentFeeStructure(
       annual_fee_schedule: (plan.annual_fee_schedule as AnnualFeeScheduleType) ?? "quarterly",
       installment_count: Number(plan.installment_count ?? 4),
       start_after_months: Number(plan.start_after_months ?? 2),
+      collection_plan_id: (plan as { collection_plan_id?: string | null }).collection_plan_id ?? null,
       admission_payment_breakdown: (
         plan as { admission_payment_breakdown?: AdmissionPaymentLine[] | null }
       ).admission_payment_breakdown,
@@ -744,6 +802,7 @@ export async function saveStudentFeePlan(
     annual_fee_schedule: AnnualFeeScheduleType;
     installment_count: number;
     start_after_months: number;
+    collection_plan_id?: string | null;
     admission_payment_breakdown?: AdmissionPaymentLine[] | null;
     notes?: string | null;
   },
@@ -775,6 +834,7 @@ export async function saveStudentFeePlan(
     annual_fee_schedule: plan.annual_fee_schedule,
     installment_count: plan.installment_count,
     start_after_months: plan.start_after_months,
+    collection_plan_id: plan.collection_plan_id ?? null,
     notes: plan.notes ?? null,
   };
   if (breakdown?.length) insertPlan.admission_payment_breakdown = breakdown;
@@ -810,6 +870,8 @@ export async function saveStudentFeePlan(
         due_date: i.due_date,
         sort_order: i.sort_order,
         status: "pending",
+        fee_cycle: i.fee_cycle ?? 1,
+        academic_year_start: i.academic_year_start ?? null,
       })),
     );
     if (instErr) throw instErr;
@@ -852,6 +914,7 @@ export async function updateStudentFeePlan(
     annual_fee_schedule: AnnualFeeScheduleType;
     installment_count: number;
     start_after_months: number;
+    collection_plan_id?: string | null;
     admission_payment_breakdown?: AdmissionPaymentLine[] | null;
     notes?: string | null;
   },
@@ -879,6 +942,7 @@ export async function updateStudentFeePlan(
     annual_fee_schedule: plan.annual_fee_schedule,
     installment_count: plan.installment_count,
     start_after_months: plan.start_after_months,
+    collection_plan_id: plan.collection_plan_id ?? null,
     notes: plan.notes ?? null,
     updated_at: new Date().toISOString(),
   };

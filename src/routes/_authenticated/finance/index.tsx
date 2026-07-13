@@ -21,6 +21,7 @@ import {
 } from "@/lib/finance";
 import { AlertCircle, Banknote, FileStack, QrCode, Plus, TrendingUp } from "lucide-react";
 import { SessionBudgetCard } from "@/components/finance/SessionBudgetCard";
+import { CampusInchargeCollectionChart } from "@/components/finance/CampusInchargeCollectionChart";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -33,6 +34,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+
+const SHOW_CASHIER_DRAWER_UI = false;
 
 export const Route = createFileRoute("/_authenticated/finance/")({
   component: FinanceDashboard,
@@ -100,11 +103,13 @@ function FinanceDashboard() {
   const { data: cashierSession } = useQuery({
     queryKey: ["open-cashier-session"],
     queryFn: fetchOpenCashierSession,
+    enabled: SHOW_CASHIER_DRAWER_UI,
   });
 
   const { data: cashierSessions } = useQuery({
     queryKey: ["recent-cashier-sessions"],
     queryFn: () => fetchRecentCashierSessions(20),
+    enabled: SHOW_CASHIER_DRAWER_UI,
   });
 
   const { data: slipRecoveries } = useQuery({
@@ -261,7 +266,10 @@ function FinanceDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{formatCurrency(rev.totalPayable)}</div>
-                <p className="text-xs text-muted-foreground">Sum of all student installment plans</p>
+                <p className="text-xs text-muted-foreground">
+                  All session students · received + outstanding + bad debt
+                  {rev.ledgerSummary.waivers > 0 ? " + waivers" : ""} = estimated
+                </p>
               </CardContent>
             </Card>
             <Card>
@@ -270,6 +278,7 @@ function FinanceDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-700">{formatCurrency(rev.totalCollected)}</div>
+                <p className="text-xs text-muted-foreground">All recorded fee payments this session</p>
               </CardContent>
             </Card>
             <Card>
@@ -278,6 +287,7 @@ function FinanceDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-amber-700">{formatCurrency(rev.totalOutstanding)}</div>
+                <p className="text-xs text-muted-foreground">Collectible dues only (excludes bad debt)</p>
               </CardContent>
             </Card>
             <Card>
@@ -289,6 +299,80 @@ function FinanceDashboard() {
               </CardContent>
             </Card>
           </div>
+
+          {(rev.years.length > 0 || rev.yearEndCloses.length > 0) && (
+            <div className="space-y-3">
+              <div>
+                <h2 className="text-lg font-semibold">Academic year breakdown</h2>
+                <p className="text-sm text-muted-foreground">
+                  Closed years show 30 June snapshot · arrears remain collectible · received + outstanding + bad debt = estimated
+                </p>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {rev.years.map((year) => (
+                  <Card key={year.academicYearStart} className={year.isClosed ? "border-slate-300" : "border-primary/30"}>
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <CardTitle className="text-base">
+                          Year {year.feeCycle} · {year.label}
+                        </CardTitle>
+                        <Badge variant={year.isClosed ? "secondary" : "default"}>
+                          {year.isClosed ? "Closed 30 Jun" : "Current"}
+                        </Badge>
+                      </div>
+                      {year.isClosed && year.closedAt && (
+                        <p className="text-xs text-muted-foreground">
+                          Snapshot {new Date(year.closedAt).toLocaleDateString()}
+                        </p>
+                      )}
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Estimated</span>
+                        <span className="font-semibold">{formatCurrency(year.totalPayable)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Received</span>
+                        <span className="font-semibold text-green-700">{formatCurrency(year.totalCollected)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          {year.isClosed ? "Outstanding at close" : "Outstanding"}
+                        </span>
+                        <span className="font-semibold text-amber-700">{formatCurrency(year.totalOutstanding)}</span>
+                      </div>
+                      {year.isClosed && (year.arrears ?? 0) > 0 && (
+                        <div className="flex justify-between rounded-lg bg-amber-500/10 px-2 py-1">
+                          <span className="text-amber-800">Live arrears</span>
+                          <span className="font-semibold text-amber-800">{formatCurrency(year.arrears ?? 0)}</span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+                <Card className="border-dashed">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Session total</CardTitle>
+                    <p className="text-xs text-muted-foreground">Live across all years</p>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Estimated</span>
+                      <span className="font-semibold">{formatCurrency(rev.sessionTotal.payable)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Received</span>
+                      <span className="font-semibold text-green-700">{formatCurrency(rev.sessionTotal.collected)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Outstanding</span>
+                      <span className="font-semibold text-amber-700">{formatCurrency(rev.sessionTotal.outstanding)}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <Card>
@@ -323,6 +407,7 @@ function FinanceDashboard() {
             </Card>
           </div>
 
+          {SHOW_CASHIER_DRAWER_UI && (
           <Card className="border-primary/20">
             <CardHeader>
               <CardTitle className="text-base">Cashier drawer control</CardTitle>
@@ -367,7 +452,9 @@ function FinanceDashboard() {
               )}
             </CardContent>
           </Card>
+          )}
 
+          {SHOW_CASHIER_DRAWER_UI && (
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Recent cashier sessions</CardTitle>
@@ -423,6 +510,7 @@ function FinanceDashboard() {
               </Table>
             </CardContent>
           </Card>
+          )}
 
           <SessionBudgetCard sessionId={sid} rev={rev} />
 
@@ -521,6 +609,10 @@ function FinanceDashboard() {
               </CardContent>
             </Card>
           </div>
+
+          {hasAnyRole(["super_admin", "finance_admin", "finance_officer"]) && (
+            <CampusInchargeCollectionChart sessionId={sid} months={12} />
+          )}
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">

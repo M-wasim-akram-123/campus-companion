@@ -20,8 +20,12 @@ function csvEscape(value: string) {
   return value;
 }
 
-function downloadCsv(filename: string, header: string[], rows: string[][]) {
-  const lines = [header.join(","), ...rows.map((row) => row.map(csvEscape).join(","))];
+function downloadCsv(filename: string, header: string[], rows: string[][], footerRows: string[][] = []) {
+  const lines = [
+    header.join(","),
+    ...rows.map((row) => row.map(csvEscape).join(",")),
+    ...footerRows.map((row) => row.map(csvEscape).join(",")),
+  ];
   const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
@@ -106,6 +110,8 @@ export function exportStudentDefaulters(
     a.student.full_name.localeCompare(b.student.full_name),
   );
 
+  const totalOverdue = rows.reduce((sum, row) => sum + row.balance, 0);
+
   downloadCsv(
     `fee-defaulters-${new Date().toISOString().slice(0, 10)}.csv`,
     [
@@ -134,6 +140,23 @@ export function exportStudentDefaulters(
       row.oldestDue,
       row.lines.join("; "),
     ]),
+    rows.length
+      ? [
+          [
+            "TOTAL",
+            `${rows.length} student${rows.length === 1 ? "" : "s"}`,
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            String(totalOverdue),
+            "",
+            "",
+          ],
+        ]
+      : [],
   );
 
   return rows.length;

@@ -1,3 +1,4 @@
+import { ACADEMIC_YEAR_START_MONTH, sessionStartYearFromDate } from "@/lib/fee-collection-plans";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -19,6 +20,28 @@ export function ordinalYearLabel(yearLevel: number): string {
   if (yearLevel === 2) return "2nd Year";
   if (yearLevel === 3) return "3rd Year";
   return `${yearLevel}th Year`;
+}
+
+export function currentAcademicYearStart(now = new Date()): number {
+  return sessionStartYearFromDate(now);
+}
+
+export function academicYearElapsed(sessionStartYear: number, now = new Date()): number {
+  return Math.max(0, currentAcademicYearStart(now) - sessionStartYear);
+}
+
+/** True on or after 1 July of the given academic-year start calendar year. */
+export function isOnOrAfterAcademicYearStart(academicYearStart: number, now = new Date()): boolean {
+  const cutoff = new Date(academicYearStart, ACADEMIC_YEAR_START_MONTH - 1, 1);
+  return now >= cutoff;
+}
+
+export function targetYearLevelForStudent(params: {
+  sessionStartYear: number;
+  admissionYearLevel: number;
+  now?: Date;
+}): number {
+  return params.admissionYearLevel + academicYearElapsed(params.sessionStartYear, params.now);
 }
 
 export type AcademicStanding = {
@@ -60,8 +83,8 @@ export function deriveAcademicStanding({
     };
   }
 
-  const academicYearStart = now.getMonth() >= 5 ? now.getFullYear() : now.getFullYear() - 1;
-  const elapsedYears = Math.max(0, academicYearStart - sessionStartYear);
+  const academicYearStart = currentAcademicYearStart(now);
+  const elapsedYears = academicYearElapsed(sessionStartYear, now);
   const currentYearLevel = admissionYearLevel + elapsedYears;
   const maxYear = programDurationYears ?? sessionEndYear - sessionStartYear;
 

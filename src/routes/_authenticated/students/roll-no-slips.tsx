@@ -238,8 +238,11 @@ function RollNoSlipsContent({ roles }: { roles: import("@/hooks/use-auth").AppRo
 
   const exportReport = () => {
     if (!filtered.length) return toast.error("No students to export.");
+    const totalUnpaid = filtered.reduce((sum, row) => sum + row.totalBalance, 0);
     exportRollNoSlipReport(filtered);
-    toast.success(`Exported ${filtered.length} students`);
+    toast.success(
+      `Exported ${filtered.length} students — total unpaid ${formatCurrency(totalUnpaid)}`,
+    );
   };
 
   return (

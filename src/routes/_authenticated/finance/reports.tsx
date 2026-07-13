@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, installmentBalance } from "@/lib/finance";
+import { fetchYearEndLedgerRows } from "@/lib/finance-analytics";
+import { academicYearLabel } from "@/lib/academic-year-close";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download } from "lucide-react";
@@ -57,11 +59,33 @@ function downloadExcel(filename: string, html: string) {
 
 function FinanceReports() {
   const [studentSessionId, setStudentSessionId] = useState("__all__");
+  const [yearEndSessionId, setYearEndSessionId] = useState("");
+  const [yearEndAcademicYear, setYearEndAcademicYear] = useState("__all__");
   const [studentProgramId, setStudentProgramId] = useState("__all__");
   const [studentClassId, setStudentClassId] = useState("__all__");
   const [studentSectionId, setStudentSectionId] = useState("__all__");
   const [studentGender, setStudentGender] = useState("__all__");
   const [studentStatus, setStudentStatus] = useState("active");
+
+  const sessions = useQuery({
+    queryKey: ["academic-sessions-reports"],
+    queryFn: async () =>
+      (await supabase.from("academic_sessions").select("*").order("start_year", { ascending: false })).data ?? [],
+  });
+
+  const yearEndCloses = useQuery({
+    queryKey: ["year-end-closes", yearEndSessionId],
+    enabled: !!yearEndSessionId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("session_academic_year_closes")
+        .select("academic_year_start, closed_at, fee_cycle, total_payable, total_collected, total_outstanding")
+        .eq("academic_session_id", yearEndSessionId)
+        .order("academic_year_start");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
   const monthly = useQuery({
     queryKey: ["fin-monthly"],
@@ -366,6 +390,82 @@ function FinanceReports() {
     }),
     { total: 0, paid: 0, remaining: 0, overdue: 0 },
   );
+  const exportYearEndLedger = async () => {
+    if (!yearEndSessionId) return;
+    const yearFilter =
+      yearEndAcademicYear !== "__all__" ? Number(yearEndAcademicYear) : undefined;
+    const rows = await fetchYearEndLedgerRows(yearEndSessionId, yearFilter);
+    if (!rows.length) return;
+
+    const headers = [
+      "Academic year",
+      "Fee year",
+      "Admission no",
+      "Name",
+      "Father name",
+      "Program",
+      "Class",
+      "Section",
+      "Phone",
+      "Estimated (payable)",
+      "Received",
+      "Outstanding at 30 Jun",
+      "Closed at",
+    ];
+    const bodyHtml = rows
+      .map((row) => {
+        const student = row.students as {
+          full_name?: string;
+          roll_number?: string;
+          father_name?: string;
+          phone?: string;
+          guardian_phone?: string;
+          programs?: { name?: string };
+          classes?: { name?: string };
+          sections?: { name?: string; gender?: string };
+        } | null;
+        const section = student?.sections;
+        const cells = [
+          academicYearLabel(row.academic_year_start),
+          `Year ${row.fee_cycle}`,
+          student?.roll_number,
+          student?.full_name,
+          student?.father_name,
+          student?.programs?.name,
+          student?.classes?.name,
+          section ? `${section.gender === "girls" ? "Girls" : "Boys"} — ${section.name}` : "—",
+          student?.phone || student?.guardian_phone,
+          row.payable,
+          row.collected,
+          row.outstanding,
+          new Date(row.closed_at).toLocaleDateString(),
+        ];
+        return `<tr>${cells.map((value) => `<td>${htmlCell(value)}</td>`).join("")}</tr>`;
+      })
+      .join("");
+
+    const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<style>
+  table { border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px; }
+  th { background: #1d4ed8; color: #fff; font-weight: 700; }
+  th, td { border: 1px solid #94a3b8; padding: 6px; }
+</style>
+</head>
+<body>
+  <table>
+    <thead><tr>${headers.map((h) => `<th>${htmlCell(h)}</th>`).join("")}</tr></thead>
+    <tbody>${bodyHtml}</tbody>
+  </table>
+</body>
+</html>`;
+    const sessionLabel =
+      sessions.data?.find((s) => s.id === yearEndSessionId)?.label?.replace(/\s+/g, "-") ?? "session";
+    const yearSuffix = yearFilter ? `-${yearFilter}` : "";
+    downloadExcel(`year-end-ledger-${sessionLabel}${yearSuffix}-${new Date().toISOString().slice(0, 10)}.xls`, html);
+  };
+
   const exportStudentReport = () => {
     const exportRows = [...new Map(filteredStudentRows.map((row) => [row.id, row])).values()];
     const installmentColumns = [
@@ -499,6 +599,90 @@ function FinanceReports() {
           <CardContent><div className="text-2xl font-bold">{defaulters.data?.length ?? 0}</div></CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <CardTitle>30 June year-end ledger</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Frozen per-student fee snapshot taken at academic year close (before 1 July promotion).
+              </p>
+            </div>
+            <Button
+              type="button"
+              onClick={() => void exportYearEndLedger().catch(() => undefined)}
+              disabled={!yearEndSessionId || !yearEndCloses.data?.length}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download Excel
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-2">
+            <Select
+              value={yearEndSessionId}
+              onValueChange={(value) => {
+                setYearEndSessionId(value);
+                setYearEndAcademicYear("__all__");
+              }}
+            >
+              <SelectTrigger><SelectValue placeholder="Select session" /></SelectTrigger>
+              <SelectContent>
+                {(sessions.data ?? []).map((session) => (
+                  <SelectItem key={session.id} value={session.id}>
+                    {session.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={yearEndAcademicYear} onValueChange={setYearEndAcademicYear}>
+              <SelectTrigger><SelectValue placeholder="Academic year" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">All closed years</SelectItem>
+                {(yearEndCloses.data ?? []).map((row) => (
+                  <SelectItem key={row.academic_year_start} value={String(row.academic_year_start)}>
+                    {academicYearLabel(row.academic_year_start)} (closed {new Date(row.closed_at).toLocaleDateString()})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {!yearEndSessionId ? (
+            <p className="text-sm text-muted-foreground">Select a session to export year-end snapshots.</p>
+          ) : yearEndCloses.isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading closed years…</p>
+          ) : !yearEndCloses.data?.length ? (
+            <p className="text-sm text-muted-foreground">
+              No year-end close has run for this session yet (automatic on 30 June).
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Academic year</TableHead>
+                  <TableHead>Closed</TableHead>
+                  <TableHead className="text-right">Estimated</TableHead>
+                  <TableHead className="text-right">Received</TableHead>
+                  <TableHead className="text-right">Outstanding</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(yearEndCloses.data ?? []).map((row) => (
+                  <TableRow key={row.academic_year_start}>
+                    <TableCell>{academicYearLabel(row.academic_year_start)}</TableCell>
+                    <TableCell>{new Date(row.closed_at).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(Number(row.total_payable))}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(Number(row.total_collected))}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(Number(row.total_outstanding))}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

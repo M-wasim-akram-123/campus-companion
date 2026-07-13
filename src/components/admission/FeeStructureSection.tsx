@@ -41,6 +41,13 @@ import {
   buildClassesOnlyInstallments,
   type StudentEnrollmentType,
 } from "@/lib/student-enrollment";
+import {
+  OTHER_COLLECTION_PLAN_ID,
+  fetchCollectionPlans,
+  formatCollectionMonths,
+  sessionStartYearFromDate,
+} from "@/lib/fee-collection-plans";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
@@ -142,6 +149,7 @@ export function FeeStructureSection({
   const [admissionDueDates, setAdmissionDueDates] = useState<Record<string, string>>({});
   const [paidByInstallmentId, setPaidByInstallmentId] = useState<Record<string, number>>({});
   const [amountDrafts, setAmountDrafts] = useState<Record<number, string>>({});
+  const [collectionPlanId, setCollectionPlanId] = useState<string | null>(null);
 
   const { data: policy, isLoading } = useQuery({
     queryKey: ["fee-policy", programId, academicSessionId],
@@ -149,9 +157,36 @@ export function FeeStructureSection({
     queryFn: () => fetchFeePolicy(programId, academicSessionId),
   });
 
+  const { data: collectionPlans = [] } = useQuery({
+    queryKey: ["fee-collection-plans"],
+    queryFn: () => fetchCollectionPlans(true),
+  });
+
+  const { data: sessionMeta } = useQuery({
+    queryKey: ["academic-session-meta", academicSessionId],
+    enabled: !!academicSessionId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("academic_sessions")
+        .select("start_year, label")
+        .eq("id", academicSessionId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const sessionStartYear = sessionMeta?.start_year ?? sessionStartYearFromDate(new Date());
+  const selectedCollectionPlan = useMemo(
+    () => collectionPlans.find((plan) => plan.id === collectionPlanId) ?? null,
+    [collectionPlans, collectionPlanId],
+  );
+  const usesCollectionPlan = selectedCollectionPlan != null;
+
   useEffect(() => {
     setPolicyLoaded(null);
     setDatesEdited(false);
+    setCollectionPlanId(null);
   }, [programId, academicSessionId]);
 
   const pct = matricPercentage(
@@ -295,9 +330,13 @@ export function FeeStructureSection({
         admissionLines: admissionDueLines,
         templates: policy?.fee_policy_installment_templates,
         schedule,
-        installmentCount,
+        installmentCount: usesCollectionPlan
+          ? selectedCollectionPlan!.collection_months.length
+          : installmentCount,
         firstInstallmentDate: firstDue,
         startAfterMonths,
+        collectionPlan: usesCollectionPlan ? selectedCollectionPlan : null,
+        sessionStartYear,
       });
       setFutureInstallments((prev) => (preserveDates ? mergePreservingUserEdits(prev, built) : built));
     },
@@ -309,6 +348,9 @@ export function FeeStructureSection({
       installmentCount,
       firstDue,
       startAfterMonths,
+      usesCollectionPlan,
+      selectedCollectionPlan,
+      sessionStartYear,
     ],
   );
 
@@ -359,6 +401,8 @@ export function FeeStructureSection({
       setPolicyLoaded(`student-${plan.id}`);
       setPaidByInstallmentId(paidMap);
       setFutureInstallments(future);
+      const savedCollectionPlanId = (plan as { collection_plan_id?: string | null }).collection_plan_id ?? null;
+      setCollectionPlanId(savedCollectionPlanId);
       setRemainingAnnualFee(Number(plan.annual_fee ?? 0));
       setRemainingAnnualFeeInput(Number(plan.annual_fee ?? 0) > 0 ? String(Math.round(Number(plan.annual_fee ?? 0))) : "");
       setAnnualFeeTouched(true);
@@ -458,6 +502,9 @@ export function FeeStructureSection({
     policy?.fee_policy_installment_templates,
     rebuildFuture,
     datesEdited,
+    usesCollectionPlan,
+    selectedCollectionPlan,
+    sessionStartYear,
   ]);
 
   useEffect(() => {
@@ -654,11 +701,16 @@ export function FeeStructureSection({
       paymentNotes: paymentNotes.trim() || null,
       admissionPayments: isClassesOnly ? [] : admissionDueLines,
       schedule: isClassesOnly ? "monthly" : schedule,
-      installmentCount: isClassesOnly ? feeClearanceMonths : installmentCount,
+      installmentCount: isClassesOnly
+        ? feeClearanceMonths
+        : usesCollectionPlan
+          ? selectedCollectionPlan!.collection_months.length
+          : installmentCount,
       startAfterMonths: isClassesOnly ? 0 : startAfterMonths,
       firstInstallmentDate: isClassesOnly
         ? classesOnlyInstallmentRows[0]?.due_date ?? todayString()
         : firstDue,
+      collectionPlanId: usesCollectionPlan ? collectionPlanId : null,
       policyId: policy?.id ?? null,
       installments: savedInstallments,
       projections: futureProjections,
@@ -683,6 +735,9 @@ export function FeeStructureSection({
     installmentCount,
     startAfterMonths,
     firstDue,
+    usesCollectionPlan,
+    collectionPlanId,
+    selectedCollectionPlan,
     classesOnlyInstallmentRows,
     policy,
     savedInstallments,
@@ -1098,8 +1153,67 @@ export function FeeStructureSection({
 
         {!isClassesOnly && (
         <>
+        <div className="mb-4">
+          <h4 className="mb-3 font-medium">Fee collection plan</h4>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Collection policy</Label>
+              <Select
+                value={collectionPlanId ?? OTHER_COLLECTION_PLAN_ID}
+                onValueChange={(value) => {
+                  if (value === OTHER_COLLECTION_PLAN_ID) {
+                    setCollectionPlanId(null);
+                  } else {
+                    setCollectionPlanId(value);
+                  }
+                  setDatesEdited(false);
+                  setAnnualAmountEdited(false);
+                }}
+                disabled={readOnlyFeePlan}
+              >
+                <SelectTrigger className={readOnlyFeePlan ? "bg-muted/40" : undefined}>
+                  <SelectValue placeholder="Select collection plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={OTHER_COLLECTION_PLAN_ID}>
+                    Other plan (custom installment dates)
+                  </SelectItem>
+                  {collectionPlans.map((plan) => (
+                    <SelectItem key={plan.id} value={plan.id}>
+                      {plan.name} — {formatCollectionMonths(plan.collection_months)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {collectionPlans.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No collection plans yet.{" "}
+                  <Link to="/settings/collection-plans" className="text-primary underline">
+                    Create one in settings
+                  </Link>
+                  .
+                </p>
+              )}
+            </div>
+            {usesCollectionPlan && selectedCollectionPlan && (
+              <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+                <p className="font-medium">{selectedCollectionPlan.name}</p>
+                <p className="text-muted-foreground">
+                  Collections in {formatCollectionMonths(selectedCollectionPlan.collection_months, false)} (due
+                  day {selectedCollectionPlan.due_day})
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Session {sessionMeta?.label ?? sessionStartYear} — annual fee splits into{" "}
+                  {selectedCollectionPlan.collection_months.length} installments on these months.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
         <div>
           <h4 className="mb-3 font-medium">Annual fee installments</h4>
+          {!usesCollectionPlan && (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1">
               <Label className="text-xs">Annual fee split into</Label>
@@ -1171,6 +1285,12 @@ export function FeeStructureSection({
               </p>
             </div>
           </div>
+          )}
+          {usesCollectionPlan && (
+            <p className="mb-3 text-sm text-muted-foreground">
+              Due dates follow the selected collection plan. You can still adjust amounts per row below.
+            </p>
+          )}
         </div>
 
         <div>

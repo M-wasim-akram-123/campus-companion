@@ -128,6 +128,8 @@ export type InstallmentPreview = {
   amount: number;
   due_date: string;
   sort_order: number;
+  fee_cycle?: number;
+  academic_year_start?: number;
 };
 
 export type AdmissionPaymentLine = {
@@ -154,6 +156,7 @@ export type FeeStructurePayload = {
   installmentCount: number;
   startAfterMonths: number;
   firstInstallmentDate: string;
+  collectionPlanId: string | null;
   policyId: string | null;
   installments: InstallmentPreview[];
   projections: FutureFeeProjection[];

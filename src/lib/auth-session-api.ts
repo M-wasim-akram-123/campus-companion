@@ -27,6 +27,18 @@ export async function registerAuthSession() {
   return authApi<{ ok: boolean }>("/api/auth/session", { method: "POST" });
 }
 
+/** Clear server-side active session on logout (same device can sign in again). */
+export async function clearAuthSession() {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return;
+
+  await fetch("/api/auth/session", {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  }).catch(() => undefined);
+}
+
 /** Update presence and verify session is still valid. */
 export async function sendAuthHeartbeat(): Promise<{ ok: boolean; revoked?: boolean }> {
   try {

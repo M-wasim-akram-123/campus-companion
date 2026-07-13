@@ -420,6 +420,8 @@ function NewAdmission() {
         photo_url = inquiryPhotoPath;
       }
 
+      const admissionClass = classes?.find((c) => c.id === form.class_id);
+
       const { data: student, error } = await supabase
         .from("students")
         .insert({
@@ -438,6 +440,7 @@ function NewAdmission() {
           program_id: form.program_id || null,
           class_id: form.class_id || null,
           section_id: form.section_id || null,
+          admission_year_level: admissionClass?.year_level ?? 1,
           academic_session_id: form.academic_session_id,
           session: form.session,
           roll_number,
@@ -474,6 +477,7 @@ function NewAdmission() {
             annual_fee_schedule: feePayload.schedule,
             installment_count: feePayload.installmentCount,
             start_after_months: feePayload.startAfterMonths,
+            collection_plan_id: feePayload.collectionPlanId,
             admission_payment_breakdown: feePayload.admissionPayments,
           },
           feePayload.installments,

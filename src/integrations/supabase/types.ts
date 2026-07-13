@@ -35,6 +35,98 @@ export type Database = {
         };
         Relationships: [];
       };
+      announcement_sections: {
+        Row: {
+          announcement_id: string;
+          created_at: string;
+          section_id: string;
+        };
+        Insert: {
+          announcement_id: string;
+          created_at?: string;
+          section_id: string;
+        };
+        Update: {
+          announcement_id?: string;
+          created_at?: string;
+          section_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "announcement_sections_announcement_id_fkey";
+            columns: ["announcement_id"];
+            isOneToOne: false;
+            referencedRelation: "announcements";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "announcement_sections_section_id_fkey";
+            columns: ["section_id"];
+            isOneToOne: false;
+            referencedRelation: "sections";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      announcements: {
+        Row: {
+          academic_session_id: string;
+          body_text: string | null;
+          class_year_level: number | null;
+          content_type: Database["public"]["Enums"]["announcement_content_type"];
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          media_mime_type: string | null;
+          media_path: string | null;
+          published_at: string | null;
+          status: Database["public"]["Enums"]["announcement_status"];
+          target_gender: Database["public"]["Enums"]["section_gender"] | null;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          academic_session_id: string;
+          body_text?: string | null;
+          class_year_level?: number | null;
+          content_type: Database["public"]["Enums"]["announcement_content_type"];
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          media_mime_type?: string | null;
+          media_path?: string | null;
+          published_at?: string | null;
+          status?: Database["public"]["Enums"]["announcement_status"];
+          target_gender?: Database["public"]["Enums"]["section_gender"] | null;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          academic_session_id?: string;
+          body_text?: string | null;
+          class_year_level?: number | null;
+          content_type?: Database["public"]["Enums"]["announcement_content_type"];
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          media_mime_type?: string | null;
+          media_path?: string | null;
+          published_at?: string | null;
+          status?: Database["public"]["Enums"]["announcement_status"];
+          target_gender?: Database["public"]["Enums"]["section_gender"] | null;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "announcements_academic_session_id_fkey";
+            columns: ["academic_session_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_sessions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       admission_fee_policies: {
         Row: {
           academic_session_id: string | null;
@@ -134,27 +226,27 @@ export type Database = {
         Row: {
           id: string;
           user_id: string;
-          class_id: string;
+          section_id: string;
           created_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
-          class_id: string;
+          section_id: string;
           created_at?: string;
         };
         Update: {
           id?: string;
           user_id?: string;
-          class_id?: string;
+          section_id?: string;
           created_at?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "campus_incharge_assignments_class_id_fkey";
-            columns: ["class_id"];
+            foreignKeyName: "campus_incharge_assignments_section_id_fkey";
+            columns: ["section_id"];
             isOneToOne: false;
-            referencedRelation: "classes";
+            referencedRelation: "sections";
             referencedColumns: ["id"];
           },
         ];
@@ -347,6 +439,42 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      fee_collection_plans: {
+        Row: {
+          collection_months: number[];
+          created_at: string;
+          description: string | null;
+          due_day: number;
+          id: string;
+          is_active: boolean;
+          name: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          collection_months: number[];
+          created_at?: string;
+          description?: string | null;
+          due_day?: number;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          collection_months?: number[];
+          created_at?: string;
+          description?: string | null;
+          due_day?: number;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       fee_policy_components: {
         Row: {
@@ -1116,12 +1244,340 @@ export type Database = {
           },
         ];
       };
+      internal_test_series: {
+        Row: {
+          academic_session_id: string;
+          academic_year_start: number;
+          class_year_level: number;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          name: string;
+          updated_at: string;
+        };
+        Insert: {
+          academic_session_id: string;
+          academic_year_start: number;
+          class_year_level: number;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          name: string;
+          updated_at?: string;
+        };
+        Update: {
+          academic_session_id?: string;
+          academic_year_start?: number;
+          class_year_level?: number;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          name?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "internal_test_series_academic_session_id_fkey";
+            columns: ["academic_session_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_sessions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      internal_test_series_sections: {
+        Row: {
+          created_at: string;
+          section_id: string;
+          series_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          section_id: string;
+          series_id: string;
+        };
+        Update: {
+          created_at?: string;
+          section_id?: string;
+          series_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "internal_test_series_sections_section_id_fkey";
+            columns: ["section_id"];
+            isOneToOne: false;
+            referencedRelation: "sections";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "internal_test_series_sections_series_id_fkey";
+            columns: ["series_id"];
+            isOneToOne: false;
+            referencedRelation: "internal_test_series";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      internal_test_marks: {
+        Row: {
+          created_at: string;
+          entered_by: string | null;
+          id: string;
+          internal_test_id: string;
+          is_absent: boolean;
+          marks_obtained: number | null;
+          remarks: string | null;
+          student_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          entered_by?: string | null;
+          id?: string;
+          internal_test_id: string;
+          is_absent?: boolean;
+          marks_obtained?: number | null;
+          remarks?: string | null;
+          student_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          entered_by?: string | null;
+          id?: string;
+          internal_test_id?: string;
+          is_absent?: boolean;
+          marks_obtained?: number | null;
+          remarks?: string | null;
+          student_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "internal_test_marks_internal_test_id_fkey";
+            columns: ["internal_test_id"];
+            isOneToOne: false;
+            referencedRelation: "internal_tests";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "internal_test_marks_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      internal_tests: {
+        Row: {
+          academic_session_id: string;
+          academic_year_start: number;
+          class_year_level: number;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          max_marks: number;
+          paper_received: boolean;
+          passing_marks: number | null;
+          published_at: string | null;
+          section_id: string | null;
+          series_id: string | null;
+          status: Database["public"]["Enums"]["internal_test_status"];
+          subject_name: string;
+          teacher_name: string | null;
+          test_date: string;
+          test_name: string;
+          updated_at: string;
+        };
+        Insert: {
+          academic_session_id: string;
+          academic_year_start: number;
+          class_year_level: number;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          max_marks: number;
+          paper_received?: boolean;
+          passing_marks?: number | null;
+          published_at?: string | null;
+          section_id?: string | null;
+          series_id?: string | null;
+          status?: Database["public"]["Enums"]["internal_test_status"];
+          subject_name: string;
+          teacher_name?: string | null;
+          test_date: string;
+          test_name: string;
+          updated_at?: string;
+        };
+        Update: {
+          academic_session_id?: string;
+          academic_year_start?: number;
+          class_year_level?: number;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          max_marks?: number;
+          paper_received?: boolean;
+          passing_marks?: number | null;
+          published_at?: string | null;
+          section_id?: string | null;
+          series_id?: string | null;
+          status?: Database["public"]["Enums"]["internal_test_status"];
+          subject_name?: string;
+          teacher_name?: string | null;
+          test_date?: string;
+          test_name?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "internal_tests_academic_session_id_fkey";
+            columns: ["academic_session_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_sessions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "internal_tests_section_id_fkey";
+            columns: ["section_id"];
+            isOneToOne: false;
+            referencedRelation: "sections";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "internal_tests_series_id_fkey";
+            columns: ["series_id"];
+            isOneToOne: false;
+            referencedRelation: "internal_test_series";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      session_academic_year_closes: {
+        Row: {
+          academic_session_id: string;
+          academic_year_start: number;
+          closed_at: string;
+          created_at: string;
+          fee_cycle: number;
+          id: string;
+          metadata: Json;
+          student_count: number;
+          total_bad_debt: number;
+          total_collected: number;
+          total_outstanding: number;
+          total_payable: number;
+          total_waivers: number;
+        };
+        Insert: {
+          academic_session_id: string;
+          academic_year_start: number;
+          closed_at?: string;
+          created_at?: string;
+          fee_cycle: number;
+          id?: string;
+          metadata?: Json;
+          student_count?: number;
+          total_bad_debt?: number;
+          total_collected?: number;
+          total_outstanding?: number;
+          total_payable?: number;
+          total_waivers?: number;
+        };
+        Update: {
+          academic_session_id?: string;
+          academic_year_start?: number;
+          closed_at?: string;
+          created_at?: string;
+          fee_cycle?: number;
+          id?: string;
+          metadata?: Json;
+          student_count?: number;
+          total_bad_debt?: number;
+          total_collected?: number;
+          total_outstanding?: number;
+          total_payable?: number;
+          total_waivers?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "session_academic_year_closes_academic_session_id_fkey";
+            columns: ["academic_session_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_sessions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      student_academic_year_closes: {
+        Row: {
+          academic_session_id: string;
+          academic_year_start: number;
+          class_year_level: number | null;
+          closed_at: string;
+          collected: number;
+          created_at: string;
+          fee_cycle: number;
+          id: string;
+          outstanding: number;
+          payable: number;
+          section_id: string | null;
+          student_id: string;
+        };
+        Insert: {
+          academic_session_id: string;
+          academic_year_start: number;
+          class_year_level?: number | null;
+          closed_at?: string;
+          collected?: number;
+          created_at?: string;
+          fee_cycle: number;
+          id?: string;
+          outstanding?: number;
+          payable?: number;
+          section_id?: string | null;
+          student_id: string;
+        };
+        Update: {
+          academic_session_id?: string;
+          academic_year_start?: number;
+          class_year_level?: number | null;
+          closed_at?: string;
+          collected?: number;
+          created_at?: string;
+          fee_cycle?: number;
+          id?: string;
+          outstanding?: number;
+          payable?: number;
+          section_id?: string | null;
+          student_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "student_academic_year_closes_academic_session_id_fkey";
+            columns: ["academic_session_id"];
+            isOneToOne: false;
+            referencedRelation: "academic_sessions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "student_academic_year_closes_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       student_fee_installments: {
         Row: {
+          academic_year_start: number | null;
           amount: number;
           component_type: Database["public"]["Enums"]["fee_component_type"] | null;
           created_at: string;
           due_date: string;
+          fee_cycle: number;
           fee_plan_id: string;
           id: string;
           label: string;
@@ -1131,10 +1587,12 @@ export type Database = {
           student_id: string;
         };
         Insert: {
+          academic_year_start?: number | null;
           amount: number;
           component_type?: Database["public"]["Enums"]["fee_component_type"] | null;
           created_at?: string;
           due_date: string;
+          fee_cycle?: number;
           fee_plan_id: string;
           id?: string;
           label: string;
@@ -1144,10 +1602,12 @@ export type Database = {
           student_id: string;
         };
         Update: {
+          academic_year_start?: number | null;
           amount?: number;
           component_type?: Database["public"]["Enums"]["fee_component_type"] | null;
           created_at?: string;
           due_date?: string;
+          fee_cycle?: number;
           fee_plan_id?: string;
           id?: string;
           label?: string;
@@ -1343,6 +1803,7 @@ export type Database = {
           board_registration_fee: number;
           board_examination_fee: number;
           classes_fee_total: number | null;
+          collection_plan_id: string | null;
           created_at: string;
           enrollment_type: Database["public"]["Enums"]["student_enrollment_type"];
           fee_clearance_months: number | null;
@@ -1368,6 +1829,7 @@ export type Database = {
           board_registration_fee?: number;
           board_examination_fee?: number;
           classes_fee_total?: number | null;
+          collection_plan_id?: string | null;
           created_at?: string;
           enrollment_type?: Database["public"]["Enums"]["student_enrollment_type"];
           fee_clearance_months?: number | null;
@@ -1393,6 +1855,7 @@ export type Database = {
           board_registration_fee?: number;
           board_examination_fee?: number;
           classes_fee_total?: number | null;
+          collection_plan_id?: string | null;
           created_at?: string;
           enrollment_type?: Database["public"]["Enums"]["student_enrollment_type"];
           fee_clearance_months?: number | null;
@@ -1813,6 +2276,7 @@ export type Database = {
       is_student_owner: { Args: { _student_id: string }; Returns: boolean };
       is_document_staff: { Args: { _user_id: string }; Returns: boolean };
       is_student_document_owner: { Args: { _student_id: string }; Returns: boolean };
+      is_exam_staff: { Args: { _user_id: string }; Returns: boolean };
       is_staff: { Args: { _user_id: string }; Returns: boolean };
       next_admission_number: { Args: { p_session_id: string }; Returns: string };
       next_finance_number: { Args: { p_key: string }; Returns: string };
@@ -1841,6 +2305,13 @@ export type Database = {
           p_voucher_id?: string;
         };
         Returns: string;
+      };
+      write_off_student_remaining_fees: {
+        Args: {
+          p_reason?: string;
+          p_student_id: string;
+        };
+        Returns: number;
       };
       review_student_document: {
         Args: {
@@ -1885,6 +2356,7 @@ export type Database = {
         | "finance_admin"
         | "finance_officer"
         | "cashier"
+        | "exam_officer"
         | "receptionist"
         | "teacher"
         | "student";
@@ -1906,6 +2378,9 @@ export type Database = {
         | "adjustment"
         | "reversal"
         | "bad_debt";
+      announcement_content_type: "text" | "voice" | "video";
+      announcement_status: "draft" | "published";
+      internal_test_status: "draft" | "published";
       inquiry_status:
         | "new"
         | "follow_up"
@@ -2069,6 +2544,7 @@ export const Constants = {
         "finance_admin",
         "finance_officer",
         "cashier",
+        "exam_officer",
         "receptionist",
         "teacher",
         "student",
@@ -2093,6 +2569,9 @@ export const Constants = {
         "reversal",
         "bad_debt",
       ],
+      announcement_content_type: ["text", "voice", "video"],
+      announcement_status: ["draft", "published"],
+      internal_test_status: ["draft", "published"],
       inquiry_status: [
         "new",
         "follow_up",

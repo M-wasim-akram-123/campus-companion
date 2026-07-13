@@ -1,5 +1,7 @@
 import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { formatCurrency } from "@/lib/fees";
 import type {
   CashierSession,
@@ -14,8 +16,109 @@ import type {
 
 export { formatCurrency };
 
-export function installmentBalance(inst: { amount: number; paid_amount: number }): number {
-  return Math.max(0, Number(inst.amount) - Number(inst.paid_amount));
+export function installmentBalance(
+  inst: {
+    amount: number;
+    paid_amount: number;
+    status?: string | null;
+  },
+  badDebtCredit = 0,
+): number {
+  if (inst.status === "written_off") return 0;
+  return Math.max(0, Number(inst.amount) - Number(inst.paid_amount) - badDebtCredit);
+}
+
+export async function fetchBadDebtByInstallment(
+  studentIds: string[],
+  client: SupabaseClient<Database> = supabase,
+): Promise<Map<string, number>> {
+  const map = new Map<string, number>();
+  if (!studentIds.length) return map;
+
+  const { data, error } = await client
+    .from("student_finance_ledger")
+    .select("installment_id, credit")
+    .in("student_id", studentIds)
+    .eq("entry_type", "bad_debt");
+  if (error) {
+    console.warn("Bad debt ledger lookup unavailable.", error);
+    return map;
+  }
+
+  for (const row of data ?? []) {
+    if (!row.installment_id) continue;
+    const credit = Number(row.credit ?? 0);
+    if (credit <= 0) continue;
+    map.set(row.installment_id, (map.get(row.installment_id) ?? 0) + credit);
+  }
+  return map;
+}
+
+const TERMINAL_STUDENT_STATUSES = ["left", "dropped", "bad_debt"] as const;
+export type TerminalStudentStatus = (typeof TERMINAL_STUDENT_STATUSES)[number];
+
+export function isTerminalStudentStatus(status: string): status is TerminalStudentStatus {
+  return (TERMINAL_STUDENT_STATUSES as readonly string[]).includes(status);
+}
+
+export async function writeOffStudentRemainingFees(
+  studentId: string,
+  reason?: string,
+): Promise<number> {
+  const { data, error } = await supabase.rpc("write_off_student_remaining_fees", {
+    p_student_id: studentId,
+    p_reason: reason ?? null,
+  });
+  if (error) {
+    if (error.message.includes("write_off_student_remaining_fees")) {
+      throw new Error(
+        "Fee write-off is not enabled in the database yet. Run supabase/patch-bad-debt-writeoff.sql in Supabase SQL Editor.",
+      );
+    }
+    throw error;
+  }
+  return Number(data ?? 0);
+}
+
+/** Apply payment to oldest unpaid installments first (sort_order, then due_date). */
+export function allocatePaymentFifo(
+  installments: Pick<
+    FeeInstallment,
+    "id" | "amount" | "paid_amount" | "sort_order" | "label" | "due_date" | "status"
+  >[],
+  totalAmount: number,
+): { installmentId: string; amount: number; label: string }[] {
+  if (totalAmount <= 0) return [];
+
+  const ordered = [...installments].sort((a, b) => {
+    const orderDiff = a.sort_order - b.sort_order;
+    if (orderDiff !== 0) return orderDiff;
+    return a.due_date.localeCompare(b.due_date);
+  });
+
+  let remaining = totalAmount;
+  const allocations: { installmentId: string; amount: number; label: string }[] = [];
+
+  for (const row of ordered) {
+    if (remaining <= 0.001) break;
+    const balance = installmentBalance(row);
+    if (balance <= 0) continue;
+    const applied = Math.min(balance, remaining);
+    allocations.push({
+      installmentId: row.id,
+      amount: applied,
+      label: row.label,
+    });
+    remaining -= applied;
+  }
+
+  if (remaining > 0.01) {
+    throw new Error(
+      `Payment exceeds total outstanding balance by ${formatCurrency(remaining)}.`,
+    );
+  }
+
+  return allocations;
 }
 
 /** Apply a payment starting at one installment; surplus rolls forward to later installments. */
@@ -1014,9 +1117,15 @@ export async function fetchOverdueInstallments() {
       "*, students(id, full_name, roll_number, father_name, phone, guardian_phone, guardian_name, academic_session_id, section_id, programs(name), sections(name, gender))",
     )
     .neq("status", "paid")
+    .neq("status", "written_off")
     .order("due_date");
   if (error) throw error;
-  return (data ?? []).filter((r) => installmentBalance(r) > 0);
+  const rows = data ?? [];
+  const studentIds = [...new Set(rows.map((r) => r.student_id))];
+  const badDebtByInstallment = await fetchBadDebtByInstallment(studentIds);
+  return rows.filter(
+    (r) => installmentBalance(r, badDebtByInstallment.get(r.id) ?? 0) > 0,
+  );
 }
 
 export function exportOverdueCsv(

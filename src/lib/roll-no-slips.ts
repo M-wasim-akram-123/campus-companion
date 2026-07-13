@@ -594,7 +594,48 @@ export function exportRollNoSlipReport(rows: RollNoSlipStudentRow[], filenamePre
     row.request?.reason ?? "",
   ]);
 
-  const lines = [header.join(","), ...data.map((row) => row.map(csvEscape).join(","))];
+  const totalUnpaid = rows.reduce((sum, row) => sum + row.totalBalance, 0);
+  const totalApproved = rows.reduce(
+    (sum, row) => sum + (row.request?.approved_amount != null ? Number(row.request.approved_amount) : 0),
+    0,
+  );
+
+  const footer =
+    rows.length > 0
+      ? [
+          [
+            "TOTAL",
+            `${rows.length} student${rows.length === 1 ? "" : "s"}`,
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            String(totalUnpaid),
+            "",
+            "",
+            "",
+            "",
+            totalApproved > 0 ? String(totalApproved) : "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+          ],
+        ]
+      : [];
+
+  const lines = [
+    header.join(","),
+    ...data.map((row) => row.map(csvEscape).join(",")),
+    ...footer.map((row) => row.map(csvEscape).join(",")),
+  ];
   const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");

@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ import {
   YAxis,
 } from "recharts";
 import { useAuth } from "@/hooks/use-auth";
+import { defaultHomePathForRoles } from "@/lib/auth-routing";
 import { CAMPUS_NAME } from "@/lib/campus";
 import { fetchFinanceStats, formatCurrency } from "@/lib/finance";
 import { fetchProfileNames } from "@/lib/staff";
@@ -78,11 +79,20 @@ type OfficerInquiryPerformance = {
 };
 
 function Dashboard() {
-  const { user, roles, hasRole, hasAnyRole } = useAuth();
+  const navigate = useNavigate();
+  const { user, roles, hasRole, hasAnyRole, loading } = useAuth();
   const [selectedPerformanceMonth, setSelectedPerformanceMonth] = useState(startOfMonthKey);
   const [performanceFrom, setPerformanceFrom] = useState("");
   const [performanceTo, setPerformanceTo] = useState("");
   const isSuperAdmin = hasRole("super_admin");
+  const homePath = defaultHomePathForRoles(roles);
+
+  useEffect(() => {
+    if (!loading && !isSuperAdmin && homePath !== "/dashboard") {
+      navigate({ to: homePath, replace: true });
+    }
+  }, [loading, isSuperAdmin, homePath, navigate]);
+
   const canViewFinance = hasAnyRole(["super_admin", "finance_admin", "finance_officer", "cashier"]);
   const canViewAdmissions = hasAnyRole(["super_admin", "admission_officer", "receptionist"]);
   const canViewStudents = hasAnyRole(["super_admin", "admission_officer", "hr", "teacher"]);

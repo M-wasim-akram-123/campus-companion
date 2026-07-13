@@ -14,40 +14,40 @@ const BROAD_STUDENT_ACCESS_ROLES: AppRole[] = [
   "sub_admission_officer",
 ];
 
-/** Staff with full student module access (not class-scoped campus incharge). */
+/** Staff with full student module access (not section-scoped campus incharge). */
 export function hasBroadStudentAccess(roles: AppRole[]): boolean {
   return roles.some((role) => BROAD_STUDENT_ACCESS_ROLES.includes(role));
 }
 
-/** Campus incharge without broader roles — limited to assigned classes, view-only. */
+/** Campus incharge without broader roles — limited to assigned sections, view-only. */
 export function isCampusInchargeScoped(roles: AppRole[]): boolean {
   return roles.includes("campus_incharge") && !hasBroadStudentAccess(roles);
 }
 
-export async function fetchCampusInchargeClassIds(userId?: string): Promise<string[]> {
+export async function fetchCampusInchargeSectionIds(userId?: string): Promise<string[]> {
   const { data: userRes } = await supabase.auth.getUser();
   const uid = userId ?? userRes.user?.id;
   if (!uid) return [];
 
   const { data, error } = await supabase
     .from("campus_incharge_assignments")
-    .select("class_id")
+    .select("section_id")
     .eq("user_id", uid);
   if (error) throw error;
-  return (data ?? []).map((row) => row.class_id);
+  return (data ?? []).map((row) => row.section_id);
 }
 
-export async function saveCampusInchargeClassIds(userId: string, classIds: string[]) {
+export async function saveCampusInchargeSectionIds(userId: string, sectionIds: string[]) {
   const { error: deleteError } = await supabase
     .from("campus_incharge_assignments")
     .delete()
     .eq("user_id", userId);
   if (deleteError) throw deleteError;
 
-  if (!classIds.length) return;
+  if (!sectionIds.length) return;
 
   const { error: insertError } = await supabase.from("campus_incharge_assignments").insert(
-    classIds.map((class_id) => ({ user_id: userId, class_id })),
+    sectionIds.map((section_id) => ({ user_id: userId, section_id })),
   );
   if (insertError) throw insertError;
 }
@@ -55,8 +55,19 @@ export async function saveCampusInchargeClassIds(userId: string, classIds: strin
 export async function fetchCampusInchargeAssignmentsForUser(userId: string): Promise<string[]> {
   const { data, error } = await supabase
     .from("campus_incharge_assignments")
-    .select("class_id")
+    .select("section_id")
     .eq("user_id", userId);
   if (error) throw error;
-  return (data ?? []).map((row) => row.class_id);
+  return (data ?? []).map((row) => row.section_id);
+}
+
+/** @deprecated Use fetchCampusInchargeSectionIds */
+export const fetchCampusInchargeClassIds = fetchCampusInchargeSectionIds;
+
+/** @deprecated Use saveCampusInchargeSectionIds */
+export const saveCampusInchargeClassIds = saveCampusInchargeSectionIds;
+
+export function sectionDisplayLabel(section: { name: string; gender?: string | null }): string {
+  const gender = section.gender === "girls" ? "Girls" : "Boys";
+  return `${gender} — ${section.name}`;
 }
