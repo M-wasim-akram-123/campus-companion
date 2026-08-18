@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +23,11 @@ import { SessionBudgetCard } from "@/components/finance/SessionBudgetCard";
 import { CampusInchargeCollectionChart } from "@/components/finance/CampusInchargeCollectionChart";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import {
+  financeScopeLabel,
+  listFinanceAcademicSessions,
+  resolveFinanceProgramScope,
+} from "@/lib/finance-scope";
 import {
   Bar,
   BarChart,
@@ -78,15 +82,15 @@ function MiniCashStat({ label, value, tone = "default" }: { label: string; value
 
 function FinanceDashboard() {
   const qc = useQueryClient();
-  const { hasAnyRole } = useAuth();
+  const { hasAnyRole, roles } = useAuth();
+  const financeScope = resolveFinanceProgramScope(roles);
   const [openingCash, setOpeningCash] = useState("");
   const [countedCash, setCountedCash] = useState("");
   const [cashierNotes, setCashierNotes] = useState("");
   const [signoffNotes, setSignoffNotes] = useState("");
   const { data: sessions } = useQuery({
-    queryKey: ["academic-sessions"],
-    queryFn: async () =>
-      (await supabase.from("academic_sessions").select("*").order("start_year", { ascending: false })).data ?? [],
+    queryKey: ["finance-academic-sessions", financeScope],
+    queryFn: () => listFinanceAcademicSessions(financeScope),
   });
 
   const active = sessions?.find((s) => s.is_active);
@@ -174,13 +178,18 @@ function FinanceDashboard() {
   const currentExpectedDrawerCash = Number(cashierSession?.opening_cash ?? 0) + currentCashCollected;
   const countedCashNumber = Number(countedCash) || 0;
   const closingVariance = cashierSession ? countedCashNumber - currentExpectedDrawerCash : 0;
-  const canSignOffCashiers = hasAnyRole(["super_admin", "finance_admin", "finance_officer"]);
+  const canSignOffCashiers = hasAnyRole([
+    "super_admin",
+    "finance_admin",
+    "finance_officer",
+    "bs_finance_admin",
+  ]);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Finance & revenue</h1>
+          <h1 className="text-3xl font-bold">{financeScopeLabel(financeScope)}</h1>
           <p className="text-muted-foreground">
             All income from students — synced from installments & cashier receipts
           </p>
@@ -236,7 +245,7 @@ function FinanceDashboard() {
             <SelectContent>
               {sessions?.map((s) => (
                 <SelectItem key={s.id} value={s.id}>
-                  {s.label}{s.is_active ? " (active)" : ""}
+                  {s.label}{s.is_active ? " (running)" : ""}
                 </SelectItem>
               ))}
             </SelectContent>

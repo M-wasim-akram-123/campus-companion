@@ -15,6 +15,13 @@ import { RecordPaymentDialog } from "@/components/finance/RecordPaymentDialog";
 import type { FeeInstallment } from "@/lib/finance-types";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  financeScopeLabel,
+  financeScopeProgramType,
+  listFinanceAcademicSessions,
+  resolveFinanceProgramScope,
+} from "@/lib/finance-scope";
 
 export const Route = createFileRoute("/_authenticated/finance/collect")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -26,6 +33,9 @@ export const Route = createFileRoute("/_authenticated/finance/collect")({
 
 function FeeCollection() {
   const qc = useQueryClient();
+  const { roles } = useAuth();
+  const financeScope = resolveFinanceProgramScope(roles);
+  const programTypeFilter = financeScopeProgramType(financeScope);
   const { studentId, installmentId } = Route.useSearch();
   const [search, setSearch] = useState("");
   const [sessionFilter, setSessionFilter] = useState("__active__");
@@ -41,13 +51,18 @@ function FeeCollection() {
   }, [studentId]);
 
   const { data: sessions } = useQuery({
-    queryKey: ["academic-sessions"],
-    queryFn: async () =>
-      (await supabase.from("academic_sessions").select("*").order("start_year", { ascending: false })).data ?? [],
+    queryKey: ["finance-academic-sessions", financeScope],
+    queryFn: () => listFinanceAcademicSessions(financeScope),
   });
 
-  const activeSessionId = sessions?.find((session) => session.is_active)?.id ?? sessions?.[0]?.id ?? "";
-  const effectiveSessionId = sessionFilter === "__active__" ? activeSessionId : sessionFilter === "__all__" ? "" : sessionFilter;
+  const runningSessionIds = (sessions ?? []).filter((s) => s.is_active).map((s) => s.id);
+  const effectiveSessionId =
+    sessionFilter === "__active__"
+      ? null
+      : sessionFilter === "__all__"
+        ? ""
+        : sessionFilter;
+  const filterRunningCohorts = sessionFilter === "__active__";
 
   const { data: classes } = useQuery({
     queryKey: ["collection-classes"],
@@ -70,34 +85,73 @@ function FeeCollection() {
     : classGroups.find((group) => group.name === classFilter)?.ids ?? [];
 
   const { data: sections } = useQuery({
-    queryKey: ["collection-sections", effectiveSessionId, classFilter, genderFilter],
+    queryKey: [
+      "collection-sections",
+      sessionFilter,
+      effectiveSessionId,
+      runningSessionIds.join(","),
+      classFilter,
+      genderFilter,
+    ],
     queryFn: async () => {
       let query = supabase
         .from("sections")
         .select("id, name, gender, class_id, classes(name)")
         .order("name");
-      if (effectiveSessionId) query = query.eq("session_id", effectiveSessionId);
+      if (filterRunningCohorts) {
+        if (!runningSessionIds.length) return [];
+        query = query.in("session_id", runningSessionIds);
+      } else if (effectiveSessionId) {
+        query = query.eq("session_id", effectiveSessionId);
+      }
       if (selectedClassIds.length) query = query.in("class_id", selectedClassIds);
-      if (genderFilter !== "__all__") query = query.eq("gender", genderFilter);
+      if (genderFilter !== "__all__") {
+        query = query.eq("gender", genderFilter as "boys" | "girls");
+      }
       const { data, error } = await query;
       if (error) throw error;
       return data ?? [];
     },
   });
 
-  const hasFilters = !!effectiveSessionId || genderFilter !== "__all__" || classFilter !== "__all__" || sectionFilter !== "__all__";
+  const hasFilters =
+    filterRunningCohorts ||
+    !!effectiveSessionId ||
+    genderFilter !== "__all__" ||
+    classFilter !== "__all__" ||
+    sectionFilter !== "__all__";
 
   const { data: students } = useQuery({
-    queryKey: ["students-search", search, effectiveSessionId, genderFilter, classFilter, sectionFilter],
+    queryKey: [
+      "students-search",
+      financeScope,
+      search,
+      sessionFilter,
+      effectiveSessionId,
+      runningSessionIds.join(","),
+      genderFilter,
+      classFilter,
+      sectionFilter,
+    ],
     enabled: search.length >= 2 || hasFilters,
     queryFn: async () => {
       let query = supabase
         .from("students")
-        .select("id, full_name, roll_number, programs(name), classes(name), sections(name, gender), academic_sessions(label)")
+        .select(
+          "id, full_name, roll_number, programs!inner(name, type), classes(name), sections(name, gender), academic_sessions(label)",
+        )
         .eq("status", "active")
         .order("full_name")
         .limit(50);
-      if (effectiveSessionId) query = query.eq("academic_session_id", effectiveSessionId);
+      if (programTypeFilter) {
+        query = query.eq("programs.type", programTypeFilter);
+      }
+      if (filterRunningCohorts) {
+        if (!runningSessionIds.length) return [];
+        query = query.in("academic_session_id", runningSessionIds);
+      } else if (effectiveSessionId) {
+        query = query.eq("academic_session_id", effectiveSessionId);
+      }
       if (genderFilter !== "__all__") query = query.eq("gender", genderFilter);
       if (selectedClassIds.length) query = query.in("class_id", selectedClassIds);
       if (sectionFilter !== "__all__") query = query.eq("section_id", sectionFilter);
@@ -118,14 +172,19 @@ function FeeCollection() {
   });
 
   const { data: selectedStudent } = useQuery({
-    queryKey: ["finance-collect-student", selectedId],
+    queryKey: ["finance-collect-student", selectedId, financeScope],
     enabled: !!selectedId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("students")
-        .select("id, full_name, roll_number, programs(name), classes(name), sections(name, gender), academic_sessions(label)")
-        .eq("id", selectedId!)
-        .maybeSingle();
+        .select(
+          "id, full_name, roll_number, programs!inner(name, type), classes(name), sections(name, gender), academic_sessions(label)",
+        )
+        .eq("id", selectedId!);
+      if (programTypeFilter) {
+        query = query.eq("programs.type", programTypeFilter);
+      }
+      const { data, error } = await query.maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -154,7 +213,7 @@ function FeeCollection() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Fee collection</h1>
+        <h1 className="text-3xl font-bold">{financeScopeLabel(financeScope)} · Fee collection</h1>
         <p className="text-muted-foreground">Search student → record payment or issue voucher</p>
       </div>
 
@@ -167,11 +226,11 @@ function FeeCollection() {
               <Select value={sessionFilter} onValueChange={(v) => { setSessionFilter(v); setSectionFilter("__all__"); setSelectedId(null); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__active__">Active session</SelectItem>
+                  <SelectItem value="__active__">All running cohorts</SelectItem>
                   <SelectItem value="__all__">All sessions</SelectItem>
                   {sessions?.map((session) => (
                     <SelectItem key={session.id} value={session.id}>
-                      {session.label}{session.is_active ? " (active)" : ""}
+                      {session.label}{session.is_active ? " (running)" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>

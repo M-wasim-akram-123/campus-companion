@@ -3,6 +3,15 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { createProgramWithClasses, sectionGenderLabel, type SectionGender } from "@/lib/academic";
+import {
+  formatSessionLabel,
+  listAcademicSessions,
+  programTypeLabel,
+  sessionsForProgramType,
+  suggestSessionEndYear,
+  type AcademicSessionRow,
+  type ProgramType as SessionProgramType,
+} from "@/lib/academic-sessions";
 import type { Database } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,7 +75,8 @@ function AcademicSetup() {
       <div>
         <h1 className="text-3xl font-bold">Academic setup</h1>
         <p className="text-muted-foreground">
-          Sessions, programs (including BS), and sections by year with separate boys and girls groups
+          Overlapping cohort sessions (Intermediate 2 years, BS 4 years), programs, and Intermediate
+          boys/girls sections
         </p>
       </div>
       <PromotionPanel />
@@ -92,35 +102,38 @@ function AcademicSetup() {
 
 function SessionsTab() {
   const qc = useQueryClient();
-  const [label, setLabel] = useState("");
+  const [programType, setProgramType] = useState<SessionProgramType>("intermediate");
   const [startYear, setStartYear] = useState(String(new Date().getFullYear()));
-  const [endYear, setEndYear] = useState(String(new Date().getFullYear() + 1));
+  const endYear = suggestSessionEndYear(parseInt(startYear, 10) || new Date().getFullYear(), programType);
+  const label = formatSessionLabel(parseInt(startYear, 10) || new Date().getFullYear(), endYear);
   const [saving, setSaving] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState("");
   const [editStart, setEditStart] = useState("");
   const [editEnd, setEditEnd] = useState("");
+  const [editType, setEditType] = useState<SessionProgramType>("intermediate");
 
-  const { data: sessions, isLoading } = useQuery({
+  const { data: sessions = [], isLoading } = useQuery({
     queryKey: ["academic-sessions"],
-    queryFn: async () =>
-      (await supabase.from("academic_sessions").select("*").order("start_year", { ascending: false })).data ?? [],
+    queryFn: listAcademicSessions,
   });
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!label.trim()) return toast.error("Session label is required");
+    const start = parseInt(startYear, 10);
+    if (!Number.isFinite(start)) return toast.error("Start year is required");
+    const end = suggestSessionEndYear(start, programType);
     setSaving(true);
     try {
       const { error } = await supabase.from("academic_sessions").insert({
-        label: label.trim(),
-        start_year: parseInt(startYear, 10),
-        end_year: parseInt(endYear, 10),
-        is_active: false,
+        label: formatSessionLabel(start, end),
+        start_year: start,
+        end_year: end,
+        program_type: programType,
+        is_active: true,
       });
       if (error) throw error;
-      toast.success("Session created");
-      setLabel("");
+      toast.success("Running cohort session created");
       qc.invalidateQueries({ queryKey: ["academic-sessions"] });
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed");
@@ -129,22 +142,30 @@ function SessionsTab() {
     }
   };
 
-  const setActive = async (id: string) => {
-    await supabase.from("academic_sessions").update({ is_active: false }).neq("id", id);
-    const { error } = await supabase.from("academic_sessions").update({ is_active: true }).eq("id", id);
+  const setRunning = async (id: string, running: boolean) => {
+    const { error } = await supabase
+      .from("academic_sessions")
+      .update({ is_active: running })
+      .eq("id", id);
     if (error) return toast.error(error.message);
-    toast.success("Active session updated");
+    toast.success(running ? "Session marked running" : "Session marked completed");
     qc.invalidateQueries({ queryKey: ["academic-sessions"] });
   };
 
   const updateSession = async () => {
     if (!editId) return;
+    const start = parseInt(editStart, 10);
+    const end = parseInt(editEnd, 10);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+      return toast.error("End year must be after start year");
+    }
     const { error } = await supabase
       .from("academic_sessions")
       .update({
-        label: editLabel.trim(),
-        start_year: parseInt(editStart, 10),
-        end_year: parseInt(editEnd, 10),
+        label: editLabel.trim() || formatSessionLabel(start, end),
+        start_year: start,
+        end_year: end,
+        program_type: editType,
       })
       .eq("id", editId);
     if (error) return toast.error(error.message);
@@ -162,23 +183,51 @@ function SessionsTab() {
 
   return (
     <Card>
-      <CardHeader><CardTitle>Academic sessions</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle>Cohort sessions</CardTitle>
+      </CardHeader>
       <CardContent className="space-y-6">
+        <p className="text-sm text-muted-foreground">
+          Multiple sessions can run at once (e.g. Intermediate 2026-2028 and 2027-2029, BS 2026-2030 and
+          2027-2031). New intakes start every year while older cohorts keep running until they pass out.
+        </p>
         <form onSubmit={save} className="grid gap-4 sm:grid-cols-4">
-          <div className="space-y-2 sm:col-span-2">
-            <Label>Label *</Label>
-            <Input placeholder="2025-2026" value={label} onChange={(e) => setLabel(e.target.value)} required />
+          <div className="space-y-2">
+            <Label>Track *</Label>
+            <Select
+              value={programType}
+              onValueChange={(v) => setProgramType(v as SessionProgramType)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="intermediate">Intermediate (2 years)</SelectItem>
+                <SelectItem value="bs">BS (4 years)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
-            <Label>Start year</Label>
-            <Input type="number" value={startYear} onChange={(e) => setStartYear(e.target.value)} />
+            <Label>Start year *</Label>
+            <Input
+              type="number"
+              value={startYear}
+              onChange={(e) => setStartYear(e.target.value)}
+              required
+            />
           </div>
           <div className="space-y-2">
             <Label>End year</Label>
-            <Input type="number" value={endYear} onChange={(e) => setEndYear(e.target.value)} />
+            <Input type="number" value={String(endYear)} disabled />
+          </div>
+          <div className="space-y-2">
+            <Label>Label</Label>
+            <Input value={label} disabled />
           </div>
           <div className="sm:col-span-4">
-            <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Add session"}</Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving..." : "Add running session"}
+            </Button>
           </div>
         </form>
 
@@ -189,38 +238,95 @@ function SessionsTab() {
             <TableHeader>
               <TableRow>
                 <TableHead>Label</TableHead>
+                <TableHead>Track</TableHead>
                 <TableHead>Years</TableHead>
-                <TableHead>Active</TableHead>
-                <TableHead className="w-40">Actions</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="w-48">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sessions?.map((s) => (
+              {sessions.map((s: AcademicSessionRow) => (
                 <TableRow key={s.id}>
                   {editId === s.id ? (
                     <>
                       <TableCell>
-                        <Input value={editLabel} onChange={(e) => setEditLabel(e.target.value)} className="h-8" />
+                        <Input
+                          value={editLabel}
+                          onChange={(e) => setEditLabel(e.target.value)}
+                          className="h-8"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={editType}
+                          onValueChange={(v) => {
+                            const t = v as SessionProgramType;
+                            setEditType(t);
+                            const start = parseInt(editStart, 10);
+                            if (Number.isFinite(start)) {
+                              const end = suggestSessionEndYear(start, t);
+                              setEditEnd(String(end));
+                              setEditLabel(formatSessionLabel(start, end));
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="intermediate">Intermediate</SelectItem>
+                            <SelectItem value="bs">BS</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="flex gap-1">
-                        <Input value={editStart} onChange={(e) => setEditStart(e.target.value)} className="h-8 w-20" />
-                        <Input value={editEnd} onChange={(e) => setEditEnd(e.target.value)} className="h-8 w-20" />
+                        <Input
+                          value={editStart}
+                          onChange={(e) => {
+                            setEditStart(e.target.value);
+                            const start = parseInt(e.target.value, 10);
+                            if (Number.isFinite(start)) {
+                              const end = suggestSessionEndYear(start, editType);
+                              setEditEnd(String(end));
+                              setEditLabel(formatSessionLabel(start, end));
+                            }
+                          }}
+                          className="h-8 w-20"
+                        />
+                        <Input
+                          value={editEnd}
+                          onChange={(e) => setEditEnd(e.target.value)}
+                          className="h-8 w-20"
+                        />
                       </TableCell>
-                      <TableCell>{s.is_active ? "Yes" : "No"}</TableCell>
+                      <TableCell>{s.is_active ? "Running" : "Completed"}</TableCell>
                       <TableCell className="space-x-1">
-                        <Button size="sm" onClick={updateSession}>Save</Button>
-                        <Button size="sm" variant="ghost" onClick={() => setEditId(null)}>Cancel</Button>
+                        <Button size="sm" onClick={updateSession}>
+                          Save
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setEditId(null)}>
+                          Cancel
+                        </Button>
                       </TableCell>
                     </>
                   ) : (
                     <>
                       <TableCell className="font-medium">{s.label}</TableCell>
-                      <TableCell>{s.start_year} – {s.end_year}</TableCell>
-                      <TableCell>{s.is_active ? "Active" : "—"}</TableCell>
+                      <TableCell>{programTypeLabel(s.program_type)}</TableCell>
+                      <TableCell>
+                        {s.start_year} – {s.end_year}
+                      </TableCell>
+                      <TableCell>{s.is_active ? "Running" : "Completed"}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          {!s.is_active && (
-                            <Button size="sm" variant="outline" onClick={() => setActive(s.id)}>Set active</Button>
+                          {s.is_active ? (
+                            <Button size="sm" variant="outline" onClick={() => setRunning(s.id, false)}>
+                              Complete
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="outline" onClick={() => setRunning(s.id, true)}>
+                              Mark running
+                            </Button>
                           )}
                           <Button
                             size="sm"
@@ -230,24 +336,29 @@ function SessionsTab() {
                               setEditLabel(s.label);
                               setEditStart(String(s.start_year));
                               setEditEnd(String(s.end_year));
+                              setEditType(s.program_type);
                             }}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button size="sm" variant="ghost"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                              <Button size="sm" variant="ghost">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Delete session?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Sections linked to this session must be removed first.
+                                  Linked sections, policies, and enrollments must be removed first.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => deleteSession(s.id)}>Delete</AlertDialogAction>
+                                <AlertDialogAction onClick={() => deleteSession(s.id)}>
+                                  Delete
+                                </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
@@ -297,17 +408,17 @@ function PromotionPanel() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Annual student promotion</CardTitle>
+        <CardTitle className="text-base">Intermediate annual promotion</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm text-muted-foreground">
         <p>
-          From <strong>1 July</strong> each academic year, active students move to the next class/section,
-          2nd-year fee installments are created from saved projections, and campus incharge assignments are
-          mirrored to the matching 2nd-year section.
+          From <strong>1 July</strong> each academic year, active <strong>Intermediate</strong> students move
+          to the next class/section. BS students are promoted semester-by-semester in LMS (Close &amp; promote),
+          not by this annual tool.
         </p>
         <p>
-          Create matching 2nd-year sections (same names as 1st year) before promotion runs. Promotion also runs
-          automatically once per day when staff log in.
+          Create matching 2nd-year boys/girls sections (same names as 1st year) before Intermediate promotion
+          runs. Promotion also runs automatically once per day when staff log in.
         </p>
         <Button type="button" variant="outline" onClick={runNow} disabled={running}>
           {running ? "Running…" : "Run promotion now"}
@@ -335,7 +446,11 @@ function ProgramsTab() {
     setSaving(true);
     try {
       await createProgramWithClasses(name.trim(), type, parseInt(duration, 10) || (type === "intermediate" ? 2 : 4));
-      toast.success("Program created with year classes");
+      toast.success(
+        type === "bs"
+          ? "BS program created (LMS department synced automatically)"
+          : "Intermediate program created with 1st & 2nd year classes",
+      );
       setName("");
       qc.invalidateQueries({ queryKey: ["programs"] });
       qc.invalidateQueries({ queryKey: ["classes"] });
@@ -396,7 +511,9 @@ function ProgramsTab() {
           </div>
         </form>
         <p className="text-sm text-muted-foreground">
-          Intermediate is fixed at 2 years (1st & 2nd). BS programs auto-create BS Year 1–N classes.
+          Intermediate is fixed at 2 years (1st &amp; 2nd) with boys/girls sections. BS programs are 4-year
+          semester degrees — creating a BS program also creates its LMS department (same thing for this
+          campus). BS has no Intermediate-style sections.
         </p>
 
         {isLoading ? (
@@ -468,14 +585,21 @@ function SectionsTab() {
 
   const { data: programs } = useQuery({
     queryKey: ["programs"],
-    queryFn: async () => (await supabase.from("programs").select("*").order("name")).data ?? [],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("programs")
+          .select("*")
+          .eq("type", "intermediate")
+          .order("name")
+      ).data ?? [],
   });
 
-  const { data: sessions } = useQuery({
+  const { data: sessions = [] } = useQuery({
     queryKey: ["academic-sessions"],
-    queryFn: async () =>
-      (await supabase.from("academic_sessions").select("*").order("start_year", { ascending: false })).data ?? [],
+    queryFn: listAcademicSessions,
   });
+  const intermediateSessions = sessionsForProgramType(sessions, "intermediate");
 
   const { data: classes } = useQuery({
     queryKey: ["classes", programId],
@@ -577,16 +701,22 @@ function SectionsTab() {
 
   return (
     <Card>
-      <CardHeader><CardTitle>Sections</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle>Intermediate sections</CardTitle>
+      </CardHeader>
       <CardContent className="space-y-6">
+        <p className="text-sm text-muted-foreground">
+          Boys and girls sections only apply to Intermediate programs (FSc, ICom, FA-IT, etc.). BS uses
+          coeducational LMS class groups instead.
+        </p>
         <form onSubmit={add} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-2">
             <Label>Program *</Label>
             <Select value={programId} onValueChange={(v) => { setProgramId(v); setClassId(""); }}>
-              <SelectTrigger><SelectValue placeholder="Select program" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Select Intermediate program" /></SelectTrigger>
               <SelectContent>
                 {programs?.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.name} ({p.type})</SelectItem>
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -604,12 +734,15 @@ function SectionsTab() {
           </div>
           <div className="space-y-2">
             <Label>Session *</Label>
-            <Select value={sessionId} onValueChange={setSessionId}>
-              <SelectTrigger><SelectValue placeholder="Select session" /></SelectTrigger>
+            <Select
+              value={sessionId}
+              onValueChange={setSessionId}
+            >
+              <SelectTrigger><SelectValue placeholder="Select Intermediate session" /></SelectTrigger>
               <SelectContent>
-                {sessions?.map((s) => (
+                {intermediateSessions.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
-                    {s.label}{s.is_active ? " (active)" : ""}
+                    {s.label}{s.is_active ? " (running)" : ""}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -15,9 +15,13 @@ const APP_ROLES: AppRole[] = [
   "hr",
   "finance_admin",
   "finance_officer",
+  "bs_finance_admin",
   "cashier",
   "exam_officer",
   "receptionist",
+  "hod",
+  "academic_coordinator",
+  "bs_coordinator",
   "teacher",
   "student",
 ];
@@ -29,6 +33,7 @@ type CreateUserBody = {
   phone?: string;
   password: string;
   roles: AppRole[];
+  teacher_scope?: "inter" | "bs" | "both";
 };
 
 type UpdateUserBody = {
@@ -37,8 +42,18 @@ type UpdateUserBody = {
   phone?: string;
   password?: string;
   roles?: AppRole[];
+  teacher_scope?: "inter" | "bs" | "both";
   disabled?: boolean;
 };
+
+function normalizeTeacherScope(
+  value: unknown,
+  fallback: "inter" | "bs" | "both" = "inter",
+): "inter" | "bs" | "both" {
+  return value === "inter" || value === "bs" || value === "both"
+    ? value
+    : fallback;
+}
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -146,6 +161,10 @@ export const Route = createFileRoute("/api/admin/users")({
                   ? new Date(authUser.banned_until) > new Date()
                   : false,
                 roles: roleMap.get(p.id) ?? [],
+                teacher_scope: normalizeTeacherScope(
+                  authUser?.user_metadata?.teacher_scope,
+                  "both",
+                ),
               };
             })
             .filter((user) => !user.roles.includes("student"));
@@ -176,6 +195,9 @@ export const Route = createFileRoute("/api/admin/users")({
             user_metadata: {
               full_name: body.full_name.trim(),
               phone: body.phone?.trim() || null,
+              ...(roles.includes("teacher")
+                ? { teacher_scope: normalizeTeacherScope(body.teacher_scope) }
+                : {}),
             },
           });
           if (error || !data.user)
@@ -236,10 +258,24 @@ export const Route = createFileRoute("/api/admin/users")({
             authPatch.email_confirm = true;
           }
           if (body.password) authPatch.password = body.password;
-          if (body.full_name !== undefined || body.phone !== undefined) {
+          if (
+            body.full_name !== undefined ||
+            body.phone !== undefined ||
+            body.teacher_scope !== undefined
+          ) {
+            const { data: currentUser } =
+              await supabaseAdmin.auth.admin.getUserById(userId);
             authPatch.user_metadata = {
+              ...(currentUser.user?.user_metadata ?? {}),
               ...(body.full_name !== undefined ? { full_name: body.full_name.trim() } : {}),
               ...(body.phone !== undefined ? { phone: body.phone.trim() || null } : {}),
+              ...(body.teacher_scope !== undefined
+                ? {
+                    teacher_scope: normalizeTeacherScope(
+                      body.teacher_scope,
+                    ),
+                  }
+                : {}),
             };
           }
           if (Object.keys(authPatch).length > 0) {

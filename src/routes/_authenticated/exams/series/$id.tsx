@@ -2,25 +2,25 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { canManageExams } from "@/lib/exam-permissions";
+import { canAccessIntermediateExams, canManageExams } from "@/lib/exam-permissions";
 import {
   academicYearLabel,
   createSeriesSubjectTest,
   fetchInternalTestSeriesById,
   fetchSeriesSections,
+  fetchSeriesTestSectionMeta,
   fetchTestsForSeries,
   formatSeriesSectionLabel,
+  setInternalTestSectionPaperReceived,
   summarizeSeriesProgress,
-  updateSeriesSubjectTest,
 } from "@/lib/internal-exams";
 import { ordinalYearLabel } from "@/lib/academic";
 import { SeriesSubjectForm } from "@/components/exams/SeriesSubjectForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, BookOpen, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/exams/series/$id")({
@@ -31,8 +31,9 @@ function TestSeriesDetailPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { roles, loading, user } = useAuth();
-  const allowed = canManageExams(roles);
+  const { roles, teacherScope, loading, user } = useAuth();
+  const allowed = canAccessIntermediateExams(roles, teacherScope);
+  const canManage = canManageExams(roles);
   const [showAddSubject, setShowAddSubject] = useState(false);
   const [adding, setAdding] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -58,6 +59,11 @@ function TestSeriesDetailPage() {
     enabled: !!series,
     queryFn: () => fetchTestsForSeries(id),
   });
+  const { data: sectionMeta = [] } = useQuery({
+    queryKey: ["internal-test-series-section-meta", id],
+    enabled: !!series,
+    queryFn: () => fetchSeriesTestSectionMeta(id),
+  });
 
   const progress = useMemo(() => summarizeSeriesProgress(tests), [tests]);
 
@@ -73,6 +79,7 @@ function TestSeriesDetailPage() {
     qc.invalidateQueries({ queryKey: ["internal-test-series", id] });
     qc.invalidateQueries({ queryKey: ["internal-test-series-subjects", id] });
     qc.invalidateQueries({ queryKey: ["internal-test-series-sections", id] });
+    qc.invalidateQueries({ queryKey: ["internal-test-series-section-meta", id] });
   };
 
   return (
@@ -99,10 +106,22 @@ function TestSeriesDetailPage() {
             )}
           </div>
         </div>
-        <Button onClick={() => setShowAddSubject((v) => !v)}>
-          <Plus className="mr-2 h-4 w-4" />
-          {showAddSubject ? "Hide form" : "Add subject"}
-        </Button>
+        <div className="flex gap-2">
+          {canManage && (
+            <Button asChild variant="outline">
+              <Link to="/exams/catalog">
+                <BookOpen className="mr-2 h-4 w-4" />
+                Subject catalog
+              </Link>
+            </Button>
+          )}
+          {canManage && (
+            <Button onClick={() => setShowAddSubject((v) => !v)}>
+              <Plus className="mr-2 h-4 w-4" />
+              {showAddSubject ? "Hide form" : "Add subject"}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
@@ -136,7 +155,7 @@ function TestSeriesDetailPage() {
         </Card>
       </div>
 
-      {showAddSubject && (
+      {canManage && showAddSubject && (
         <Card>
           <CardHeader>
             <CardTitle>Add subject paper</CardTitle>
@@ -191,36 +210,67 @@ function TestSeriesDetailPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tests.map((test) => (
+                {tests.map((test) => {
+                  const meta = sectionMeta.filter((row) => row.internal_test_id === test.id);
+                  return (
                   <TableRow key={test.id}>
                     <TableCell className="font-medium">{test.subject_name}</TableCell>
                     <TableCell>{test.test_date}</TableCell>
-                    <TableCell>{test.teacher_name || "—"}</TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        {meta.length ? (
+                          meta.map((row) => (
+                            <p key={row.id} className="text-xs">
+                              {formatSeriesSectionLabel({
+                                id: row.section_id,
+                                name: row.sections?.name ?? "Section",
+                                gender: (row.sections?.gender ?? "boys") as "boys" | "girls",
+                              })}
+                              {" · "}
+                              <span className="font-medium">{row.teacher_name_snapshot}</span>
+                            </p>
+                          ))
+                        ) : (
+                          <span className="text-muted-foreground">Legacy test</span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       {test.status === "published" ? (
                         <Badge variant="outline">Received</Badge>
                       ) : (
-                        <div className="flex items-center gap-2">
-                          <Checkbox
-                            checked={test.paper_received}
-                            disabled={togglingId === test.id}
-                            onCheckedChange={async (checked) => {
-                              setTogglingId(test.id);
-                              try {
-                                await updateSeriesSubjectTest(test.id, {
-                                  paper_received: checked === true,
-                                });
-                                refresh();
-                              } catch (e) {
-                                toast.error(e instanceof Error ? e.message : "Could not update");
-                              } finally {
-                                setTogglingId(null);
-                              }
-                            }}
-                          />
-                          <span className="text-xs text-muted-foreground">
-                            {test.paper_received ? "Received" : "Pending"}
-                          </span>
+                        <div className="space-y-1">
+                          {meta.map((row) => (
+                            <Button
+                              key={row.id}
+                              type="button"
+                              size="sm"
+                              variant={row.paper_received ? "secondary" : "outline"}
+                              className="h-7 w-full justify-start text-xs"
+                              disabled={!canManage || togglingId === row.id}
+                              onClick={async () => {
+                                setTogglingId(row.id);
+                                try {
+                                  await setInternalTestSectionPaperReceived(
+                                    row.id,
+                                    !row.paper_received,
+                                  );
+                                  await qc.invalidateQueries({
+                                    queryKey: ["internal-test-series-section-meta", id],
+                                  });
+                                } catch (e) {
+                                  toast.error(
+                                    e instanceof Error ? e.message : "Could not update paper",
+                                  );
+                                } finally {
+                                  setTogglingId(null);
+                                }
+                              }}
+                            >
+                              {row.sections?.name ?? "Section"}:{" "}
+                              {row.paper_received ? "Received" : "Pending"}
+                            </Button>
+                          ))}
                         </div>
                       )}
                     </TableCell>
@@ -238,7 +288,8 @@ function TestSeriesDetailPage() {
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           )}

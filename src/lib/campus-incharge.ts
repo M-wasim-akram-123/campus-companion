@@ -6,12 +6,16 @@ const BROAD_STUDENT_ACCESS_ROLES: AppRole[] = [
   "admission_officer",
   "registrar",
   "hr",
+  "receptionist",
+  "sub_admission_officer",
+];
+
+/** Finance roles see students only through scoped finance tools, not the full student module. */
+export const FINANCE_SCOPED_STUDENT_ROLES: AppRole[] = [
   "finance_admin",
   "finance_officer",
   "cashier",
-  "receptionist",
-  "teacher",
-  "sub_admission_officer",
+  "bs_finance_admin",
 ];
 
 /** Staff with full student module access (not section-scoped campus incharge). */

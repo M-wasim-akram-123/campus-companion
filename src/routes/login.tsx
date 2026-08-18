@@ -48,9 +48,14 @@ function LoginPage() {
 
     const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", userId);
     const roles = (roleRows ?? []).map((row) => row.role as import("@/hooks/use-auth").AppRole);
+    const metadataScope = data.session.user.user_metadata?.teacher_scope;
+    const teacherScope =
+      metadataScope === "inter" || metadataScope === "bs" || metadataScope === "both"
+        ? metadataScope
+        : "both";
     setLoading(false);
     toast.success("Signed in");
-    navigate({ to: defaultHomePathForRoles(roles) });
+    navigate({ to: defaultHomePathForRoles(roles, teacherScope) });
   };
 
   return (

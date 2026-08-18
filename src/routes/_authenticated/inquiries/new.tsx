@@ -95,9 +95,10 @@ function NewInquiry() {
   });
 
   useEffect(() => {
-    const active = sessions?.find((s) => s.is_active);
-    if (active && !form.academic_session_id) {
-      setForm((f) => ({ ...f, academic_session_id: active.id }));
+    const running = sessions?.filter((s) => s.is_active).sort((a, b) => b.start_year - a.start_year);
+    const pick = running?.[0] ?? sessions?.[0];
+    if (pick && !form.academic_session_id) {
+      setForm((f) => ({ ...f, academic_session_id: pick.id }));
     }
   }, [sessions, form.academic_session_id]);
 
@@ -298,7 +299,7 @@ function NewInquiry() {
                     {sessions?.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.label}
-                        {s.is_active ? " (active)" : ""}
+                        {s.is_active ? " (running)" : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -11,6 +11,12 @@ import { academicYearLabel } from "@/lib/academic-year-close";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  financeScopeProgramType,
+  listFinanceAcademicSessions,
+  resolveFinanceProgramScope,
+} from "@/lib/finance-scope";
 
 export const Route = createFileRoute("/_authenticated/finance/reports")({
   component: FinanceReports,
@@ -58,6 +64,9 @@ function downloadExcel(filename: string, html: string) {
 }
 
 function FinanceReports() {
+  const { roles } = useAuth();
+  const financeScope = resolveFinanceProgramScope(roles);
+  const programTypeFilter = financeScopeProgramType(financeScope);
   const [studentSessionId, setStudentSessionId] = useState("__all__");
   const [yearEndSessionId, setYearEndSessionId] = useState("");
   const [yearEndAcademicYear, setYearEndAcademicYear] = useState("__all__");
@@ -68,9 +77,8 @@ function FinanceReports() {
   const [studentStatus, setStudentStatus] = useState("active");
 
   const sessions = useQuery({
-    queryKey: ["academic-sessions-reports"],
-    queryFn: async () =>
-      (await supabase.from("academic_sessions").select("*").order("start_year", { ascending: false })).data ?? [],
+    queryKey: ["finance-academic-sessions", financeScope],
+    queryFn: () => listFinanceAcademicSessions(financeScope),
   });
 
   const yearEndCloses = useQuery({
@@ -242,17 +250,22 @@ function FinanceReports() {
   });
 
   const studentReport = useQuery({
-    queryKey: ["student-fee-export-report"],
+    queryKey: ["student-fee-export-report", financeScope],
     queryFn: async () => {
-      const [{ data: students, error: studentsErr }, { data: installments, error: installmentsErr }] = await Promise.all([
-        supabase
-          .from("students")
-          .select("*, programs(name), classes(name), sections(name, gender), academic_sessions(label)")
-          .order("roll_number"),
-        supabase
-          .from("student_fee_installments")
-          .select("student_id, label, component_type, amount, paid_amount, due_date, status, sort_order"),
-      ]);
+      let studentsQuery = supabase
+        .from("students")
+        .select("*, programs!inner(name, type), classes(name), sections(name, gender), academic_sessions(label)")
+        .order("roll_number");
+      if (programTypeFilter) {
+        studentsQuery = studentsQuery.eq("programs.type", programTypeFilter);
+      }
+      const [{ data: students, error: studentsErr }, { data: installments, error: installmentsErr }] =
+        await Promise.all([
+          studentsQuery,
+          supabase
+            .from("student_fee_installments")
+            .select("student_id, label, component_type, amount, paid_amount, due_date, status, sort_order"),
+        ]);
       if (studentsErr) throw studentsErr;
       if (installmentsErr) throw installmentsErr;
 

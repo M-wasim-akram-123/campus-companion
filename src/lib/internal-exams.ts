@@ -24,6 +24,7 @@ export type InternalTestSeries = {
 export type InternalTest = {
   id: string;
   series_id: string | null;
+  subject_id: string | null;
   academic_session_id: string;
   academic_year_start: number;
   class_year_level: number;
@@ -129,21 +130,30 @@ export type CreateInternalTestSeriesInput = {
 
 export type CreateSeriesSubjectInput = {
   series_id: string;
-  subject_name: string;
+  subject_id: string;
   test_date: string;
   max_marks: number;
   passing_marks?: number | null;
-  teacher_name?: string | null;
-  paper_received?: boolean;
 };
 
 export type UpdateSeriesSubjectInput = {
-  subject_name?: string;
   test_date?: string;
   max_marks?: number;
   passing_marks?: number | null;
-  teacher_name?: string | null;
-  paper_received?: boolean;
+};
+
+export type InternalTestSectionMeta = {
+  id: string;
+  internal_test_id: string;
+  section_id: string;
+  subject_id: string;
+  teacher_user_id: string;
+  teacher_name_snapshot: string;
+  paper_received: boolean;
+  marks_completed: boolean;
+  marks_completed_at: string | null;
+  marks_completed_by: string | null;
+  sections?: { name?: string; gender?: string } | null;
 };
 
 function throwErr(error: { message?: string }) {
@@ -296,11 +306,61 @@ export async function fetchInternalTestById(id: string): Promise<InternalTest | 
   return (data as InternalTest | null) ?? null;
 }
 
+export async function fetchInternalTestSectionMeta(
+  testId: string,
+): Promise<InternalTestSectionMeta[]> {
+  const { data, error } = await supabase
+    .from("internal_test_section_meta")
+    .select("*, sections(name, gender)")
+    .eq("internal_test_id", testId)
+    .order("teacher_name_snapshot");
+  if (error) throwErr(error);
+  return (data ?? []) as InternalTestSectionMeta[];
+}
+
+export async function fetchSeriesTestSectionMeta(
+  seriesId: string,
+): Promise<InternalTestSectionMeta[]> {
+  const { data, error } = await supabase
+    .from("internal_test_section_meta")
+    .select("*, sections(name, gender), internal_tests!inner(series_id)")
+    .eq("internal_tests.series_id", seriesId)
+    .order("teacher_name_snapshot");
+  if (error) throwErr(error);
+  return (data ?? []) as InternalTestSectionMeta[];
+}
+
+export async function setInternalTestSectionPaperReceived(
+  metaId: string,
+  paperReceived: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from("internal_test_section_meta")
+    .update({
+      paper_received: paperReceived,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", metaId);
+  if (error) throwErr(error);
+}
+
+export async function completeInternalTestSection(
+  testId: string,
+  sectionId: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("complete_internal_test_section", {
+    p_test_id: testId,
+    p_section_id: sectionId,
+  });
+  if (error) throwErr(error);
+}
+
 export type CreateInternalTestInput = {
   academic_session_id: string;
   academic_year_start?: number;
   class_year_level: number;
   section_id?: string | null;
+  subject_id?: string | null;
   subject_name: string;
   test_name: string;
   test_date: string;
@@ -315,21 +375,30 @@ export async function createSeriesSubjectTest(
   const series = await fetchInternalTestSeriesById(input.series_id);
   if (!series) throw new Error("Test series not found.");
 
+  const { data: subject, error: subjectError } = await supabase
+    .from("intermediate_subjects")
+    .select("id, name, is_active")
+    .eq("id", input.subject_id)
+    .single();
+  if (subjectError) throwErr(subjectError);
+  if (!subject.is_active) throw new Error("Selected subject is inactive.");
+
   const { data, error } = await supabase
     .from("internal_tests")
     .insert({
       series_id: series.id,
+      subject_id: subject.id,
       academic_session_id: series.academic_session_id,
       academic_year_start: series.academic_year_start,
       class_year_level: series.class_year_level,
       section_id: null,
-      subject_name: input.subject_name.trim(),
+      subject_name: subject.name,
       test_name: series.name,
       test_date: input.test_date,
       max_marks: input.max_marks,
       passing_marks: input.passing_marks ?? null,
-      teacher_name: input.teacher_name?.trim() || null,
-      paper_received: input.paper_received ?? false,
+      teacher_name: null,
+      paper_received: false,
       status: "draft",
       created_by: createdBy ?? null,
     })
@@ -344,12 +413,9 @@ export async function updateSeriesSubjectTest(
   input: UpdateSeriesSubjectInput,
 ): Promise<InternalTest> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (input.subject_name) patch.subject_name = input.subject_name.trim();
   if (input.test_date) patch.test_date = input.test_date;
   if (input.max_marks != null) patch.max_marks = input.max_marks;
   if (input.passing_marks !== undefined) patch.passing_marks = input.passing_marks;
-  if (input.teacher_name !== undefined) patch.teacher_name = input.teacher_name?.trim() || null;
-  if (input.paper_received !== undefined) patch.paper_received = input.paper_received;
 
   const { data, error } = await supabase
     .from("internal_tests")
@@ -366,6 +432,24 @@ export async function createInternalTest(
   input: CreateInternalTestInput,
   createdBy?: string | null,
 ): Promise<InternalTest> {
+  if (input.subject_id && input.section_id) {
+    const { data, error } = await supabase.rpc("create_teacher_class_test", {
+      p_academic_session_id: input.academic_session_id,
+      p_academic_year_start: input.academic_year_start ?? currentAcademicYearStart(),
+      p_class_year_level: input.class_year_level,
+      p_section_id: input.section_id,
+      p_subject_id: input.subject_id,
+      p_test_name: input.test_name.trim(),
+      p_test_date: input.test_date,
+      p_max_marks: input.max_marks,
+      p_passing_marks: input.passing_marks ?? null,
+    });
+    if (error) throwErr(error);
+    const created = data as InternalTest;
+    const hydrated = await fetchInternalTestById(created.id);
+    return hydrated ?? created;
+  }
+
   const { data, error } = await supabase
     .from("internal_tests")
     .insert({
@@ -373,6 +457,7 @@ export async function createInternalTest(
       academic_year_start: input.academic_year_start ?? currentAcademicYearStart(),
       class_year_level: input.class_year_level,
       section_id: input.section_id ?? null,
+      subject_id: input.subject_id ?? null,
       subject_name: input.subject_name.trim(),
       test_name: input.test_name.trim(),
       test_date: input.test_date,
@@ -396,6 +481,7 @@ export async function updateInternalTest(
   if (input.academic_year_start != null) patch.academic_year_start = input.academic_year_start;
   if (input.class_year_level != null) patch.class_year_level = input.class_year_level;
   if (input.section_id !== undefined) patch.section_id = input.section_id;
+  if (input.subject_id !== undefined) patch.subject_id = input.subject_id;
   if (input.subject_name) patch.subject_name = input.subject_name.trim();
   if (input.test_name) patch.test_name = input.test_name.trim();
   if (input.test_date) patch.test_date = input.test_date;
@@ -517,27 +603,9 @@ export async function saveTestMarks(
 }
 
 export async function publishInternalTest(testId: string): Promise<InternalTest> {
-  const test = await fetchInternalTestById(testId);
-  if (!test) throw new Error("Test not found.");
-  if (test.status === "published") throw new Error("Test is already published.");
-
-  const { count, error: countErr } = await supabase
-    .from("internal_test_marks")
-    .select("id", { count: "exact", head: true })
-    .eq("internal_test_id", testId);
-  if (countErr) throwErr(countErr);
-  if (!count) {
-    throw new Error("Enter at least one mark or absent record before publishing.");
-  }
-
-  const now = new Date().toISOString();
-  const { data, error } = await supabase
-    .from("internal_tests")
-    .update({ status: "published", published_at: now, updated_at: now })
-    .eq("id", testId)
-    .eq("status", "draft")
-    .select("*, academic_sessions(label), sections(name, gender)")
-    .single();
+  const { data, error } = await supabase.rpc("publish_internal_test", {
+    p_test_id: testId,
+  });
   if (error) throwErr(error);
   return data as InternalTest;
 }
@@ -605,7 +673,8 @@ export async function fetchStudentUpcomingSchedule(): Promise<StudentUpcomingTes
       max_marks,
       teacher_name,
       class_year_level,
-      internal_test_series!inner(name)
+      internal_test_series!inner(name),
+      internal_test_section_meta(teacher_name_snapshot)
     `,
     )
     .eq("status", "draft")
@@ -617,13 +686,16 @@ export async function fetchStudentUpcomingSchedule(): Promise<StudentUpcomingTes
 
   return (data ?? []).map((row) => {
     const series = row.internal_test_series as { name?: string } | null;
+    const sectionMeta = row.internal_test_section_meta as
+      | { teacher_name_snapshot?: string }[]
+      | null;
     return {
       testId: row.id,
       seriesName: series?.name ?? row.test_name,
       subjectName: row.subject_name,
       testDate: row.test_date,
       maxMarks: Number(row.max_marks),
-      teacherName: row.teacher_name ?? null,
+      teacherName: sectionMeta?.[0]?.teacher_name_snapshot ?? row.teacher_name ?? null,
       classYearLevel: row.class_year_level,
     };
   });

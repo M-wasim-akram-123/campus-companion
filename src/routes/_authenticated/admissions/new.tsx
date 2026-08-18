@@ -3,6 +3,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { studentGenderToSectionGender, sectionGenderLabel } from "@/lib/academic";
+import {
+  listAcademicSessions,
+  resolveDefaultSessionId,
+  sessionsForProgramType,
+  sessionActiveBadge,
+  type AcademicSessionRow,
+} from "@/lib/academic-sessions";
+import { enrollBsStudentOnAdmission } from "@/lib/lms/api";
 import { generateAdmissionNumber } from "@/lib/admission-number";
 import {
   admissionLinesTotal,
@@ -99,15 +107,9 @@ function NewAdmission() {
 
   const handleFeeChange = useCallback((p: FeeStructurePayload) => setFeePayload(p), []);
 
-  const { data: sessions } = useQuery({
+  const { data: sessions = [] } = useQuery({
     queryKey: ["academic-sessions"],
-    queryFn: async () =>
-      (
-        await supabase
-          .from("academic_sessions")
-          .select("*")
-          .order("start_year", { ascending: false })
-      ).data ?? [],
+    queryFn: listAcademicSessions,
   });
 
   const { data: programs } = useQuery({
@@ -115,9 +117,23 @@ function NewAdmission() {
     queryFn: async () => (await supabase.from("programs").select("*").order("name")).data ?? [],
   });
 
+  const selectedProgram = useMemo(
+    () => programs?.find((p) => p.id === form.program_id) ?? null,
+    [programs, form.program_id],
+  );
+  const isBsProgram = selectedProgram?.type === "bs";
+  const isIntermediateProgram = selectedProgram?.type === "intermediate";
+  const compatibleSessions = useMemo(
+    () =>
+      selectedProgram
+        ? sessionsForProgramType(sessions, selectedProgram.type)
+        : sessions,
+    [sessions, selectedProgram],
+  );
+
   const { data: classes } = useQuery({
     queryKey: ["classes", form.program_id],
-    enabled: !!form.program_id,
+    enabled: !!form.program_id && !isBsProgram,
     queryFn: async () =>
       (
         await supabase
@@ -144,7 +160,10 @@ function NewAdmission() {
 
   const { data: sections } = useQuery({
     queryKey: ["sections", form.class_id, form.academic_session_id, sectionGender],
-    enabled: !!form.class_id && !!form.academic_session_id,
+    enabled:
+      isIntermediateProgram &&
+      !!form.class_id &&
+      !!form.academic_session_id,
     queryFn: async () => {
       let q = supabase
         .from("sections")
@@ -309,11 +328,33 @@ function NewAdmission() {
   };
 
   useEffect(() => {
-    const active = sessions?.find((s) => s.is_active);
-    if (active && !form.academic_session_id) {
-      setForm((f) => ({ ...f, academic_session_id: active.id, session: active.label }));
+    if (form.academic_session_id || !compatibleSessions.length) return;
+    const defaultId = resolveDefaultSessionId(compatibleSessions as AcademicSessionRow[], {
+      programType: selectedProgram?.type ?? null,
+    });
+    const session = compatibleSessions.find((s) => s.id === defaultId);
+    if (session) {
+      setForm((f) => ({ ...f, academic_session_id: session.id, session: session.label }));
     }
-  }, [sessions, form.academic_session_id]);
+  }, [compatibleSessions, form.academic_session_id, selectedProgram?.type]);
+
+  useEffect(() => {
+    if (!selectedProgram || !form.academic_session_id) return;
+    const stillValid = compatibleSessions.some((s) => s.id === form.academic_session_id);
+    if (!stillValid) {
+      const defaultId = resolveDefaultSessionId(compatibleSessions as AcademicSessionRow[], {
+        programType: selectedProgram.type,
+      });
+      const session = compatibleSessions.find((s) => s.id === defaultId);
+      setForm((f) => ({
+        ...f,
+        academic_session_id: session?.id ?? "",
+        session: session?.label ?? "",
+        class_id: "",
+        section_id: "",
+      }));
+    }
+  }, [selectedProgram, compatibleSessions, form.academic_session_id]);
 
   useEffect(() => {
     if (!inquiryId) return;
@@ -382,7 +423,12 @@ function NewAdmission() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.academic_session_id) return toast.error("Select an academic session");
+    if (!form.program_id) return toast.error("Select a program");
     if (!form.gender) return toast.error("Gender is required");
+    if (isIntermediateProgram) {
+      if (!form.class_id) return toast.error("Select year / class");
+      if (!form.section_id) return toast.error("Select a boys/girls section");
+    }
     const matricObtained = Number(form.matric_marks_obtained);
     const matricTotal = Number(form.matric_marks_total);
     if (!form.matric_school.trim()) return toast.error("Matric school is required");
@@ -420,7 +466,9 @@ function NewAdmission() {
         photo_url = inquiryPhotoPath;
       }
 
-      const admissionClass = classes?.find((c) => c.id === form.class_id);
+      const admissionClass = isBsProgram
+        ? null
+        : classes?.find((c) => c.id === form.class_id);
 
       const { data: student, error } = await supabase
         .from("students")
@@ -438,8 +486,8 @@ function NewAdmission() {
           guardian_occupation: form.guardian_occupation || null,
           guardian_details: form.guardian_details || null,
           program_id: form.program_id || null,
-          class_id: form.class_id || null,
-          section_id: form.section_id || null,
+          class_id: isBsProgram ? null : form.class_id || null,
+          section_id: isBsProgram ? null : form.section_id || null,
           admission_year_level: admissionClass?.year_level ?? 1,
           academic_session_id: form.academic_session_id,
           session: form.session,
@@ -455,6 +503,10 @@ function NewAdmission() {
         .single();
       if (error) throw error;
       createdStudentId = student.id;
+
+      if (isBsProgram) {
+        await enrollBsStudentOnAdmission(student.id);
+      }
 
       if (feePayload) {
         const f = feePayload.fees;
@@ -511,7 +563,7 @@ function NewAdmission() {
       navigate({ to: "/students/$id", params: { id: student.id } });
     } catch (e: unknown) {
       if (createdStudentId) {
-        await supabase.from("students").delete().eq("id", createdStudentId);
+        await supabase.rpc("admin_purge_student", { p_student_id: createdStudentId });
       }
       toast.error(e instanceof Error ? e.message : "Admission failed");
     } finally {
@@ -849,7 +901,7 @@ function NewAdmission() {
                   <Select
                     value={form.academic_session_id}
                     onValueChange={(v) => {
-                      const s = sessions?.find((x) => x.id === v);
+                      const s = compatibleSessions.find((x) => x.id === v);
                       resetAcademic({
                         academic_session_id: v,
                         session: s?.label || "",
@@ -861,10 +913,12 @@ function NewAdmission() {
                       <SelectValue placeholder="Select session" />
                     </SelectTrigger>
                     <SelectContent>
-                      {sessions?.map((s) => (
+                      {compatibleSessions.map((s) => (
                         <SelectItem key={s.id} value={s.id}>
                           {s.label}
-                          {s.is_active ? " (active)" : ""}
+                          {sessionActiveBadge(s as AcademicSessionRow)
+                            ? ` (${sessionActiveBadge(s as AcademicSessionRow)})`
+                            : ""}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -883,62 +937,72 @@ function NewAdmission() {
                     <SelectContent>
                       {programs?.map((p) => (
                         <SelectItem key={p.id} value={p.id}>
-                          {p.name}
+                          {p.name} ({p.type === "bs" ? "BS" : "Inter"})
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </Field>
-                <Field label="Year / class *">
-                  <Select
-                    value={form.class_id}
-                    onValueChange={(v) => resetAcademic({ class_id: v, section_id: "" })}
-                    disabled={!form.program_id}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {classes?.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label="Section *">
-                  <Select
-                    value={form.section_id}
-                    onValueChange={(v) => {
-                      setSectionManuallySelected(true);
-                      setForm({ ...form, section_id: v });
-                    }}
-                    disabled={!form.class_id || !form.academic_session_id || !form.gender}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={form.gender ? "Select section" : "Select gender first"}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sections?.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {sectionGenderLabel(s.gender)} — {s.name}
-                          {s.merit_min_percentage != null || s.merit_max_percentage != null
-                            ? ` (${s.merit_min_percentage ?? 0}% - ${s.merit_max_percentage ?? 100}%)`
-                            : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {matricPercentage != null && (
-                    <p className="text-xs text-muted-foreground">
-                      Calculated merit: {matricPercentage.toFixed(1)}%. Matching section is selected
-                      automatically.
-                    </p>
-                  )}
-                </Field>
+                {isBsProgram ? (
+                  <div className="md:col-span-2 xl:col-span-2 rounded-md border bg-muted/30 p-3 text-sm text-muted-foreground">
+                    BS is coeducational and semester-based. No Intermediate class/section is assigned.
+                    The student is auto-enrolled in LMS Semester 1 for this program and session (must be
+                    open/running).
+                  </div>
+                ) : (
+                  <>
+                    <Field label="Year / class *">
+                      <Select
+                        value={form.class_id}
+                        onValueChange={(v) => resetAcademic({ class_id: v, section_id: "" })}
+                        disabled={!form.program_id}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {classes?.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <Field label="Section *">
+                      <Select
+                        value={form.section_id}
+                        onValueChange={(v) => {
+                          setSectionManuallySelected(true);
+                          setForm({ ...form, section_id: v });
+                        }}
+                        disabled={!form.class_id || !form.academic_session_id || !form.gender}
+                      >
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={form.gender ? "Select section" : "Select gender first"}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {sections?.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {sectionGenderLabel(s.gender)} — {s.name}
+                              {s.merit_min_percentage != null || s.merit_max_percentage != null
+                                ? ` (${s.merit_min_percentage ?? 0}% - ${s.merit_max_percentage ?? 100}%)`
+                                : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {matricPercentage != null && (
+                        <p className="text-xs text-muted-foreground">
+                          Calculated merit: {matricPercentage.toFixed(1)}%. Matching section is selected
+                          automatically.
+                        </p>
+                      )}
+                    </Field>
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -968,12 +1032,17 @@ function NewAdmission() {
                 value={programs?.find((p) => p.id === form.program_id)?.name || "Select program"}
               />
               <SummaryRow
-                label="Class"
-                value={classes?.find((c) => c.id === form.class_id)?.name || "Select class"}
-              />
-              <SummaryRow
-                label="Section"
-                value={sections?.find((s) => s.id === form.section_id)?.name || "Select section"}
+                label="Placement"
+                value={
+                  isBsProgram
+                    ? "BS · Semester 1 (LMS, co-ed)"
+                    : [
+                        classes?.find((c) => c.id === form.class_id)?.name,
+                        sections?.find((s) => s.id === form.section_id)?.name,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ") || "Select class / section"
+                }
               />
               <SummaryRow
                 label="Enrollment"

@@ -35,6 +35,8 @@ import {
 import { CAMPUS_NAME } from "@/lib/campus";
 import { Copy, Download, FileStack, MessageCircle, Phone, Save } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
+import { listFinanceAcademicSessions, resolveFinanceProgramScope } from "@/lib/finance-scope";
 
 export const Route = createFileRoute("/_authenticated/finance/dues")({
   component: OverdueFollowUp,
@@ -165,6 +167,8 @@ function buildStudentDuesWorkbook(rows: Awaited<ReturnType<typeof fetchOverdueIn
 }
 
 function OverdueFollowUp() {
+  const { roles } = useAuth();
+  const financeScope = resolveFinanceProgramScope(roles);
   const [sessionScope, setSessionScope] = useState<"active" | "all" | string>("active");
   const [genderFilter, setGenderFilter] = useState<"__all__" | "boys" | "girls">("__all__");
   const [sectionFilter, setSectionFilter] = useState("__all__");
@@ -175,32 +179,58 @@ function OverdueFollowUp() {
   const [showTemplate, setShowTemplate] = useState(false);
 
   const { data: sessions } = useQuery({
-    queryKey: ["academic-sessions"],
-    queryFn: async () =>
-      (await supabase.from("academic_sessions").select("*").order("start_year", { ascending: false })).data ?? [],
+    queryKey: ["finance-academic-sessions", financeScope],
+    queryFn: () => listFinanceAcademicSessions(financeScope),
   });
 
-  const active = sessions?.find((s) => s.is_active);
+  const runningIds = (sessions ?? []).filter((s) => s.is_active).map((s) => s.id);
+  const scopedSessionIds = useMemo(() => new Set((sessions ?? []).map((s) => s.id)), [sessions]);
   const filterSessionId =
-    sessionScope === "all" ? undefined : sessionScope === "active" ? active?.id : sessionScope;
+    sessionScope === "all"
+      ? undefined
+      : sessionScope === "active"
+        ? undefined
+        : sessionScope;
 
   const { data: rows, isLoading, error } = useQuery({
     queryKey: ["finance-overdue"],
     queryFn: fetchOverdueInstallments,
   });
 
-  const filtered = useMemo(
-    () =>
-      filterOverdueRows(rows ?? [], {
-        sessionId: filterSessionId,
-        sectionId: sectionFilter === "__all__" ? undefined : sectionFilter,
-        gender: genderFilter === "__all__" ? undefined : genderFilter,
-        dueScope,
-        minDaysOverdue: Number(minDays) || 0,
-        search,
-      }),
-    [rows, filterSessionId, sectionFilter, genderFilter, dueScope, minDays, search],
-  );
+  const filtered = useMemo(() => {
+    const scopedRows = (rows ?? []).filter((row) => {
+      const st = row.students as { academic_session_id?: string } | null;
+      const sid = st?.academic_session_id;
+      return sid ? scopedSessionIds.has(sid) : financeScope === "all";
+    });
+    const base = filterOverdueRows(scopedRows, {
+      sessionId: sessionScope === "active" ? undefined : filterSessionId,
+      sectionId: sectionFilter === "__all__" ? undefined : sectionFilter,
+      gender: genderFilter === "__all__" ? undefined : genderFilter,
+      dueScope,
+      minDaysOverdue: Number(minDays) || 0,
+      search,
+    });
+    if (sessionScope !== "active") return base;
+    if (!runningIds.length) return [];
+    const allowed = new Set(runningIds);
+    return base.filter((row) => {
+      const st = row.students as { academic_session_id?: string } | null;
+      return !!st?.academic_session_id && allowed.has(st.academic_session_id);
+    });
+  }, [
+    rows,
+    scopedSessionIds,
+    financeScope,
+    filterSessionId,
+    sessionScope,
+    runningIds.join(","),
+    sectionFilter,
+    genderFilter,
+    dueScope,
+    minDays,
+    search,
+  ]);
 
   const groups = useMemo(() => groupOverdueByStudent(filtered), [filtered]);
 
@@ -319,11 +349,11 @@ function OverdueFollowUp() {
             <Select value={sessionScope} onValueChange={(v) => { setSessionScope(v); setSectionFilter("__all__"); }}>
               <SelectTrigger><SelectValue placeholder="Session" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="active">Active session</SelectItem>
+                <SelectItem value="active">All running cohorts</SelectItem>
                 <SelectItem value="all">All sessions</SelectItem>
                 {sessions?.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
-                    {s.label}{s.is_active ? " (active)" : ""}
+                    {s.label}{s.is_active ? " (running)" : ""}
                   </SelectItem>
                 ))}
               </SelectContent>

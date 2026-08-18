@@ -14,10 +14,22 @@ import { toast } from "sonner";
 import { FEE_COMPONENTS, formatCurrency, policyAutoName } from "@/lib/fees";
 import type { FeeComponentType, ScholarshipSlab } from "@/lib/fees-types";
 import {
+  feeComponentsForProgramType,
   INSTALLMENT_COUNT_OPTIONS,
   monthNameForOffset,
   scheduleForInstallmentCount,
 } from "@/lib/fees-types";
+import {
+  listAcademicSessions,
+  sessionsForProgramType,
+  sessionActiveBadge,
+} from "@/lib/academic-sessions";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  filterSessionsForFinanceScope,
+  financeScopeProgramType,
+  resolveFinanceProgramScope,
+} from "@/lib/finance-scope";
 import { Eye, Plus, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings/fees")({
@@ -84,6 +96,9 @@ async function upsertPolicy(
 
 function FeePoliciesPage() {
   const qc = useQueryClient();
+  const { roles } = useAuth();
+  const financeScope = resolveFinanceProgramScope(roles);
+  const programTypeFilter = financeScopeProgramType(financeScope);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [viewPolicy, setViewPolicy] = useState<PolicyRow | null>(null);
   const [showScholarships, setShowScholarships] = useState(false);
@@ -109,15 +124,38 @@ function FeePoliciesPage() {
   const [saving, setSaving] = useState(false);
 
   const { data: programs } = useQuery({
-    queryKey: ["programs"],
-    queryFn: async () => (await supabase.from("programs").select("*").order("name")).data ?? [],
+    queryKey: ["programs", financeScope],
+    queryFn: async () => {
+      let query = supabase.from("programs").select("*").order("name");
+      if (programTypeFilter) query = query.eq("type", programTypeFilter);
+      return (await query).data ?? [];
+    },
   });
 
-  const { data: sessions } = useQuery({
+  const { data: allSessions = [] } = useQuery({
     queryKey: ["academic-sessions"],
-    queryFn: async () =>
-      (await supabase.from("academic_sessions").select("*").order("start_year", { ascending: false })).data ?? [],
+    queryFn: listAcademicSessions,
   });
+  const sessions = useMemo(
+    () => filterSessionsForFinanceScope(allSessions, financeScope),
+    [allSessions, financeScope],
+  );
+
+  const selectedProgram = useMemo(
+    () => programs?.find((p) => p.id === programId) ?? null,
+    [programs, programId],
+  );
+  const compatibleSessions = useMemo(
+    () =>
+      selectedProgram
+        ? sessionsForProgramType(sessions, selectedProgram.type)
+        : sessions,
+    [sessions, selectedProgram],
+  );
+  const visibleFeeComponents = useMemo(
+    () => feeComponentsForProgramType(selectedProgram?.type ?? null),
+    [selectedProgram?.type],
+  );
 
   const { data: policies, isLoading } = useQuery({
     queryKey: ["fee-policies"],
@@ -142,8 +180,20 @@ function FeePoliciesPage() {
     const prog = programs?.find((p) => p.id === programId);
     if (!prog || editingId) return;
     const durationYears = Math.max(1, Number(prog.duration_years ?? 1));
-    setProjectionCycleCount(String(projectionCycleType === "semester" ? durationYears * 2 : durationYears));
-  }, [programId, projectionCycleType, programs, editingId]);
+    if (prog.type === "bs") {
+      setProjectionCycleType("semester");
+      setProjectionCycleCount(String(durationYears * 2));
+      setDefaultInstallmentCount("1");
+    } else {
+      setProjectionCycleType("annual");
+      setProjectionCycleCount(String(durationYears));
+    }
+  }, [programId, programs, editingId]);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    if (!compatibleSessions.some((s) => s.id === sessionId)) setSessionId("");
+  }, [compatibleSessions, sessionId]);
 
   const resetForm = () => {
     setEditingId(null);
@@ -327,9 +377,10 @@ function FeePoliciesPage() {
               <Select value={sessionId} onValueChange={setSessionId}>
                 <SelectTrigger><SelectValue placeholder="e.g. 2025–26" /></SelectTrigger>
                 <SelectContent>
-                  {sessions?.map((s) => (
+                  {compatibleSessions.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
-                      {s.label}{s.is_active ? " (active)" : ""}
+                      {s.label}
+                      {sessionActiveBadge(s) ? ` (${sessionActiveBadge(s)})` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -351,9 +402,9 @@ function FeePoliciesPage() {
           <div>
             <Label className="mb-3 block">Fee amounts (PKR)</Label>
             <div className="grid gap-3 sm:grid-cols-2">
-              {FEE_COMPONENTS.map((c) => (
+              {visibleFeeComponents.map((c) => (
                 <div key={c.key} className="flex items-center gap-3">
-                  <Label className="w-36 shrink-0 text-sm">{c.label}</Label>
+                  <Label className="w-44 shrink-0 text-sm">{c.label}</Label>
                   <Input
                     type="number"
                     min={0}
@@ -370,7 +421,7 @@ function FeePoliciesPage() {
             <div>
               <Label className="mb-2 block">Usually paid at admission</Label>
               <div className="flex flex-wrap gap-4">
-                {FEE_COMPONENTS.map((c) => (
+                {visibleFeeComponents.map((c) => (
                   <label key={c.key} className="flex items-center gap-2 text-sm">
                     <Checkbox
                       checked={defaultAdmissionComponents.includes(c.key)}

@@ -89,7 +89,7 @@ export function InternalTestForm({ initial, onSubmit, saving }: Props) {
             <SelectContent>
               {(sessions ?? []).map((s) => (
                 <SelectItem key={s.id} value={s.id}>
-                  {s.label}{s.is_active ? " (active)" : ""}
+                  {s.label}{s.is_active ? " (running)" : ""}
                 </SelectItem>
               ))}
             </SelectContent>

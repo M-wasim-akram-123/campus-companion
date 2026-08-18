@@ -41,11 +41,13 @@ import {
   canEditStudentRemainingFees,
 } from "@/lib/student-edit-permissions";
 import { isCampusInchargeScoped } from "@/lib/campus-incharge";
+import { canViewExamMarks } from "@/lib/exam-permissions";
 import { formatCnicForStorage, formatPakistanCnic, validatePakistanCnic } from "@/lib/cnic";
 import { CnicInput } from "@/components/forms/CnicInput";
 import { StudentFeePlanCard } from "@/components/finance/StudentFeePlanCard";
 import { StudentFinanceLedgerCard } from "@/components/finance/StudentFinanceLedgerCard";
 import { StudentTestResultsCard } from "@/components/exams/StudentTestResultsCard";
+import { StudentAcademicLedgerCard } from "@/components/exams/StudentAcademicLedgerCard";
 import { StudentBasicInfoSection } from "@/components/students/StudentBasicInfoSection";
 import { StudentDocumentsCard } from "@/components/students/StudentDocumentsCard";
 import { FeeStructureSection } from "@/components/admission/FeeStructureSection";
@@ -97,6 +99,7 @@ function StudentDetail() {
   const qc = useQueryClient();
   const { roles } = useAuth();
   const campusViewOnly = isCampusInchargeScoped(roles);
+  const allowExamRecords = canViewExamMarks(roles);
   const allowStatusChange = canChangeStudentStatus(roles);
   const allowProfileEdit = canEditStudentProfile(roles);
   const allowRegistrarFields = canEditStudentRegistrarFields(roles);
@@ -487,20 +490,14 @@ function StudentDetail() {
   };
 
   const deleteStudent = async () => {
-    if (s.inquiry_id) {
-      await supabase
-        .from("inquiries")
-        .update({
-          status: "interested",
-          converted_student_id: null,
-          converted_by: null,
-          converted_at: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", s.inquiry_id);
+    // Ledger rows are immutable; cascade delete must go through admin_purge_student.
+    const { error } = await supabase.rpc("admin_purge_student", { p_student_id: id });
+    if (error) {
+      const message = error.message.includes("admin_purge_student")
+        ? "Delete is blocked until supabase/patch-admin-purge-student.sql is run in Supabase SQL Editor."
+        : error.message;
+      return toast.error(message);
     }
-    const { error } = await supabase.from("students").delete().eq("id", id);
-    if (error) return toast.error(error.message);
     toast.success("Admission deleted");
     qc.invalidateQueries({ queryKey: ["students"] });
     qc.invalidateQueries({ queryKey: ["inquiries"] });
@@ -619,8 +616,9 @@ function StudentDetail() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete this admission?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This permanently removes {s.full_name} and fee plans, installments, vouchers,
-                    and payment records tied to this student.
+                    This permanently removes {s.full_name} plus fee plans, installments, vouchers,
+                    payments, and finance ledger rows for this admission. Prefer changing status to
+                    Left / Bad debt when you only need to stop billing.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -790,7 +788,7 @@ function StudentDetail() {
                   {sessions?.map((session) => (
                     <SelectItem key={session.id} value={session.id}>
                       {session.label}
-                      {session.is_active ? " (active)" : ""}
+                      {session.is_active ? " (running)" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -992,7 +990,12 @@ function StudentDetail() {
             admissionDate={s.admission_date}
             enrollmentTypeLabel={enrollmentTypeLabel((s as { enrollment_type?: string }).enrollment_type)}
           />
-          <StudentTestResultsCard studentId={id} />
+          {allowExamRecords && (
+            <>
+              <StudentTestResultsCard studentId={id} />
+              <StudentAcademicLedgerCard studentId={id} />
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="fee-plan" className="mt-0 space-y-4">

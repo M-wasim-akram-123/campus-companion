@@ -32,6 +32,8 @@ BEGIN
     RAISE EXCEPTION 'No super_admin user found. Aborting reset.';
   END IF;
 
+  -- Supabase blocks direct storage deletes unless this session flag is set.
+  PERFORM set_config('storage.allow_delete_query', 'true', true);
   DELETE FROM storage.objects;
 
   SELECT string_agg(format('%I.%I', schemaname, tablename), ', ')

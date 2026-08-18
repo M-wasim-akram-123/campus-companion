@@ -2,10 +2,12 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { canManageExams } from "@/lib/exam-permissions";
+import { canAccessIntermediateExams, canManageExams } from "@/lib/exam-permissions";
 import {
   academicYearLabel,
+  completeInternalTestSection,
   fetchInternalTestById,
+  fetchInternalTestSectionMeta,
   fetchSeriesSections,
   formatSeriesSectionLabel,
   listStudentsForTest,
@@ -35,8 +37,9 @@ function InternalTestDetailPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { roles, loading, user } = useAuth();
-  const allowed = canManageExams(roles);
+  const { roles, teacherScope, loading, user } = useAuth();
+  const allowed = canAccessIntermediateExams(roles, teacherScope);
+  const canManage = canManageExams(roles);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [sectionId, setSectionId] = useState("");
@@ -57,17 +60,33 @@ function InternalTestDetailPage() {
     queryFn: () => fetchSeriesSections(test!.series_id!),
   });
   const seriesSections = seriesSectionsData ?? EMPTY_SECTIONS;
+  const { data: sectionMeta = [] } = useQuery({
+    queryKey: ["internal-test-section-meta", id],
+    enabled: !!test,
+    queryFn: () => fetchInternalTestSectionMeta(id),
+  });
 
   const sectionOptions = useMemo(() => {
-    if (test?.section_id && test.sections?.name) {
-      return [{
-        id: test.section_id,
-        name: test.sections.name,
-        gender: (test.sections.gender ?? "boys") as "boys" | "girls",
-      }];
-    }
-    return seriesSections;
-  }, [test, seriesSections]);
+    const all =
+      test?.section_id && test.sections?.name
+        ? [
+            {
+              id: test.section_id,
+              name: test.sections.name,
+              gender: (test.sections.gender ?? "boys") as "boys" | "girls",
+            },
+          ]
+        : seriesSections;
+
+    if (canManage || !sectionMeta.length) return all;
+
+    const allowedSectionIds = new Set(
+      sectionMeta
+        .filter((row) => row.teacher_user_id === user?.id)
+        .map((row) => row.section_id),
+    );
+    return all.filter((section) => allowedSectionIds.has(section.id));
+  }, [canManage, sectionMeta, seriesSections, test, user?.id]);
 
   useEffect(() => {
     if (!sectionOptions.length) {
@@ -78,6 +97,7 @@ function InternalTestDetailPage() {
   }, [sectionOptions]);
 
   const selectedSection = sectionOptions.find((s) => s.id === sectionId);
+  const selectedMeta = sectionMeta.find((row) => row.section_id === sectionId);
 
   const { data: students = [], isLoading: studentsLoading } = useQuery({
     queryKey: ["internal-test-students", id, sectionId],
@@ -93,7 +113,8 @@ function InternalTestDetailPage() {
     return <div className="p-8 text-center text-muted-foreground">Loading test…</div>;
   }
 
-  const readOnly = test.status === "published";
+  const readOnly =
+    test.status === "published" || (!canManage && selectedMeta?.marks_completed === true);
   const testLabel = `${test.subject_name} — ${seriesName(test)}`;
   const backTo = test.series_id ? "/exams/series/$id" : "/exams";
   const backParams = test.series_id ? { id: test.series_id } : undefined;
@@ -124,7 +145,7 @@ function InternalTestDetailPage() {
           <Badge variant={test.status === "published" ? "default" : "secondary"} className="capitalize">
             {test.status}
           </Badge>
-          {test.status === "draft" && (
+          {canManage && test.status === "draft" && (
             <PublishTestDialog
               testLabel={testLabel}
               publishing={publishing}
@@ -156,12 +177,18 @@ function InternalTestDetailPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Teacher</CardTitle></CardHeader>
-          <CardContent><div className="text-lg font-semibold">{test.teacher_name || "—"}</div></CardContent>
+          <CardContent>
+            <div className="text-lg font-semibold">
+              {selectedMeta?.teacher_name_snapshot || test.teacher_name || "—"}
+            </div>
+          </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Paper received</CardTitle></CardHeader>
           <CardContent>
-            <div className="text-lg font-semibold">{test.paper_received ? "Yes" : "No"}</div>
+            <div className="text-lg font-semibold">
+              {selectedMeta ? (selectedMeta.paper_received ? "Yes" : "No") : test.paper_received ? "Yes" : "No"}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -204,6 +231,15 @@ function InternalTestDetailPage() {
           )}
         </CardHeader>
         <CardContent>
+          {selectedMeta?.marks_completed && (
+            <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+              Mark sheet completed by {selectedMeta.teacher_name_snapshot}
+              {selectedMeta.marks_completed_at
+                ? ` on ${new Date(selectedMeta.marks_completed_at).toLocaleString()}`
+                : ""}
+              .
+            </div>
+          )}
           {!sectionOptions.length ? (
             <p className="text-sm text-muted-foreground">
               No sections are linked to this test series. Edit the series and assign boys/girls sections first.
@@ -222,7 +258,12 @@ function InternalTestDetailPage() {
                 try {
                   await saveTestMarks(test, rows, user?.id ?? null);
                   toast.success("Marks saved");
-                  await qc.invalidateQueries({ queryKey: ["internal-test-students", id, sectionId] });
+                  await Promise.all([
+                    qc.invalidateQueries({
+                      queryKey: ["internal-test-students", id, sectionId],
+                    }),
+                    qc.invalidateQueries({ queryKey: ["internal-test-section-meta", id] }),
+                  ]);
                 } catch (e) {
                   toast.error(e instanceof Error ? e.message : "Could not save marks");
                 } finally {
@@ -230,6 +271,29 @@ function InternalTestDetailPage() {
                 }
               }}
             />
+          )}
+          {!readOnly && sectionId && students.length > 0 && (
+            <div className="mt-4 flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    await completeInternalTestSection(test.id, sectionId);
+                    toast.success("Section mark sheet completed");
+                    await qc.invalidateQueries({
+                      queryKey: ["internal-test-section-meta", id],
+                    });
+                  } catch (error) {
+                    toast.error(
+                      error instanceof Error ? error.message : "Could not complete mark sheet",
+                    );
+                  }
+                }}
+              >
+                Complete section mark sheet
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>

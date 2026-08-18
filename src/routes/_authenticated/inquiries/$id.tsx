@@ -848,7 +848,7 @@ function InquiryDetail() {
                   <SelectItem value="__none__">No session</SelectItem>
                   {sessions?.map((session) => (
                     <SelectItem key={session.id} value={session.id}>
-                      {session.label}{session.is_active ? " (active)" : ""}
+                      {session.label}{session.is_active ? " (running)" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>

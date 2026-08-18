@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -8,19 +8,24 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Download, FileArchive, Plus, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { deriveAcademicStanding } from "@/lib/academic";
 import { isClassesOnlyEnrollment, enrollmentTypeLabel } from "@/lib/student-enrollment";
 import { isCampusInchargeScoped } from "@/lib/campus-incharge";
+import { isTeacherScoped } from "@/lib/teacher-scope";
+import { defaultHomePathForRoles } from "@/lib/auth-routing";
 import { exportStudentDefaulters, exportStudentPhoneList } from "@/lib/student-exports";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/students/")({ component: StudentsList });
 
 function StudentsList() {
-  const { roles } = useAuth();
+  const navigate = useNavigate();
+  const { roles, teacherScope } = useAuth();
   const campusScoped = isCampusInchargeScoped(roles);
+  const teacherScoped = isTeacherScoped(roles);
+  const scopedView = campusScoped || teacherScoped;
   const [search, setSearch] = useState("");
   const [sessionId, setSessionId] = useState("__all__");
   const [sectionId, setSectionId] = useState("__all__");
@@ -29,17 +34,43 @@ function StudentsList() {
   const [enrollmentFilter, setEnrollmentFilter] = useState("__all__");
   const [exporting, setExporting] = useState<"phones" | "defaulters" | null>(null);
 
+  useEffect(() => {
+    if (teacherScoped) {
+      navigate({
+        to: defaultHomePathForRoles(roles, teacherScope),
+        replace: true,
+      });
+    }
+  }, [navigate, roles, teacherScope, teacherScoped]);
+
   const { data: students, isLoading, error } = useQuery({
-    queryKey: ["students", campusScoped ? "scoped" : "all"],
+    queryKey: ["students", campusScoped ? "scoped" : teacherScoped ? "teacher" : "all"],
+    enabled: !teacherScoped,
     queryFn: async () => {
       const { data, error: queryError } = await supabase
         .from("students")
-        .select("*, programs(name, duration_years), classes(name, year_level), sections(name, gender), academic_sessions(label, start_year, end_year)")
+        .select(
+          "*, programs(name, type, duration_years), classes(name, year_level), sections(name, gender), academic_sessions(label, start_year, end_year)",
+        )
         .order("created_at", { ascending: false });
       if (queryError) throw queryError;
+      // Teachers keep Intermediate and BS separate — this list is Intermediate only.
+      if (teacherScoped) {
+        return (data ?? []).filter(
+          (s) => (s.programs as { type?: string } | null)?.type === "intermediate",
+        );
+      }
       return data;
     },
   });
+
+  if (teacherScoped) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        Opening your assigned teaching area…
+      </div>
+    );
+  }
 
   const options = useMemo(() => {
     const sessions = new Map<string, string>();
@@ -146,26 +177,36 @@ function StudentsList() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Students</h1>
+          <h1 className="text-3xl font-bold">
+            {teacherScoped ? "Intermediate students" : "Students"}
+          </h1>
           <p className="text-muted-foreground">
-            {campusScoped ? "Students in your assigned sections" : "All admitted students"}
+            {teacherScoped
+              ? "Only Intermediate students in your assigned sections (filter by session if you teach multiple years)."
+              : campusScoped
+                ? "Students in your assigned sections"
+                : "All admitted students"}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" onClick={downloadPhoneList} disabled={!!exporting}>
-            <Download className="mr-2 h-4 w-4" />
-            Phone list
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={downloadDefaulters}
-            disabled={exporting === "defaulters"}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            {exporting === "defaulters" ? "Exporting…" : "Defaulters"}
-          </Button>
-          {!campusScoped && (
+          {!teacherScoped && (
+            <>
+              <Button type="button" variant="outline" onClick={downloadPhoneList} disabled={!!exporting}>
+                <Download className="mr-2 h-4 w-4" />
+                Phone list
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={downloadDefaulters}
+                disabled={exporting === "defaulters"}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {exporting === "defaulters" ? "Exporting…" : "Defaulters"}
+              </Button>
+            </>
+          )}
+          {!scopedView && (
             <>
               <Button asChild variant="outline">
                 <Link to="/students/documents"><FileArchive className="mr-2 h-4 w-4" />Documents</Link>
@@ -176,9 +217,11 @@ function StudentsList() {
         </div>
       </div>
 
-      {campusScoped && !isLoading && students?.length === 0 && (
+      {scopedView && !isLoading && students?.length === 0 && (
         <Card className="border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-950">
-          No sections are assigned to your account yet. Ask Super Admin to assign sections in User Management.
+          {teacherScoped
+            ? "No Intermediate sections are assigned to you yet. Ask Super Admin to assign Inter sections in User Management. BS students appear under My BS classes."
+            : "No sections are assigned to your account yet. Ask Super Admin to assign sections in User Management."}
         </Card>
       )}
 

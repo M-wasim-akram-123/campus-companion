@@ -1,5 +1,9 @@
 import { Link, Outlet, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
-import { useAuth, type AppRole } from "@/hooks/use-auth";
+import {
+  useAuth,
+  type AppRole,
+  type TeacherScope,
+} from "@/hooks/use-auth";
 import {
   ArrowLeft,
   GraduationCap,
@@ -15,6 +19,7 @@ import {
   CircleUserRound,
   FileArchive,
   BookOpenCheck,
+  LibraryBig,
   ClipboardCheck,
   Megaphone,
 } from "lucide-react";
@@ -29,6 +34,7 @@ const nav: {
   label: string;
   icon: LucideIcon;
   roles?: AppRole[];
+  teacherScopes?: TeacherScope[];
 }[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["super_admin"] },
   {
@@ -47,7 +53,14 @@ const nav: {
     to: "/students",
     label: "Students",
     icon: Users,
-    roles: ["super_admin", "campus_incharge", "registrar", "admission_officer", "hr", "teacher"],
+    roles: ["super_admin", "campus_incharge", "registrar", "admission_officer", "hr"],
+  },
+  {
+    to: "/lms/my-classes",
+    label: "My BS classes",
+    icon: GraduationCap,
+    roles: ["teacher"],
+    teacherScopes: ["bs", "both"],
   },
   {
     to: "/students/roll-no-slips",
@@ -57,9 +70,36 @@ const nav: {
   },
   {
     to: "/exams",
-    label: "Exams",
+    label: "Inter Tests",
     icon: GraduationCap,
+    roles: ["super_admin", "exam_officer", "teacher"],
+    teacherScopes: ["inter", "both"],
+  },
+  {
+    to: "/exams/catalog",
+    label: "Inter Subjects",
+    icon: BookOpenCheck,
     roles: ["super_admin", "exam_officer"],
+  },
+  {
+    to: "/exams/reports",
+    label: "Inter Reports",
+    icon: ClipboardCheck,
+    roles: ["super_admin", "exam_officer"],
+  },
+  {
+    to: "/lms",
+    label: "BS LMS",
+    icon: LibraryBig,
+    roles: [
+      "super_admin",
+      "hod",
+      "academic_coordinator",
+      "bs_coordinator",
+      "registrar",
+      "exam_officer",
+      "hr",
+    ],
   },
   {
     to: "/announcements",
@@ -71,42 +111,56 @@ const nav: {
     to: "/students/documents",
     label: "Student Documents",
     icon: FileArchive,
-    roles: ["super_admin", "admission_officer", "hr", "finance_admin", "finance_officer"],
+    roles: ["super_admin", "admission_officer", "hr", "finance_admin", "finance_officer", "bs_finance_admin"],
   },
   {
     to: "/finance",
     label: "Finance",
     icon: Banknote,
-    roles: ["super_admin", "finance_admin", "finance_officer", "cashier"],
+    roles: ["super_admin", "finance_admin", "finance_officer", "cashier", "bs_finance_admin"],
   },
   { to: "/settings/academic", label: "Academic setup", icon: Layers, roles: ["super_admin"] },
-  { to: "/settings/board-gazette", label: "Board gazettes", icon: BookOpenCheck, roles: ["super_admin"] },
+  {
+    to: "/settings/board-gazette",
+    label: "Board gazettes",
+    icon: BookOpenCheck,
+    roles: ["super_admin"],
+  },
   {
     to: "/settings/fees",
     label: "Fee policies",
     icon: Wallet,
-    roles: ["super_admin", "finance_admin", "finance_officer"],
+    roles: ["super_admin", "finance_admin", "finance_officer", "bs_finance_admin"],
   },
   {
     to: "/settings/collection-plans",
     label: "Collection plans",
     icon: Wallet,
-    roles: ["super_admin", "finance_admin"],
+    roles: ["super_admin", "finance_admin", "bs_finance_admin"],
   },
   { to: "/settings/users", label: "User Management", icon: UserCog, roles: ["super_admin"] },
   { to: "/settings/profile", label: "My Profile", icon: CircleUserRound },
 ] as const;
 
 export function AppLayout() {
-  const { user, signOut, roles } = useAuth();
+  const { user, signOut, roles, teacherScope } = useAuth();
   const navigate = useNavigate();
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
+  const scopedTeacher =
+    roles.includes("teacher") &&
+    !roles.some((role) =>
+      ["super_admin", "hod", "academic_coordinator"].includes(role),
+    );
   const navItems = nav.filter(
-    (item) => !item.roles || item.roles.some((role) => roles.includes(role)),
+    (item) =>
+      (!item.roles || item.roles.some((role) => roles.includes(role))) &&
+      (!scopedTeacher ||
+        !item.teacherScopes ||
+        item.teacherScopes.includes(teacherScope)),
   );
-  const homePath = defaultHomePathForRoles(roles);
+  const homePath = defaultHomePathForRoles(roles, teacherScope);
   const showBackButton = pathname !== homePath;
   const goBack = () => {
     if (window.history.length > 1) {
@@ -138,7 +192,12 @@ export function AppLayout() {
         </div>
         <nav className="flex-1 space-y-1.5 p-3">
           {navItems.map((item) => {
-            const active = pathname.startsWith(item.to);
+            const active =
+              item.to === "/exams"
+                ? pathname === "/exams" ||
+                  pathname.startsWith("/exams/series") ||
+                  pathname.startsWith("/exams/tests")
+                : pathname.startsWith(item.to);
             return (
               <Link key={item.to} to={item.to} className={linkClass(active)}>
                 <item.icon
@@ -194,7 +253,12 @@ export function AppLayout() {
           </div>
           <nav className="flex gap-1 overflow-x-auto border-t px-2 py-2 text-foreground">
             {navItems.map((item) => {
-              const active = pathname.startsWith(item.to);
+              const active =
+                item.to === "/exams"
+                  ? pathname === "/exams" ||
+                    pathname.startsWith("/exams/series") ||
+                    pathname.startsWith("/exams/tests")
+                  : pathname.startsWith(item.to);
               return (
                 <Link
                   key={item.to}

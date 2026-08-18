@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { canManageAnnouncements } from "@/lib/announcement-permissions";
+import { canManageExams } from "@/lib/exam-permissions";
 import {
   academicYearLabel,
   fetchInternalTestSeries,
@@ -78,6 +79,7 @@ function actionVariant(reason: "paper_pending" | "marks_pending" | "test_today")
 export function ExamDashboard() {
   const { roles } = useAuth();
   const canAnnounce = canManageAnnouncements(roles);
+  const canManage = canManageExams(roles);
   const [sessionId, setSessionId] = useState("");
   const [classYearLevel, setClassYearLevel] = useState("__all__");
 
@@ -87,7 +89,10 @@ export function ExamDashboard() {
       (await supabase.from("academic_sessions").select("*").order("start_year", { ascending: false })).data ?? [],
   });
 
-  const active = sessions?.find((s) => s.is_active);
+  const interRunning = (sessions ?? [])
+    .filter((s) => s.is_active && (s as { program_type?: string }).program_type !== "bs")
+    .sort((a, b) => b.start_year - a.start_year);
+  const active = interRunning[0] ?? sessions?.find((s) => s.is_active);
   const sid = sessionId || active?.id || sessions?.[0]?.id || "";
   const yearFilter = classYearLevel === "__all__" ? undefined : Number(classYearLevel);
   const activeSessionLabel = sessions?.find((s) => s.id === sid)?.label;
@@ -167,19 +172,31 @@ export function ExamDashboard() {
               {activeSessionLabel ? `Session: ${activeSessionLabel}` : "Exam branch"}
             </div>
             <h1 className="bg-gradient-to-r from-foreground via-primary to-emerald-500 bg-clip-text text-4xl font-black tracking-tight text-transparent md:text-5xl">
-              Exam Command Center
+              {canManage ? "Exam Command Center" : "My Intermediate Tests"}
             </h1>
             <p className="mt-3 max-w-2xl text-muted-foreground">
-              Schedule test series, track papers, upload marks by section, and publish results to the student app.
+              {canManage
+                ? "Schedule test series, track papers, upload marks by section, and publish results to the student app."
+                : "Enter marks only for the subjects and Intermediate sections assigned to you."}
             </p>
           </div>
           <div className="flex flex-wrap gap-2 lg:flex-col lg:items-stretch">
-            <Button asChild size="lg">
-              <Link to="/exams/series/new">
-                <Plus className="mr-2 h-4 w-4" />
-                Announce series
-              </Link>
-            </Button>
+            {canManage && (
+              <Button asChild size="lg">
+                <Link to="/exams/series/new">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Announce series
+                </Link>
+              </Button>
+            )}
+            {!canManage && (
+              <Button asChild size="lg">
+                <Link to="/exams/tests/new">
+                  <Plus className="mr-2 h-4 w-4" />
+                  New weekly/class test
+                </Link>
+              </Button>
+            )}
             {canAnnounce && (
               <Button asChild size="lg" variant="outline">
                 <Link to="/announcements/new">
@@ -201,7 +218,7 @@ export function ExamDashboard() {
             {(sessions ?? []).map((s) => (
               <SelectItem key={s.id} value={s.id}>
                 {s.label}
-                {s.is_active ? " (active)" : ""}
+                {s.is_active ? " (running)" : ""}
               </SelectItem>
             ))}
           </SelectContent>
@@ -524,13 +541,22 @@ export function ExamDashboard() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle>All test series</CardTitle>
-          <Button asChild size="sm" variant="outline">
-            <Link to="/exams/series/new">
-              <Plus className="mr-2 h-4 w-4" />
-              New series
-            </Link>
-          </Button>
+          <CardTitle>{canManage ? "All test series" : "Assigned test series"}</CardTitle>
+          {canManage ? (
+            <Button asChild size="sm" variant="outline">
+              <Link to="/exams/series/new">
+                <Plus className="mr-2 h-4 w-4" />
+                New series
+              </Link>
+            </Button>
+          ) : (
+            <Button asChild size="sm" variant="outline">
+              <Link to="/exams/tests/new">
+                <Plus className="mr-2 h-4 w-4" />
+                New class test
+              </Link>
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {seriesLoading ? (
@@ -538,14 +564,30 @@ export function ExamDashboard() {
           ) : !seriesList.length ? (
             <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-12 text-center">
               <GraduationCap className="mb-3 h-12 w-12 text-muted-foreground" />
-              <p className="font-medium">No test series yet</p>
-              <p className="mb-4 text-sm text-muted-foreground">Announce Test 1 to get started</p>
-              <Button asChild>
-                <Link to="/exams/series/new">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Announce series
-                </Link>
-              </Button>
+              <p className="font-medium">
+                {canManage ? "No test series yet" : "No tests assigned to you"}
+              </p>
+              <p className="mb-4 text-sm text-muted-foreground">
+                {canManage
+                  ? "Announce Test 1 to get started"
+                  : "Your assigned section and subject tests will appear here."}
+              </p>
+              {canManage && (
+                <Button asChild>
+                  <Link to="/exams/series/new">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Announce series
+                  </Link>
+                </Button>
+              )}
+              {!canManage && (
+                <Button asChild>
+                  <Link to="/exams/tests/new">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create class test
+                  </Link>
+                </Button>
+              )}
             </div>
           ) : (
             <Table>

@@ -22,6 +22,8 @@ import {
 import { FEE_COMPONENTS, type FeeComponentType } from "@/lib/fees-types";
 import { toast } from "sonner";
 import { Eye, FileStack, Printer } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { listFinanceAcademicSessions, resolveFinanceProgramScope } from "@/lib/finance-scope";
 
 export const Route = createFileRoute("/_authenticated/finance/bulk-vouchers")({
   component: BulkVouchersPage,
@@ -29,6 +31,8 @@ export const Route = createFileRoute("/_authenticated/finance/bulk-vouchers")({
 
 function BulkVouchersPage() {
   const qc = useQueryClient();
+  const { roles } = useAuth();
+  const financeScope = resolveFinanceProgramScope(roles);
   const [sessionId, setSessionId] = useState("");
   const [sectionId, setSectionId] = useState("");
   const [voucherDueDate, setVoucherDueDate] = useState("");
@@ -45,9 +49,8 @@ function BulkVouchersPage() {
   const [selectedPrintIds, setSelectedPrintIds] = useState<string[]>([]);
 
   const { data: sessions } = useQuery({
-    queryKey: ["academic-sessions"],
-    queryFn: async () =>
-      (await supabase.from("academic_sessions").select("*").order("start_year", { ascending: false })).data ?? [],
+    queryKey: ["finance-academic-sessions", financeScope],
+    queryFn: () => listFinanceAcademicSessions(financeScope),
   });
 
   const active = sessions?.find((s) => s.is_active);
@@ -193,7 +196,7 @@ function BulkVouchersPage() {
               <SelectContent>
                 {sessions?.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
-                    {s.label}{s.is_active ? " (active)" : ""}
+                    {s.label}{s.is_active ? " (running)" : ""}
                   </SelectItem>
                 ))}
               </SelectContent>

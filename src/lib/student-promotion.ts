@@ -274,7 +274,7 @@ export async function runSessionPromotions(
   let studentQuery = client
     .from("students")
     .select(
-      "id, roll_number, status, enrollment_type, program_id, class_id, section_id, academic_session_id, admission_year_level, classes(year_level), sections(name, gender, session_id), academic_sessions(start_year, end_year)",
+      "id, roll_number, status, enrollment_type, program_id, class_id, section_id, academic_session_id, admission_year_level, classes(year_level), sections(name, gender, session_id), academic_sessions(start_year, end_year), programs(type)",
     )
     .eq("status", "active")
     .eq("enrollment_type", "regular");
@@ -285,6 +285,12 @@ export async function runSessionPromotions(
 
   const { data: students, error: stErr } = await studentQuery;
   if (stErr) throw stErr;
+
+  // BS progression is semester-based in LMS — never annual class promotion.
+  const intermediateStudents = (students ?? []).filter((row) => {
+    const program = (row as { programs?: { type?: string } | null }).programs;
+    return program?.type !== "bs";
+  });
 
   const { data: existingLogs } = await client
     .from("student_promotion_log")
@@ -303,7 +309,7 @@ export async function runSessionPromotions(
 
   const mirroredPairs = new Set<string>();
 
-  for (const raw of students ?? []) {
+  for (const raw of intermediateStudents) {
     const student = raw as StudentRow;
     if (alreadyPromoted.has(student.id)) {
       result.skipped += 1;

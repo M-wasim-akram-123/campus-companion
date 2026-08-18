@@ -15,6 +15,7 @@ export type Database = {
           id: string;
           is_active: boolean;
           label: string;
+          program_type: Database["public"]["Enums"]["program_type"];
           start_year: number;
         };
         Insert: {
@@ -23,6 +24,7 @@ export type Database = {
           id?: string;
           is_active?: boolean;
           label: string;
+          program_type?: Database["public"]["Enums"]["program_type"];
           start_year: number;
         };
         Update: {
@@ -31,6 +33,7 @@ export type Database = {
           id?: string;
           is_active?: boolean;
           label?: string;
+          program_type?: Database["public"]["Enums"]["program_type"];
           start_year?: number;
         };
         Relationships: [];
@@ -244,6 +247,35 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "campus_incharge_assignments_section_id_fkey";
+            columns: ["section_id"];
+            isOneToOne: false;
+            referencedRelation: "sections";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      intermediate_teacher_assignments: {
+        Row: {
+          id: string;
+          teacher_user_id: string;
+          section_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          teacher_user_id: string;
+          section_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          teacher_user_id?: string;
+          section_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "intermediate_teacher_assignments_section_id_fkey";
             columns: ["section_id"];
             isOneToOne: false;
             referencedRelation: "sections";
@@ -1244,6 +1276,246 @@ export type Database = {
           },
         ];
       };
+      intermediate_subjects: {
+        Row: {
+          id: string;
+          code: string;
+          name: string;
+          is_active: boolean;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          name: string;
+          is_active?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          name?: string;
+          is_active?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      intermediate_section_subjects: {
+        Row: {
+          id: string;
+          section_id: string;
+          subject_id: string;
+          teacher_user_id: string;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          section_id: string;
+          subject_id: string;
+          teacher_user_id: string;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          section_id?: string;
+          subject_id?: string;
+          teacher_user_id?: string;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "intermediate_section_subjects_section_id_fkey";
+            columns: ["section_id"];
+            isOneToOne: false;
+            referencedRelation: "sections";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "intermediate_section_subjects_subject_id_fkey";
+            columns: ["subject_id"];
+            isOneToOne: false;
+            referencedRelation: "intermediate_subjects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      internal_test_section_meta: {
+        Row: {
+          id: string;
+          internal_test_id: string;
+          section_id: string;
+          subject_id: string;
+          teacher_user_id: string;
+          teacher_name_snapshot: string;
+          paper_received: boolean;
+          marks_completed: boolean;
+          marks_completed_at: string | null;
+          marks_completed_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          internal_test_id: string;
+          section_id: string;
+          subject_id: string;
+          teacher_user_id: string;
+          teacher_name_snapshot: string;
+          paper_received?: boolean;
+          marks_completed?: boolean;
+          marks_completed_at?: string | null;
+          marks_completed_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          internal_test_id?: string;
+          section_id?: string;
+          subject_id?: string;
+          teacher_user_id?: string;
+          teacher_name_snapshot?: string;
+          paper_received?: boolean;
+          marks_completed?: boolean;
+          marks_completed_at?: string | null;
+          marks_completed_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "internal_test_section_meta_internal_test_id_fkey";
+            columns: ["internal_test_id"];
+            isOneToOne: false;
+            referencedRelation: "internal_tests";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "internal_test_section_meta_section_id_fkey";
+            columns: ["section_id"];
+            isOneToOne: false;
+            referencedRelation: "sections";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "internal_test_section_meta_subject_id_fkey";
+            columns: ["subject_id"];
+            isOneToOne: false;
+            referencedRelation: "intermediate_subjects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      student_academic_ledger: {
+        Row: {
+          id: string;
+          student_id: string;
+          event_type: string;
+          internal_test_id: string | null;
+          series_id: string | null;
+          subject_id: string | null;
+          section_id: string | null;
+          teacher_user_id: string | null;
+          academic_session_id: string | null;
+          academic_year_start: number | null;
+          class_year_level: number | null;
+          subject_name: string;
+          test_name: string;
+          marks_obtained: number | null;
+          max_marks: number | null;
+          passing_marks: number | null;
+          is_absent: boolean;
+          metadata: Json;
+          recorded_by: string | null;
+          recorded_at: string;
+        };
+        Insert: {
+          id?: string;
+          student_id: string;
+          event_type: string;
+          internal_test_id?: string | null;
+          series_id?: string | null;
+          subject_id?: string | null;
+          section_id?: string | null;
+          teacher_user_id?: string | null;
+          academic_session_id?: string | null;
+          academic_year_start?: number | null;
+          class_year_level?: number | null;
+          subject_name: string;
+          test_name: string;
+          marks_obtained?: number | null;
+          max_marks?: number | null;
+          passing_marks?: number | null;
+          is_absent?: boolean;
+          metadata?: Json;
+          recorded_by?: string | null;
+          recorded_at?: string;
+        };
+        Update: {
+          id?: string;
+          student_id?: string;
+          event_type?: string;
+          internal_test_id?: string | null;
+          series_id?: string | null;
+          subject_id?: string | null;
+          section_id?: string | null;
+          teacher_user_id?: string | null;
+          academic_session_id?: string | null;
+          academic_year_start?: number | null;
+          class_year_level?: number | null;
+          subject_name?: string;
+          test_name?: string;
+          marks_obtained?: number | null;
+          max_marks?: number | null;
+          passing_marks?: number | null;
+          is_absent?: boolean;
+          metadata?: Json;
+          recorded_by?: string | null;
+          recorded_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "student_academic_ledger_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "student_academic_ledger_internal_test_id_fkey";
+            columns: ["internal_test_id"];
+            isOneToOne: false;
+            referencedRelation: "internal_tests";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "student_academic_ledger_subject_id_fkey";
+            columns: ["subject_id"];
+            isOneToOne: false;
+            referencedRelation: "intermediate_subjects";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "student_academic_ledger_section_id_fkey";
+            columns: ["section_id"];
+            isOneToOne: false;
+            referencedRelation: "sections";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       internal_test_series: {
         Row: {
           academic_session_id: string;
@@ -1384,6 +1656,7 @@ export type Database = {
           section_id: string | null;
           series_id: string | null;
           status: Database["public"]["Enums"]["internal_test_status"];
+          subject_id: string | null;
           subject_name: string;
           teacher_name: string | null;
           test_date: string;
@@ -1404,6 +1677,7 @@ export type Database = {
           section_id?: string | null;
           series_id?: string | null;
           status?: Database["public"]["Enums"]["internal_test_status"];
+          subject_id?: string | null;
           subject_name: string;
           teacher_name?: string | null;
           test_date: string;
@@ -1424,6 +1698,7 @@ export type Database = {
           section_id?: string | null;
           series_id?: string | null;
           status?: Database["public"]["Enums"]["internal_test_status"];
+          subject_id?: string | null;
           subject_name?: string;
           teacher_name?: string | null;
           test_date?: string;
@@ -1450,6 +1725,13 @@ export type Database = {
             columns: ["series_id"];
             isOneToOne: false;
             referencedRelation: "internal_test_series";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "internal_tests_subject_id_fkey";
+            columns: ["subject_id"];
+            isOneToOne: false;
+            referencedRelation: "intermediate_subjects";
             referencedColumns: ["id"];
           },
         ];
@@ -2213,6 +2495,28 @@ export type Database = {
       };
     };
     Functions: {
+      complete_internal_test_section: {
+        Args: { p_section_id: string; p_test_id: string };
+        Returns: Database["public"]["Tables"]["internal_test_section_meta"]["Row"];
+      };
+      create_teacher_class_test: {
+        Args: {
+          p_academic_session_id: string;
+          p_academic_year_start: number;
+          p_class_year_level: number;
+          p_section_id: string;
+          p_subject_id: string;
+          p_test_name: string;
+          p_test_date: string;
+          p_max_marks: number;
+          p_passing_marks?: number | null;
+        };
+        Returns: Database["public"]["Tables"]["internal_tests"]["Row"];
+      };
+      publish_internal_test: {
+        Args: { p_test_id: string };
+        Returns: Database["public"]["Tables"]["internal_tests"]["Row"];
+      };
       add_student_finance_charge: {
         Args: {
           p_amount: number;
@@ -2355,9 +2659,13 @@ export type Database = {
         | "hr"
         | "finance_admin"
         | "finance_officer"
+        | "bs_finance_admin"
         | "cashier"
         | "exam_officer"
         | "receptionist"
+        | "hod"
+        | "academic_coordinator"
+        | "bs_coordinator"
         | "teacher"
         | "student";
       cashier_session_status: "open" | "closed" | "cancelled";
@@ -2390,12 +2698,7 @@ export type Database = {
         | "lost";
       payment_method: "cash" | "bank" | "online" | "other";
       program_type: "intermediate" | "bs";
-      roll_no_slip_request_status:
-        | "pending"
-        | "approved"
-        | "rejected"
-        | "released"
-        | "settled";
+      roll_no_slip_request_status: "pending" | "approved" | "rejected" | "released" | "settled";
       section_gender: "boys" | "girls";
       student_document_status: "pending_review" | "approved" | "rejected";
       student_document_type:
@@ -2543,9 +2846,13 @@ export const Constants = {
         "hr",
         "finance_admin",
         "finance_officer",
+        "bs_finance_admin",
         "cashier",
         "exam_officer",
         "receptionist",
+        "hod",
+        "academic_coordinator",
+        "bs_coordinator",
         "teacher",
         "student",
       ],

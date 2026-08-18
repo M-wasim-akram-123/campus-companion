@@ -80,12 +80,12 @@ type OfficerInquiryPerformance = {
 
 function Dashboard() {
   const navigate = useNavigate();
-  const { user, roles, hasRole, hasAnyRole, loading } = useAuth();
+  const { user, roles, teacherScope, hasRole, hasAnyRole, loading } = useAuth();
   const [selectedPerformanceMonth, setSelectedPerformanceMonth] = useState(startOfMonthKey);
   const [performanceFrom, setPerformanceFrom] = useState("");
   const [performanceTo, setPerformanceTo] = useState("");
   const isSuperAdmin = hasRole("super_admin");
-  const homePath = defaultHomePathForRoles(roles);
+  const homePath = defaultHomePathForRoles(roles, teacherScope);
 
   useEffect(() => {
     if (!loading && !isSuperAdmin && homePath !== "/dashboard") {
@@ -95,7 +95,7 @@ function Dashboard() {
 
   const canViewFinance = hasAnyRole(["super_admin", "finance_admin", "finance_officer", "cashier"]);
   const canViewAdmissions = hasAnyRole(["super_admin", "admission_officer", "receptionist"]);
-  const canViewStudents = hasAnyRole(["super_admin", "admission_officer", "hr", "teacher"]);
+  const canViewStudents = hasAnyRole(["super_admin", "admission_officer", "hr"]);
   const canSetupSystem = isSuperAdmin;
 
   const { data: overview, isLoading } = useQuery({
@@ -141,11 +141,16 @@ function Dashboard() {
       const payments = paymentsRes.data ?? [];
       const installments = installmentsRes.data ?? [];
 
-      const activeSession = sessions.find((s) => s.is_active);
+      const runningSessions = sessions.filter((s) => s.is_active);
+      const runningSessionIds = new Set(runningSessions.map((s) => s.id));
       const activeStudents = students.filter((s) => s.status === "active");
-      const activeSessionStudents = activeSession
-        ? students.filter((s) => s.academic_session_id === activeSession.id)
+      const activeSessionStudents = runningSessionIds.size
+        ? students.filter((s) => s.academic_session_id && runningSessionIds.has(s.academic_session_id))
         : activeStudents;
+      const runningSessionLabels = runningSessions
+        .map((s) => s.label)
+        .sort((a, b) => b.localeCompare(a));
+      const activeSession = runningSessions[0] ?? null;
 
       const statusCounts = inquiries.reduce<Record<string, number>>((acc, inquiry) => {
         acc[inquiry.status] = (acc[inquiry.status] ?? 0) + 1;
@@ -251,6 +256,7 @@ function Dashboard() {
 
       return {
         activeSession,
+        runningSessionLabels,
         totalInquiries: inquiries.length,
         totalStudents: students.length,
         activeStudents: activeStudents.length,
@@ -334,7 +340,9 @@ function Dashboard() {
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
               <Sparkles className="h-4 w-4" />
-              {overview?.activeSession?.label ? `Active session: ${overview.activeSession.label}` : CAMPUS_NAME}
+              {overview?.runningSessionLabels?.length
+                ? `Running cohorts: ${overview.runningSessionLabels.join(", ")}`
+                : CAMPUS_NAME}
             </div>
             <h1 className="bg-gradient-to-r from-foreground via-primary to-cyan-500 bg-clip-text text-4xl font-black tracking-tight text-transparent md:text-5xl">
               Command Center
@@ -577,7 +585,7 @@ function Dashboard() {
               </Button>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              Active session students: <strong>{overview?.activeSessionStudents ?? 0}</strong>. Keep sessions,
+              Running cohort students: <strong>{overview?.activeSessionStudents ?? 0}</strong>. Keep sessions,
               programs, classes and sections updated so inquiry, admission and finance reports stay accurate.
             </CardContent>
           </Card>

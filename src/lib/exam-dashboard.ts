@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { InternalTest } from "@/lib/internal-exams";
-import { summarizeSeriesProgress } from "@/lib/internal-exams";
 
 export type ExamDashboardAction = {
   testId: string;
@@ -30,7 +29,12 @@ export type ExamSeriesProgressRow = {
 
 export type ExamDashboardData = {
   seriesCount: number;
-  progress: ReturnType<typeof summarizeSeriesProgress>;
+  progress: {
+    totalSubjects: number;
+    papersPending: number;
+    marksPending: number;
+    published: number;
+  };
   completionPercent: number;
   testsThisWeek: number;
   testsToday: number;
@@ -88,7 +92,6 @@ export async function fetchExamDashboardData(
     .from("internal_tests")
     .select("*, internal_test_series(name)")
     .eq("academic_session_id", sessionId)
-    .not("series_id", "is", null)
     .order("test_date", { ascending: true });
   if (classYearLevel != null) testsQuery = testsQuery.eq("class_year_level", classYearLevel);
 
@@ -105,11 +108,64 @@ export async function fetchExamDashboardData(
   if (annErr) throwErr(annErr);
 
   const allTests = (tests ?? []) as InternalTest[];
-  const progress = summarizeSeriesProgress(allTests);
+  const testIds = allTests.map((test) => test.id);
+  const metaResult =
+    testIds.length > 0
+      ? await supabase
+          .from("internal_test_section_meta")
+          .select(
+            "internal_test_id, teacher_name_snapshot, paper_received, marks_completed",
+          )
+          .in("internal_test_id", testIds)
+      : {
+          data: [] as {
+            internal_test_id: string;
+            teacher_name_snapshot: string;
+            paper_received: boolean;
+            marks_completed: boolean;
+          }[],
+          error: null,
+        };
+  if (metaResult.error) throwErr(metaResult.error);
+  const metaByTest = new Map<string, typeof metaResult.data>();
+  for (const row of metaResult.data ?? []) {
+    const current = metaByTest.get(row.internal_test_id) ?? [];
+    current.push(row);
+    metaByTest.set(row.internal_test_id, current);
+  }
+  const paperReceived = (test: InternalTest) => {
+    const meta = metaByTest.get(test.id) ?? [];
+    return meta.length ? meta.every((row) => row.paper_received) : test.paper_received;
+  };
+  const marksCompleted = (test: InternalTest) => {
+    const meta = metaByTest.get(test.id) ?? [];
+    return meta.length ? meta.every((row) => row.marks_completed) : test.status === "published";
+  };
+  const teacherNames = (test: InternalTest) => {
+    const names = [
+      ...new Set(
+        (metaByTest.get(test.id) ?? [])
+          .map((row) => row.teacher_name_snapshot)
+          .filter(Boolean),
+      ),
+    ];
+    return names.length ? names.join(", ") : test.teacher_name;
+  };
+
   const draftTests = allTests.filter((t) => t.status === "draft");
-  const publishedCount = progress.published;
-  const papersPending = draftTests.filter((t) => !t.paper_received).length;
-  const awaitingMarks = draftTests.filter((t) => t.paper_received).length;
+  const publishedCount = allTests.filter((test) => test.status === "published").length;
+  const papersPending = draftTests.filter((test) => !paperReceived(test)).length;
+  const awaitingMarks = draftTests.filter(
+    (test) => paperReceived(test) && !marksCompleted(test),
+  ).length;
+  const progress = {
+    totalSubjects: new Set(
+      allTests.map((test) => test.subject_id ?? test.subject_name.trim().toLowerCase()),
+    ).size,
+    papersPending,
+    marksPending: draftTests.filter((test) => !marksCompleted(test)).length,
+    published: publishedCount,
+  };
 
   const completionPercent =
     allTests.length > 0 ? Math.round((publishedCount / allTests.length) * 100) : 0;
@@ -158,18 +214,24 @@ export async function fetchExamDashboardData(
 
   const seriesProgress: ExamSeriesProgressRow[] = (seriesRows ?? []).map((series) => {
     const seriesTests = testsBySeries.get(series.id) ?? [];
-    const sp = summarizeSeriesProgress(seriesTests);
-    const awaiting = seriesTests.filter((t) => t.status === "draft" && t.paper_received).length;
+    const published = seriesTests.filter((test) => test.status === "published").length;
+    const seriesPaperPending = seriesTests.filter(
+      (test) => test.status === "draft" && !paperReceived(test),
+    ).length;
+    const awaiting = seriesTests.filter(
+      (test) =>
+        test.status === "draft" && paperReceived(test) && !marksCompleted(test),
+    ).length;
     const total = seriesTests.length;
     return {
       seriesId: series.id,
       seriesName: series.name,
       classYearLevel: series.class_year_level,
       total,
-      published: sp.published,
-      papersPending: sp.papersPending,
+      published,
+      papersPending: seriesPaperPending,
       awaitingMarks: awaiting,
-      completionPercent: total > 0 ? Math.round((sp.published / total) * 100) : 0,
+      completionPercent: total > 0 ? Math.round((published / total) * 100) : 0,
     };
   });
 
@@ -182,11 +244,11 @@ export async function fetchExamDashboardData(
       seriesName: seriesName(test),
       subjectName: test.subject_name,
       testDate: test.test_date,
-      teacherName: test.teacher_name,
+      teacherName: teacherNames(test),
     };
     if (test.test_date === today) {
       actionItems.push({ ...base, reason: "test_today" });
-    } else if (!test.paper_received) {
+    } else if (!paperReceived(test)) {
       actionItems.push({ ...base, reason: "paper_pending" });
     } else {
       actionItems.push({ ...base, reason: "marks_pending" });

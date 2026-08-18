@@ -18,6 +18,30 @@ export const INTERMEDIATE_TRACK_HINTS = [
 ] as const;
 
 export type FeeComponentType = (typeof FEE_COMPONENTS)[number]["key"];
+export type ProgramTypeHint = "intermediate" | "bs";
+
+/** Labels/components vary by track; registration/exam remain optional for both. */
+export function feeComponentsForProgramType(programType?: ProgramTypeHint | null) {
+  if (programType === "bs") {
+    return [
+      { key: "admission_fee" as const, label: "Admission fee" },
+      { key: "annual_fund" as const, label: "Annual fund" },
+      { key: "semester_fee" as const, label: "Semester fee" },
+      { key: "board_registration_fee" as const, label: "University registration fee (optional)" },
+      { key: "board_examination_fee" as const, label: "University examination fee (optional)" },
+    ];
+  }
+  if (programType === "intermediate") {
+    return [
+      { key: "admission_fee" as const, label: "Admission fee" },
+      { key: "annual_fund" as const, label: "Annual fund" },
+      { key: "annual_fee" as const, label: "Annual fee" },
+      { key: "board_registration_fee" as const, label: "Board registration fee (optional)" },
+      { key: "board_examination_fee" as const, label: "Board examination fee (optional)" },
+    ];
+  }
+  return [...FEE_COMPONENTS];
+}
 
 export type AnnualFeeScheduleType = "monthly" | "quarterly" | "biannual" | "spread" | "custom";
 export type ProjectionCycleType = "annual" | "semester";

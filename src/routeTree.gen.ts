@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated/students/index'
+import { Route as AuthenticatedLmsIndexRouteImport } from './routes/_authenticated/lms/index'
 import { Route as AuthenticatedInquiriesIndexRouteImport } from './routes/_authenticated/inquiries/index'
 import { Route as AuthenticatedFinanceIndexRouteImport } from './routes/_authenticated/finance/index'
 import { Route as AuthenticatedExamsIndexRouteImport } from './routes/_authenticated/exams/index'
@@ -40,6 +41,16 @@ import { Route as AuthenticatedSettingsFeesRouteImport } from './routes/_authent
 import { Route as AuthenticatedSettingsCollectionPlansRouteImport } from './routes/_authenticated/settings/collection-plans'
 import { Route as AuthenticatedSettingsBoardGazetteRouteImport } from './routes/_authenticated/settings/board-gazette'
 import { Route as AuthenticatedSettingsAcademicRouteImport } from './routes/_authenticated/settings/academic'
+import { Route as AuthenticatedLmsTeachersRouteImport } from './routes/_authenticated/lms/teachers'
+import { Route as AuthenticatedLmsSemestersRouteImport } from './routes/_authenticated/lms/semesters'
+import { Route as AuthenticatedLmsSalaryRouteImport } from './routes/_authenticated/lms/salary'
+import { Route as AuthenticatedLmsOfferingsRouteImport } from './routes/_authenticated/lms/offerings'
+import { Route as AuthenticatedLmsMyClassesRouteImport } from './routes/_authenticated/lms/my-classes'
+import { Route as AuthenticatedLmsDepartmentsRouteImport } from './routes/_authenticated/lms/departments'
+import { Route as AuthenticatedLmsDeliveriesRouteImport } from './routes/_authenticated/lms/deliveries'
+import { Route as AuthenticatedLmsCoursesRouteImport } from './routes/_authenticated/lms/courses'
+import { Route as AuthenticatedLmsClassesRouteImport } from './routes/_authenticated/lms/classes'
+import { Route as AuthenticatedLmsCalendarRouteImport } from './routes/_authenticated/lms/calendar'
 import { Route as AuthenticatedInquiriesNewRouteImport } from './routes/_authenticated/inquiries/new'
 import { Route as AuthenticatedInquiriesIdRouteImport } from './routes/_authenticated/inquiries/$id'
 import { Route as AuthenticatedFinanceScanRouteImport } from './routes/_authenticated/finance/scan'
@@ -47,6 +58,8 @@ import { Route as AuthenticatedFinanceReportsRouteImport } from './routes/_authe
 import { Route as AuthenticatedFinanceDuesRouteImport } from './routes/_authenticated/finance/dues'
 import { Route as AuthenticatedFinanceCollectRouteImport } from './routes/_authenticated/finance/collect'
 import { Route as AuthenticatedFinanceBulkVouchersRouteImport } from './routes/_authenticated/finance/bulk-vouchers'
+import { Route as AuthenticatedExamsReportsRouteImport } from './routes/_authenticated/exams/reports'
+import { Route as AuthenticatedExamsCatalogRouteImport } from './routes/_authenticated/exams/catalog'
 import { Route as AuthenticatedAnnouncementsNewRouteImport } from './routes/_authenticated/announcements/new'
 import { Route as AuthenticatedAdmissionsNewRouteImport } from './routes/_authenticated/admissions/new'
 import { Route as AuthenticatedFinanceVouchersIndexRouteImport } from './routes/_authenticated/finance/vouchers/index'
@@ -89,6 +102,11 @@ const AuthenticatedStudentsIndexRoute =
     path: '/students/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedLmsIndexRoute = AuthenticatedLmsIndexRouteImport.update({
+  id: '/lms/',
+  path: '/lms/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedInquiriesIndexRoute =
   AuthenticatedInquiriesIndexRouteImport.update({
     id: '/inquiries/',
@@ -228,6 +246,63 @@ const AuthenticatedSettingsAcademicRoute =
     path: '/settings/academic',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedLmsTeachersRoute =
+  AuthenticatedLmsTeachersRouteImport.update({
+    id: '/lms/teachers',
+    path: '/lms/teachers',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLmsSemestersRoute =
+  AuthenticatedLmsSemestersRouteImport.update({
+    id: '/lms/semesters',
+    path: '/lms/semesters',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLmsSalaryRoute = AuthenticatedLmsSalaryRouteImport.update({
+  id: '/lms/salary',
+  path: '/lms/salary',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLmsOfferingsRoute =
+  AuthenticatedLmsOfferingsRouteImport.update({
+    id: '/lms/offerings',
+    path: '/lms/offerings',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLmsMyClassesRoute =
+  AuthenticatedLmsMyClassesRouteImport.update({
+    id: '/lms/my-classes',
+    path: '/lms/my-classes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLmsDepartmentsRoute =
+  AuthenticatedLmsDepartmentsRouteImport.update({
+    id: '/lms/departments',
+    path: '/lms/departments',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLmsDeliveriesRoute =
+  AuthenticatedLmsDeliveriesRouteImport.update({
+    id: '/lms/deliveries',
+    path: '/lms/deliveries',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLmsCoursesRoute = AuthenticatedLmsCoursesRouteImport.update({
+  id: '/lms/courses',
+  path: '/lms/courses',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLmsClassesRoute = AuthenticatedLmsClassesRouteImport.update({
+  id: '/lms/classes',
+  path: '/lms/classes',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLmsCalendarRoute =
+  AuthenticatedLmsCalendarRouteImport.update({
+    id: '/lms/calendar',
+    path: '/lms/calendar',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedInquiriesNewRoute =
   AuthenticatedInquiriesNewRouteImport.update({
     id: '/inquiries/new',
@@ -268,6 +343,18 @@ const AuthenticatedFinanceBulkVouchersRoute =
   AuthenticatedFinanceBulkVouchersRouteImport.update({
     id: '/finance/bulk-vouchers',
     path: '/finance/bulk-vouchers',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedExamsReportsRoute =
+  AuthenticatedExamsReportsRouteImport.update({
+    id: '/exams/reports',
+    path: '/exams/reports',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedExamsCatalogRoute =
+  AuthenticatedExamsCatalogRouteImport.update({
+    id: '/exams/catalog',
+    path: '/exams/catalog',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAnnouncementsNewRoute =
@@ -344,6 +431,8 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admissions/new': typeof AuthenticatedAdmissionsNewRoute
   '/announcements/new': typeof AuthenticatedAnnouncementsNewRoute
+  '/exams/catalog': typeof AuthenticatedExamsCatalogRoute
+  '/exams/reports': typeof AuthenticatedExamsReportsRoute
   '/finance/bulk-vouchers': typeof AuthenticatedFinanceBulkVouchersRoute
   '/finance/collect': typeof AuthenticatedFinanceCollectRoute
   '/finance/dues': typeof AuthenticatedFinanceDuesRoute
@@ -351,6 +440,16 @@ export interface FileRoutesByFullPath {
   '/finance/scan': typeof AuthenticatedFinanceScanRoute
   '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/inquiries/new': typeof AuthenticatedInquiriesNewRoute
+  '/lms/calendar': typeof AuthenticatedLmsCalendarRoute
+  '/lms/classes': typeof AuthenticatedLmsClassesRoute
+  '/lms/courses': typeof AuthenticatedLmsCoursesRoute
+  '/lms/deliveries': typeof AuthenticatedLmsDeliveriesRoute
+  '/lms/departments': typeof AuthenticatedLmsDepartmentsRoute
+  '/lms/my-classes': typeof AuthenticatedLmsMyClassesRoute
+  '/lms/offerings': typeof AuthenticatedLmsOfferingsRoute
+  '/lms/salary': typeof AuthenticatedLmsSalaryRoute
+  '/lms/semesters': typeof AuthenticatedLmsSemestersRoute
+  '/lms/teachers': typeof AuthenticatedLmsTeachersRoute
   '/settings/academic': typeof AuthenticatedSettingsAcademicRoute
   '/settings/board-gazette': typeof AuthenticatedSettingsBoardGazetteRoute
   '/settings/collection-plans': typeof AuthenticatedSettingsCollectionPlansRoute
@@ -376,6 +475,7 @@ export interface FileRoutesByFullPath {
   '/exams/': typeof AuthenticatedExamsIndexRoute
   '/finance/': typeof AuthenticatedFinanceIndexRoute
   '/inquiries/': typeof AuthenticatedInquiriesIndexRoute
+  '/lms/': typeof AuthenticatedLmsIndexRoute
   '/students/': typeof AuthenticatedStudentsIndexRoute
   '/exams/series/$id': typeof AuthenticatedExamsSeriesIdRoute
   '/exams/series/new': typeof AuthenticatedExamsSeriesNewRoute
@@ -394,6 +494,8 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admissions/new': typeof AuthenticatedAdmissionsNewRoute
   '/announcements/new': typeof AuthenticatedAnnouncementsNewRoute
+  '/exams/catalog': typeof AuthenticatedExamsCatalogRoute
+  '/exams/reports': typeof AuthenticatedExamsReportsRoute
   '/finance/bulk-vouchers': typeof AuthenticatedFinanceBulkVouchersRoute
   '/finance/collect': typeof AuthenticatedFinanceCollectRoute
   '/finance/dues': typeof AuthenticatedFinanceDuesRoute
@@ -401,6 +503,16 @@ export interface FileRoutesByTo {
   '/finance/scan': typeof AuthenticatedFinanceScanRoute
   '/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/inquiries/new': typeof AuthenticatedInquiriesNewRoute
+  '/lms/calendar': typeof AuthenticatedLmsCalendarRoute
+  '/lms/classes': typeof AuthenticatedLmsClassesRoute
+  '/lms/courses': typeof AuthenticatedLmsCoursesRoute
+  '/lms/deliveries': typeof AuthenticatedLmsDeliveriesRoute
+  '/lms/departments': typeof AuthenticatedLmsDepartmentsRoute
+  '/lms/my-classes': typeof AuthenticatedLmsMyClassesRoute
+  '/lms/offerings': typeof AuthenticatedLmsOfferingsRoute
+  '/lms/salary': typeof AuthenticatedLmsSalaryRoute
+  '/lms/semesters': typeof AuthenticatedLmsSemestersRoute
+  '/lms/teachers': typeof AuthenticatedLmsTeachersRoute
   '/settings/academic': typeof AuthenticatedSettingsAcademicRoute
   '/settings/board-gazette': typeof AuthenticatedSettingsBoardGazetteRoute
   '/settings/collection-plans': typeof AuthenticatedSettingsCollectionPlansRoute
@@ -426,6 +538,7 @@ export interface FileRoutesByTo {
   '/exams': typeof AuthenticatedExamsIndexRoute
   '/finance': typeof AuthenticatedFinanceIndexRoute
   '/inquiries': typeof AuthenticatedInquiriesIndexRoute
+  '/lms': typeof AuthenticatedLmsIndexRoute
   '/students': typeof AuthenticatedStudentsIndexRoute
   '/exams/series/$id': typeof AuthenticatedExamsSeriesIdRoute
   '/exams/series/new': typeof AuthenticatedExamsSeriesNewRoute
@@ -446,6 +559,8 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/admissions/new': typeof AuthenticatedAdmissionsNewRoute
   '/_authenticated/announcements/new': typeof AuthenticatedAnnouncementsNewRoute
+  '/_authenticated/exams/catalog': typeof AuthenticatedExamsCatalogRoute
+  '/_authenticated/exams/reports': typeof AuthenticatedExamsReportsRoute
   '/_authenticated/finance/bulk-vouchers': typeof AuthenticatedFinanceBulkVouchersRoute
   '/_authenticated/finance/collect': typeof AuthenticatedFinanceCollectRoute
   '/_authenticated/finance/dues': typeof AuthenticatedFinanceDuesRoute
@@ -453,6 +568,16 @@ export interface FileRoutesById {
   '/_authenticated/finance/scan': typeof AuthenticatedFinanceScanRoute
   '/_authenticated/inquiries/$id': typeof AuthenticatedInquiriesIdRoute
   '/_authenticated/inquiries/new': typeof AuthenticatedInquiriesNewRoute
+  '/_authenticated/lms/calendar': typeof AuthenticatedLmsCalendarRoute
+  '/_authenticated/lms/classes': typeof AuthenticatedLmsClassesRoute
+  '/_authenticated/lms/courses': typeof AuthenticatedLmsCoursesRoute
+  '/_authenticated/lms/deliveries': typeof AuthenticatedLmsDeliveriesRoute
+  '/_authenticated/lms/departments': typeof AuthenticatedLmsDepartmentsRoute
+  '/_authenticated/lms/my-classes': typeof AuthenticatedLmsMyClassesRoute
+  '/_authenticated/lms/offerings': typeof AuthenticatedLmsOfferingsRoute
+  '/_authenticated/lms/salary': typeof AuthenticatedLmsSalaryRoute
+  '/_authenticated/lms/semesters': typeof AuthenticatedLmsSemestersRoute
+  '/_authenticated/lms/teachers': typeof AuthenticatedLmsTeachersRoute
   '/_authenticated/settings/academic': typeof AuthenticatedSettingsAcademicRoute
   '/_authenticated/settings/board-gazette': typeof AuthenticatedSettingsBoardGazetteRoute
   '/_authenticated/settings/collection-plans': typeof AuthenticatedSettingsCollectionPlansRoute
@@ -478,6 +603,7 @@ export interface FileRoutesById {
   '/_authenticated/exams/': typeof AuthenticatedExamsIndexRoute
   '/_authenticated/finance/': typeof AuthenticatedFinanceIndexRoute
   '/_authenticated/inquiries/': typeof AuthenticatedInquiriesIndexRoute
+  '/_authenticated/lms/': typeof AuthenticatedLmsIndexRoute
   '/_authenticated/students/': typeof AuthenticatedStudentsIndexRoute
   '/_authenticated/exams/series/$id': typeof AuthenticatedExamsSeriesIdRoute
   '/_authenticated/exams/series/new': typeof AuthenticatedExamsSeriesNewRoute
@@ -498,6 +624,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/admissions/new'
     | '/announcements/new'
+    | '/exams/catalog'
+    | '/exams/reports'
     | '/finance/bulk-vouchers'
     | '/finance/collect'
     | '/finance/dues'
@@ -505,6 +633,16 @@ export interface FileRouteTypes {
     | '/finance/scan'
     | '/inquiries/$id'
     | '/inquiries/new'
+    | '/lms/calendar'
+    | '/lms/classes'
+    | '/lms/courses'
+    | '/lms/deliveries'
+    | '/lms/departments'
+    | '/lms/my-classes'
+    | '/lms/offerings'
+    | '/lms/salary'
+    | '/lms/semesters'
+    | '/lms/teachers'
     | '/settings/academic'
     | '/settings/board-gazette'
     | '/settings/collection-plans'
@@ -530,6 +668,7 @@ export interface FileRouteTypes {
     | '/exams/'
     | '/finance/'
     | '/inquiries/'
+    | '/lms/'
     | '/students/'
     | '/exams/series/$id'
     | '/exams/series/new'
@@ -548,6 +687,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/admissions/new'
     | '/announcements/new'
+    | '/exams/catalog'
+    | '/exams/reports'
     | '/finance/bulk-vouchers'
     | '/finance/collect'
     | '/finance/dues'
@@ -555,6 +696,16 @@ export interface FileRouteTypes {
     | '/finance/scan'
     | '/inquiries/$id'
     | '/inquiries/new'
+    | '/lms/calendar'
+    | '/lms/classes'
+    | '/lms/courses'
+    | '/lms/deliveries'
+    | '/lms/departments'
+    | '/lms/my-classes'
+    | '/lms/offerings'
+    | '/lms/salary'
+    | '/lms/semesters'
+    | '/lms/teachers'
     | '/settings/academic'
     | '/settings/board-gazette'
     | '/settings/collection-plans'
@@ -580,6 +731,7 @@ export interface FileRouteTypes {
     | '/exams'
     | '/finance'
     | '/inquiries'
+    | '/lms'
     | '/students'
     | '/exams/series/$id'
     | '/exams/series/new'
@@ -599,6 +751,8 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/admissions/new'
     | '/_authenticated/announcements/new'
+    | '/_authenticated/exams/catalog'
+    | '/_authenticated/exams/reports'
     | '/_authenticated/finance/bulk-vouchers'
     | '/_authenticated/finance/collect'
     | '/_authenticated/finance/dues'
@@ -606,6 +760,16 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/scan'
     | '/_authenticated/inquiries/$id'
     | '/_authenticated/inquiries/new'
+    | '/_authenticated/lms/calendar'
+    | '/_authenticated/lms/classes'
+    | '/_authenticated/lms/courses'
+    | '/_authenticated/lms/deliveries'
+    | '/_authenticated/lms/departments'
+    | '/_authenticated/lms/my-classes'
+    | '/_authenticated/lms/offerings'
+    | '/_authenticated/lms/salary'
+    | '/_authenticated/lms/semesters'
+    | '/_authenticated/lms/teachers'
     | '/_authenticated/settings/academic'
     | '/_authenticated/settings/board-gazette'
     | '/_authenticated/settings/collection-plans'
@@ -631,6 +795,7 @@ export interface FileRouteTypes {
     | '/_authenticated/exams/'
     | '/_authenticated/finance/'
     | '/_authenticated/inquiries/'
+    | '/_authenticated/lms/'
     | '/_authenticated/students/'
     | '/_authenticated/exams/series/$id'
     | '/_authenticated/exams/series/new'
@@ -705,6 +870,13 @@ declare module '@tanstack/react-router' {
       path: '/students'
       fullPath: '/students/'
       preLoaderRoute: typeof AuthenticatedStudentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/': {
+      id: '/_authenticated/lms/'
+      path: '/lms'
+      fullPath: '/lms/'
+      preLoaderRoute: typeof AuthenticatedLmsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/inquiries/': {
@@ -882,6 +1054,76 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsAcademicRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/lms/teachers': {
+      id: '/_authenticated/lms/teachers'
+      path: '/lms/teachers'
+      fullPath: '/lms/teachers'
+      preLoaderRoute: typeof AuthenticatedLmsTeachersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/semesters': {
+      id: '/_authenticated/lms/semesters'
+      path: '/lms/semesters'
+      fullPath: '/lms/semesters'
+      preLoaderRoute: typeof AuthenticatedLmsSemestersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/salary': {
+      id: '/_authenticated/lms/salary'
+      path: '/lms/salary'
+      fullPath: '/lms/salary'
+      preLoaderRoute: typeof AuthenticatedLmsSalaryRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/offerings': {
+      id: '/_authenticated/lms/offerings'
+      path: '/lms/offerings'
+      fullPath: '/lms/offerings'
+      preLoaderRoute: typeof AuthenticatedLmsOfferingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/my-classes': {
+      id: '/_authenticated/lms/my-classes'
+      path: '/lms/my-classes'
+      fullPath: '/lms/my-classes'
+      preLoaderRoute: typeof AuthenticatedLmsMyClassesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/departments': {
+      id: '/_authenticated/lms/departments'
+      path: '/lms/departments'
+      fullPath: '/lms/departments'
+      preLoaderRoute: typeof AuthenticatedLmsDepartmentsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/deliveries': {
+      id: '/_authenticated/lms/deliveries'
+      path: '/lms/deliveries'
+      fullPath: '/lms/deliveries'
+      preLoaderRoute: typeof AuthenticatedLmsDeliveriesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/courses': {
+      id: '/_authenticated/lms/courses'
+      path: '/lms/courses'
+      fullPath: '/lms/courses'
+      preLoaderRoute: typeof AuthenticatedLmsCoursesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/classes': {
+      id: '/_authenticated/lms/classes'
+      path: '/lms/classes'
+      fullPath: '/lms/classes'
+      preLoaderRoute: typeof AuthenticatedLmsClassesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/calendar': {
+      id: '/_authenticated/lms/calendar'
+      path: '/lms/calendar'
+      fullPath: '/lms/calendar'
+      preLoaderRoute: typeof AuthenticatedLmsCalendarRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/inquiries/new': {
       id: '/_authenticated/inquiries/new'
       path: '/inquiries/new'
@@ -929,6 +1171,20 @@ declare module '@tanstack/react-router' {
       path: '/finance/bulk-vouchers'
       fullPath: '/finance/bulk-vouchers'
       preLoaderRoute: typeof AuthenticatedFinanceBulkVouchersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/exams/reports': {
+      id: '/_authenticated/exams/reports'
+      path: '/exams/reports'
+      fullPath: '/exams/reports'
+      preLoaderRoute: typeof AuthenticatedExamsReportsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/exams/catalog': {
+      id: '/_authenticated/exams/catalog'
+      path: '/exams/catalog'
+      fullPath: '/exams/catalog'
+      preLoaderRoute: typeof AuthenticatedExamsCatalogRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/announcements/new': {
@@ -1015,6 +1271,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedAdmissionsNewRoute: typeof AuthenticatedAdmissionsNewRoute
   AuthenticatedAnnouncementsNewRoute: typeof AuthenticatedAnnouncementsNewRoute
+  AuthenticatedExamsCatalogRoute: typeof AuthenticatedExamsCatalogRoute
+  AuthenticatedExamsReportsRoute: typeof AuthenticatedExamsReportsRoute
   AuthenticatedFinanceBulkVouchersRoute: typeof AuthenticatedFinanceBulkVouchersRoute
   AuthenticatedFinanceCollectRoute: typeof AuthenticatedFinanceCollectRoute
   AuthenticatedFinanceDuesRoute: typeof AuthenticatedFinanceDuesRoute
@@ -1022,6 +1280,16 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFinanceScanRoute: typeof AuthenticatedFinanceScanRoute
   AuthenticatedInquiriesIdRoute: typeof AuthenticatedInquiriesIdRoute
   AuthenticatedInquiriesNewRoute: typeof AuthenticatedInquiriesNewRoute
+  AuthenticatedLmsCalendarRoute: typeof AuthenticatedLmsCalendarRoute
+  AuthenticatedLmsClassesRoute: typeof AuthenticatedLmsClassesRoute
+  AuthenticatedLmsCoursesRoute: typeof AuthenticatedLmsCoursesRoute
+  AuthenticatedLmsDeliveriesRoute: typeof AuthenticatedLmsDeliveriesRoute
+  AuthenticatedLmsDepartmentsRoute: typeof AuthenticatedLmsDepartmentsRoute
+  AuthenticatedLmsMyClassesRoute: typeof AuthenticatedLmsMyClassesRoute
+  AuthenticatedLmsOfferingsRoute: typeof AuthenticatedLmsOfferingsRoute
+  AuthenticatedLmsSalaryRoute: typeof AuthenticatedLmsSalaryRoute
+  AuthenticatedLmsSemestersRoute: typeof AuthenticatedLmsSemestersRoute
+  AuthenticatedLmsTeachersRoute: typeof AuthenticatedLmsTeachersRoute
   AuthenticatedSettingsAcademicRoute: typeof AuthenticatedSettingsAcademicRoute
   AuthenticatedSettingsBoardGazetteRoute: typeof AuthenticatedSettingsBoardGazetteRoute
   AuthenticatedSettingsCollectionPlansRoute: typeof AuthenticatedSettingsCollectionPlansRoute
@@ -1035,6 +1303,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedExamsIndexRoute: typeof AuthenticatedExamsIndexRoute
   AuthenticatedFinanceIndexRoute: typeof AuthenticatedFinanceIndexRoute
   AuthenticatedInquiriesIndexRoute: typeof AuthenticatedInquiriesIndexRoute
+  AuthenticatedLmsIndexRoute: typeof AuthenticatedLmsIndexRoute
   AuthenticatedStudentsIndexRoute: typeof AuthenticatedStudentsIndexRoute
   AuthenticatedExamsSeriesIdRoute: typeof AuthenticatedExamsSeriesIdRoute
   AuthenticatedExamsSeriesNewRoute: typeof AuthenticatedExamsSeriesNewRoute
@@ -1050,6 +1319,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedAdmissionsNewRoute: AuthenticatedAdmissionsNewRoute,
   AuthenticatedAnnouncementsNewRoute: AuthenticatedAnnouncementsNewRoute,
+  AuthenticatedExamsCatalogRoute: AuthenticatedExamsCatalogRoute,
+  AuthenticatedExamsReportsRoute: AuthenticatedExamsReportsRoute,
   AuthenticatedFinanceBulkVouchersRoute: AuthenticatedFinanceBulkVouchersRoute,
   AuthenticatedFinanceCollectRoute: AuthenticatedFinanceCollectRoute,
   AuthenticatedFinanceDuesRoute: AuthenticatedFinanceDuesRoute,
@@ -1057,6 +1328,16 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedFinanceScanRoute: AuthenticatedFinanceScanRoute,
   AuthenticatedInquiriesIdRoute: AuthenticatedInquiriesIdRoute,
   AuthenticatedInquiriesNewRoute: AuthenticatedInquiriesNewRoute,
+  AuthenticatedLmsCalendarRoute: AuthenticatedLmsCalendarRoute,
+  AuthenticatedLmsClassesRoute: AuthenticatedLmsClassesRoute,
+  AuthenticatedLmsCoursesRoute: AuthenticatedLmsCoursesRoute,
+  AuthenticatedLmsDeliveriesRoute: AuthenticatedLmsDeliveriesRoute,
+  AuthenticatedLmsDepartmentsRoute: AuthenticatedLmsDepartmentsRoute,
+  AuthenticatedLmsMyClassesRoute: AuthenticatedLmsMyClassesRoute,
+  AuthenticatedLmsOfferingsRoute: AuthenticatedLmsOfferingsRoute,
+  AuthenticatedLmsSalaryRoute: AuthenticatedLmsSalaryRoute,
+  AuthenticatedLmsSemestersRoute: AuthenticatedLmsSemestersRoute,
+  AuthenticatedLmsTeachersRoute: AuthenticatedLmsTeachersRoute,
   AuthenticatedSettingsAcademicRoute: AuthenticatedSettingsAcademicRoute,
   AuthenticatedSettingsBoardGazetteRoute:
     AuthenticatedSettingsBoardGazetteRoute,
@@ -1072,6 +1353,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedExamsIndexRoute: AuthenticatedExamsIndexRoute,
   AuthenticatedFinanceIndexRoute: AuthenticatedFinanceIndexRoute,
   AuthenticatedInquiriesIndexRoute: AuthenticatedInquiriesIndexRoute,
+  AuthenticatedLmsIndexRoute: AuthenticatedLmsIndexRoute,
   AuthenticatedStudentsIndexRoute: AuthenticatedStudentsIndexRoute,
   AuthenticatedExamsSeriesIdRoute: AuthenticatedExamsSeriesIdRoute,
   AuthenticatedExamsSeriesNewRoute: AuthenticatedExamsSeriesNewRoute,

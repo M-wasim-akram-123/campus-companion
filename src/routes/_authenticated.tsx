@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthGate() {
-  const { user, session, loading, roles } = useAuth();
+  const { user, session, loading, roles, teacherScope } = useAuth();
   const navigate = useNavigate();
   useAcademicPromotionAutoRun();
 
@@ -22,10 +22,10 @@ function AuthGate() {
     if (loading || !user) return;
     const path = window.location.pathname;
     if (path === "/dashboard" || path === "/dashboard/") {
-      const home = defaultHomePathForRoles(roles);
+      const home = defaultHomePathForRoles(roles, teacherScope);
       if (home !== "/dashboard") navigate({ to: home, replace: true });
     }
-  }, [loading, user, roles, navigate]);
+  }, [loading, user, roles, teacherScope, navigate]);
 
   if (loading) {
     return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Loading...</div>;

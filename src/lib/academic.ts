@@ -123,14 +123,12 @@ export async function createProgramWithClasses(
           { program_id: program.id, name: "1st Year", year_level: 1 },
           { program_id: program.id, name: "2nd Year", year_level: 2 },
         ]
-      : Array.from({ length: durationYears }, (_, i) => ({
-          program_id: program.id,
-          name: `BS Year ${i + 1}`,
-          year_level: i + 1,
-        }));
+      : [];
 
-  const { error: classesError } = await supabase.from("classes").insert(classRows);
-  if (classesError) throw classesError;
+  if (classRows.length) {
+    const { error: classesError } = await supabase.from("classes").insert(classRows);
+    if (classesError) throw classesError;
+  }
 
   return program;
 }

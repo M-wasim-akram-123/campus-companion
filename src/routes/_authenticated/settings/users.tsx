@@ -2,7 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth, type AppRole } from "@/hooks/use-auth";
+import {
+  useAuth,
+  type AppRole,
+  type TeacherScope,
+} from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,10 +40,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ChevronsUpDown, ShieldCheck, UserCog, UserPlus, Users, Layers } from "lucide-react";
 import { toast } from "sonner";
 import { formatLastSeen } from "@/lib/auth-session";
 import { CampusInchargeClassesDialog } from "@/components/settings/CampusInchargeClassesDialog";
+import { TeacherIntermediateSectionsDialog } from "@/components/settings/TeacherIntermediateSectionsDialog";
 
 export const Route = createFileRoute("/_authenticated/settings/users")({
   component: UserManagement,
@@ -84,28 +96,55 @@ const ROLE_OPTIONS: { role: AppRole; label: string; level: string; access: strin
   },
   {
     role: "finance_officer",
-    label: "Finance Officer",
-    level: "Finance access",
+    label: "Finance Officer (Intermediate)",
+    level: "Intermediate finance",
     access:
-      "Fee collection, vouchers, dues, reports, revenue dashboard. Kept for existing finance users.",
+      "Intermediate fee collection, vouchers, dues, reports. Cannot see BS students or BS finance.",
   },
   {
     role: "finance_admin",
-    label: "Finance Admin",
-    level: "Finance approval",
-    access: "Finance dashboard, reports, cashier closing review, and daily signoff",
+    label: "Finance Admin (Intermediate)",
+    level: "Intermediate finance approval",
+    access:
+      "Intermediate finance dashboard, reports, cashier closing review. Cannot see BS students or BS finance.",
+  },
+  {
+    role: "bs_finance_admin",
+    label: "BS Finance Admin",
+    level: "BS finance only",
+    access:
+      "BS fee collection, vouchers, dues, reports for BS cohorts only. Cannot see Intermediate students or Intermediate finance.",
   },
   {
     role: "cashier",
-    label: "Cashier",
+    label: "Cashier (Intermediate)",
     level: "Collection access",
-    access: "Open cashier session, collect fees, scan vouchers, close own cash drawer",
+    access: "Open cashier session, collect Intermediate fees, scan vouchers, close own cash drawer",
   },
   {
     role: "exam_officer",
     label: "Exam Officer",
     level: "Exam branch",
-    access: "Create internal tests, upload marks, and publish results to student mobile",
+    access: "Internal tests plus BS final exams, result approval, transcripts, and merit lists",
+  },
+  {
+    role: "hod",
+    label: "Head of Department",
+    level: "Department leadership",
+    access: "Manage own department semesters, courses, teachers, classes, workload, and results",
+  },
+  {
+    role: "academic_coordinator",
+    label: "Academic Coordinator",
+    level: "LMS academic operations",
+    access: "Manage BS semesters, courses, class groups, offerings, enrollments, and timetable",
+  },
+  {
+    role: "bs_coordinator",
+    label: "BS Coordinator",
+    level: "Semester lecture control",
+    access:
+      "Mark theory/lab lecture deliveries for assigned BS semesters (feeds visiting teacher salary)",
   },
   {
     role: "receptionist",
@@ -116,8 +155,9 @@ const ROLE_OPTIONS: { role: AppRole; label: string; level: string; access: strin
   {
     role: "teacher",
     label: "Teacher",
-    level: "Academic view",
-    access: "View students and academic records",
+    level: "Assigned teaching",
+    access:
+      "Inter students in assigned sections + BS students in assigned LMS offerings (kept separate)",
   },
 ];
 
@@ -133,6 +173,7 @@ type ManagedUser = {
   is_online: boolean;
   disabled: boolean;
   roles: AppRole[];
+  teacher_scope: TeacherScope;
 };
 
 type CreateForm = {
@@ -141,6 +182,7 @@ type CreateForm = {
   phone: string;
   password: string;
   roles: AppRole[];
+  teacher_scope: TeacherScope;
 };
 
 type EditForm = {
@@ -148,6 +190,7 @@ type EditForm = {
   email: string;
   phone: string;
   password: string;
+  teacher_scope: TeacherScope;
 };
 
 async function adminApi<T>(path: string, init?: RequestInit): Promise<T> {
@@ -239,6 +282,7 @@ function UserManagement() {
     phone: "",
     password: "",
     roles: ["admission_officer"],
+    teacher_scope: "inter",
   });
   const [editingRoles, setEditingRoles] = useState<Record<string, AppRole[]>>({});
   const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
@@ -247,8 +291,10 @@ function UserManagement() {
     email: "",
     phone: "",
     password: "",
+    teacher_scope: "inter",
   });
   const [classAssignUser, setClassAssignUser] = useState<ManagedUser | null>(null);
+  const [teacherAssignUser, setTeacherAssignUser] = useState<ManagedUser | null>(null);
 
   const {
     data,
@@ -269,7 +315,14 @@ function UserManagement() {
       }),
     onSuccess: () => {
       toast.success("System user created");
-      setForm({ full_name: "", email: "", phone: "", password: "", roles: ["admission_officer"] });
+      setForm({
+        full_name: "",
+        email: "",
+        phone: "",
+        password: "",
+        roles: ["admission_officer"],
+        teacher_scope: "inter",
+      });
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -296,13 +349,20 @@ function UserManagement() {
           full_name: values.full_name,
           email: values.email,
           phone: values.phone,
+          teacher_scope: values.teacher_scope,
           ...(values.password ? { password: values.password } : {}),
         }),
       }),
     onSuccess: () => {
       toast.success("User profile updated");
       setEditingUser(null);
-      setEditForm({ full_name: "", email: "", phone: "", password: "" });
+      setEditForm({
+        full_name: "",
+        email: "",
+        phone: "",
+        password: "",
+        teacher_scope: "inter",
+      });
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -338,6 +398,7 @@ function UserManagement() {
       email: user.email,
       phone: user.phone ?? "",
       password: "",
+      teacher_scope: user.teacher_scope,
     });
   };
 
@@ -420,10 +481,7 @@ function UserManagement() {
 
             <div className="space-y-2">
               <Label>Roles / access level</Label>
-              <RolesSelect
-                roles={form.roles}
-                onChange={(roles) => setForm({ ...form, roles })}
-              />
+              <RolesSelect roles={form.roles} onChange={(roles) => setForm({ ...form, roles })} />
               {form.roles.length > 0 && (
                 <div className="flex flex-wrap gap-1 pt-1">
                   {form.roles.map((role) => (
@@ -434,6 +492,31 @@ function UserManagement() {
                 </div>
               )}
             </div>
+
+            {form.roles.includes("teacher") && (
+              <div className="space-y-2">
+                <Label>Teacher teaching area</Label>
+                <Select
+                  value={form.teacher_scope}
+                  onValueChange={(teacher_scope: TeacherScope) =>
+                    setForm({ ...form, teacher_scope })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="inter">Intermediate only</SelectItem>
+                    <SelectItem value="bs">BS only</SelectItem>
+                    <SelectItem value="both">Intermediate and BS</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  This controls teacher navigation. Actual students, tests, and
+                  courses remain limited by subject and course assignments.
+                </p>
+              </div>
+            )}
 
             <Button
               className="w-full"
@@ -477,6 +560,7 @@ function UserManagement() {
                     <TableHead>User</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Roles</TableHead>
+                    <TableHead>Teaching area</TableHead>
                     <TableHead>Presence</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Last sign in</TableHead>
@@ -515,6 +599,19 @@ function UserManagement() {
                           </div>
                         </TableCell>
                         <TableCell>
+                          {roles.includes("teacher") ? (
+                            <Badge variant="outline">
+                              {u.teacher_scope === "inter"
+                                ? "Intermediate"
+                                : u.teacher_scope === "bs"
+                                  ? "BS"
+                                  : "Inter + BS"}
+                            </Badge>
+                          ) : (
+                            "—"
+                          )}
+                        </TableCell>
+                        <TableCell>
                           <div className="flex items-center gap-2">
                             <span
                               className={`h-2.5 w-2.5 shrink-0 rounded-full ${
@@ -524,7 +621,9 @@ function UserManagement() {
                             />
                             <div className="text-xs">
                               <p className="font-medium">{u.is_online ? "Online" : "Offline"}</p>
-                              <p className="text-muted-foreground">{formatLastSeen(u.last_seen_at)}</p>
+                              <p className="text-muted-foreground">
+                                {formatLastSeen(u.last_seen_at)}
+                              </p>
                             </div>
                           </div>
                         </TableCell>
@@ -551,6 +650,16 @@ function UserManagement() {
                               >
                                 <Layers className="mr-1 h-3.5 w-3.5" />
                                 Sections
+                              </Button>
+                            )}
+                            {roles.includes("teacher") && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setTeacherAssignUser(u)}
+                              >
+                                <Layers className="mr-1 h-3.5 w-3.5" />
+                                Inter classes
                               </Button>
                             )}
                             <Button
@@ -667,6 +776,26 @@ function UserManagement() {
                 onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
               />
             </div>
+            {editingUser?.roles.includes("teacher") && (
+              <div className="space-y-2">
+                <Label>Teacher teaching area</Label>
+                <Select
+                  value={editForm.teacher_scope}
+                  onValueChange={(teacher_scope: TeacherScope) =>
+                    setEditForm({ ...editForm, teacher_scope })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="inter">Intermediate only</SelectItem>
+                    <SelectItem value="bs">BS only</SelectItem>
+                    <SelectItem value="both">Intermediate and BS</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>New password</Label>
               <Input
@@ -704,6 +833,12 @@ function UserManagement() {
         userName={classAssignUser?.full_name || classAssignUser?.email || "User"}
         open={!!classAssignUser}
         onOpenChange={(open) => !open && setClassAssignUser(null)}
+      />
+      <TeacherIntermediateSectionsDialog
+        userId={teacherAssignUser?.id ?? null}
+        userName={teacherAssignUser?.full_name || teacherAssignUser?.email || "User"}
+        open={!!teacherAssignUser}
+        onOpenChange={(open) => !open && setTeacherAssignUser(null)}
       />
     </div>
   );
