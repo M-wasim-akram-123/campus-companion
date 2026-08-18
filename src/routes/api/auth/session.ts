@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { sessionIdFromAccessToken } from "@/lib/auth-session";
+import { sessionIdFromAccessToken, userIdFromAccessToken } from "@/lib/auth-session";
 import type { Database } from "@/integrations/supabase/types";
 
 function json(data: unknown, status = 200) {
@@ -17,29 +16,58 @@ function bearerToken(request: Request) {
   return auth.startsWith("Bearer ") ? auth.slice(7) : "";
 }
 
-async function requireUser(request: Request) {
-  const token = bearerToken(request);
-  if (!token) throw new Response("Unauthorized", { status: 401 });
-
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-    throw new Error("Missing Supabase environment variables.");
+function supabasePublicConfig() {
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const publishableKey =
+    process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !publishableKey) {
+    throw new Error("Missing SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY.");
   }
+  return { url, publishableKey };
+}
 
-  const userClient = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+/** Same auth combo as the working token/login client: publishable apikey + user JWT. */
+function createUserClient(token: string) {
+  const { url, publishableKey } = supabasePublicConfig();
+  return createClient<Database>(url, publishableKey, {
     realtime: { transport: WebSocket },
     global: { headers: { Authorization: `Bearer ${token}` } },
     auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
   });
+}
 
-  const { data: userRes, error: userErr } = await userClient.auth.getUser(token);
-  if (userErr || !userRes.user) throw new Response("Unauthorized", { status: 401 });
+function requireUser(request: Request) {
+  const token = bearerToken(request);
+  if (!token) throw new Response("Unauthorized", { status: 401 });
 
+  const userId = userIdFromAccessToken(token);
   const sessionId = sessionIdFromAccessToken(token);
+  if (!userId) throw new Response("Unauthorized", { status: 401 });
   if (!sessionId) throw new Response("Invalid session token", { status: 400 });
 
-  return { user: userRes.user, token, sessionId };
+  return { userId, token, sessionId, client: createUserClient(token) };
+}
+
+/** Sign out other devices using the user JWT — never send sb_secret_ to Auth. */
+async function signOutOtherSessions(token: string) {
+  try {
+    const { url, publishableKey } = supabasePublicConfig();
+    const res = await fetch(`${url.replace(/\/$/, "")}/auth/v1/logout?scope=others`, {
+      method: "POST",
+      headers: {
+        apikey: publishableKey,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.warn("[auth/session] signOut others:", res.status, body.slice(0, 200));
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn("[auth/session] signOut others:", message);
+  }
 }
 
 export const Route = createFileRoute("/api/auth/session")({
@@ -48,15 +76,12 @@ export const Route = createFileRoute("/api/auth/session")({
       /** Called after login — ends other browser sessions and registers this one. */
       POST: async ({ request }) => {
         try {
-          const { user, token, sessionId } = await requireUser(request);
+          const { userId, token, sessionId, client } = requireUser(request);
           const now = new Date().toISOString();
 
-          const { error: signOutErr } = await supabaseAdmin.auth.admin.signOut(token, "others");
-          if (signOutErr) {
-            console.warn("[auth/session] signOut others:", signOutErr.message);
-          }
+          await signOutOtherSessions(token);
 
-          const { error: profileErr } = await supabaseAdmin
+          const { error: profileErr } = await client
             .from("profiles")
             .update({
               active_auth_session_id: sessionId,
@@ -64,7 +89,7 @@ export const Route = createFileRoute("/api/auth/session")({
               last_login_at: now,
               updated_at: now,
             })
-            .eq("id", user.id);
+            .eq("id", userId);
 
           if (profileErr) {
             if (
@@ -95,13 +120,13 @@ export const Route = createFileRoute("/api/auth/session")({
       /** Heartbeat — refresh last seen and verify this session is still the active one. */
       PATCH: async ({ request }) => {
         try {
-          const { user, sessionId } = await requireUser(request);
+          const { userId, sessionId, client } = requireUser(request);
           const now = new Date().toISOString();
 
-          const { data: profile, error: fetchErr } = await supabaseAdmin
+          const { data: profile, error: fetchErr } = await client
             .from("profiles")
             .select("active_auth_session_id")
-            .eq("id", user.id)
+            .eq("id", userId)
             .maybeSingle();
 
           if (fetchErr) return json({ error: fetchErr.message }, 500);
@@ -120,10 +145,10 @@ export const Route = createFileRoute("/api/auth/session")({
             );
           }
 
-          const { error: updateErr } = await supabaseAdmin
+          const { error: updateErr } = await client
             .from("profiles")
             .update({ last_seen_at: now, updated_at: now })
-            .eq("id", user.id);
+            .eq("id", userId);
 
           if (updateErr) return json({ error: updateErr.message }, 500);
 
@@ -140,17 +165,17 @@ export const Route = createFileRoute("/api/auth/session")({
       /** Logout — release the active session slot so the same user can sign in again. */
       DELETE: async ({ request }) => {
         try {
-          const { user } = await requireUser(request);
+          const { userId, client } = requireUser(request);
           const now = new Date().toISOString();
 
-          const { error: updateErr } = await supabaseAdmin
+          const { error: updateErr } = await client
             .from("profiles")
             .update({
               active_auth_session_id: null,
               last_seen_at: now,
               updated_at: now,
             })
-            .eq("id", user.id);
+            .eq("id", userId);
 
           if (updateErr) return json({ error: updateErr.message }, 500);
 
