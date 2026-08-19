@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
-import WebSocket from "ws";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireSuperAdmin } from "@/lib/api-auth.server";
 import type { AppRole } from "@/hooks/use-auth";
-import type { Database } from "@/integrations/supabase/types";
 import { isUserOnline } from "@/lib/auth-session";
 
 const APP_ROLES: AppRole[] = [
@@ -68,49 +66,6 @@ async function errorJson(error: unknown) {
   }
   const message = error instanceof Error ? error.message : "User management request failed.";
   return json({ error: message }, 500);
-}
-
-async function requireSuperAdmin(request: Request) {
-  const auth = request.headers.get("authorization") ?? "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  if (!token) throw new Response("Unauthorized", { status: 401 });
-
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-    throw new Error(
-      "Missing Supabase environment variable(s): SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY.",
-    );
-  }
-
-  const userClient = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-    realtime: {
-      transport: WebSocket,
-    },
-    global: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    auth: {
-      storage: undefined,
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
-
-  const { data: userRes, error: userErr } = await userClient.auth.getUser(token);
-  if (userErr || !userRes.user) throw new Response("Unauthorized", { status: 401 });
-
-  const { data: roleRows, error: roleErr } = await userClient
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userRes.user.id)
-    .eq("role", "super_admin")
-    .maybeSingle();
-  if (roleErr || !roleRows) throw new Response("Forbidden", { status: 403 });
-
-  return userRes.user;
 }
 
 function normalizeRoles(input: unknown): AppRole[] {

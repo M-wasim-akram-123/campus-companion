@@ -1,17 +1,23 @@
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
+import { userIdFromAccessToken } from "@/lib/auth-session";
 import type { Database } from "@/integrations/supabase/types";
 
-function createUserClient(token: string) {
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+function supabasePublicConfig() {
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const publishableKey =
+    process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !publishableKey) {
     throw new Error(
       "Missing Supabase environment variable(s): SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY.",
     );
   }
+  return { url, publishableKey };
+}
 
-  return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+function createUserClient(token: string) {
+  const { url, publishableKey } = supabasePublicConfig();
+  return createClient<Database>(url, publishableKey, {
     realtime: { transport: WebSocket },
     global: { headers: { Authorization: `Bearer ${token}` } },
     auth: {
@@ -27,38 +33,36 @@ function bearerToken(request: Request): string {
   return auth.startsWith("Bearer ") ? auth.slice(7) : "";
 }
 
-export async function requireStaff(request: Request) {
+function requireAccessToken(request: Request) {
   const token = bearerToken(request);
   if (!token) throw new Response("Unauthorized", { status: 401 });
+  const userId = userIdFromAccessToken(token);
+  if (!userId) throw new Response("Unauthorized", { status: 401 });
+  return { token, userId, client: createUserClient(token) };
+}
 
-  const userClient = createUserClient(token);
-  const { data: userRes, error: userErr } = await userClient.auth.getUser(token);
-  if (userErr || !userRes.user) throw new Response("Unauthorized", { status: 401 });
+export async function requireStaff(request: Request) {
+  const { userId, client } = requireAccessToken(request);
 
-  const { data: roles, error: roleErr } = await userClient
+  const { data: roles, error: roleErr } = await client
     .from("user_roles")
     .select("role")
-    .eq("user_id", userRes.user.id);
+    .eq("user_id", userId);
   if (roleErr || !roles?.length) throw new Response("Forbidden", { status: 403 });
 
-  return userRes.user;
+  return { id: userId };
 }
 
 export async function requireSuperAdmin(request: Request) {
-  const token = bearerToken(request);
-  if (!token) throw new Response("Unauthorized", { status: 401 });
+  const { userId, client } = requireAccessToken(request);
 
-  const userClient = createUserClient(token);
-  const { data: userRes, error: userErr } = await userClient.auth.getUser(token);
-  if (userErr || !userRes.user) throw new Response("Unauthorized", { status: 401 });
-
-  const { data: roleRows, error: roleErr } = await userClient
+  const { data: roleRows, error: roleErr } = await client
     .from("user_roles")
     .select("role")
-    .eq("user_id", userRes.user.id)
+    .eq("user_id", userId)
     .eq("role", "super_admin")
     .maybeSingle();
   if (roleErr || !roleRows) throw new Response("Forbidden", { status: 403 });
 
-  return userRes.user;
+  return { id: userId };
 }

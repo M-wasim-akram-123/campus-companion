@@ -544,12 +544,14 @@ function UserManagement() {
               <div className="rounded-2xl border border-destructive/40 bg-destructive/10 p-4">
                 <p className="font-semibold text-destructive">User management is not configured</p>
                 <p className="mt-1 text-sm text-muted-foreground">{usersError.message}</p>
-                {usersError.message.includes("SUPABASE_SERVICE_ROLE_KEY") && (
+                {usersError.message.includes("SUPABASE_SERVICE_ROLE_KEY") ||
+                usersError.message.includes("Unregistered API key") ? (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Add the real Supabase service_role JWT or `sb_secret_...` key to `.env`, restart
-                    the dev server, then try again.
+                    Server Auth Admin needs the legacy <code>service_role</code> JWT in
+                    <code> SUPABASE_SERVICE_ROLE_KEY</code>. Restart the dev server after updating
+                    <code> .env</code>.
                   </p>
-                )}
+                ) : null}
               </div>
             ) : isLoading ? (
               <p className="text-sm text-muted-foreground">Loading users...</p>

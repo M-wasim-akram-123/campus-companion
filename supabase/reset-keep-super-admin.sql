@@ -23,9 +23,18 @@ BEGIN
   TRUNCATE keep_super_admin_users;
 
   INSERT INTO keep_super_admin_users (user_id)
-  SELECT DISTINCT user_id
-  FROM public.user_roles
-  WHERE role::TEXT = 'super_admin';
+  SELECT DISTINCT ur.user_id
+  FROM public.user_roles ur
+  JOIN auth.users u ON u.id = ur.user_id
+  WHERE ur.role::TEXT = 'super_admin'
+    AND COALESCE(u.email, '') NOT ILIKE '%@test.local';
+
+  IF NOT EXISTS (SELECT 1 FROM keep_super_admin_users) THEN
+    INSERT INTO keep_super_admin_users (user_id)
+    SELECT DISTINCT user_id
+    FROM public.user_roles
+    WHERE role::TEXT = 'super_admin';
+  END IF;
 
   SELECT COUNT(*) INTO v_super_admin_count FROM keep_super_admin_users;
   IF v_super_admin_count = 0 THEN
