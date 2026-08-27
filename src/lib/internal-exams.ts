@@ -157,7 +157,14 @@ export type InternalTestSectionMeta = {
 };
 
 function throwErr(error: { message?: string }) {
-  throw new Error(error.message ?? "Request failed");
+  const message = error.message ?? "Request failed";
+  if (/idx_internal_test_series_unique_name/i.test(message)) {
+    throw new Error("A test series with this name already exists for that class and year.");
+  }
+  if (/unique_internal_tests_series_subject/i.test(message)) {
+    throw new Error("This subject is already announced in the series.");
+  }
+  throw new Error(message);
 }
 
 export async function fetchSectionsForClassYear(
@@ -266,7 +273,87 @@ export async function createInternalTestSeries(
   const { error: sectionErr } = await supabase.from("internal_test_series_sections").insert(sectionRows);
   if (sectionErr) throwErr(sectionErr);
 
+  await announceSeriesAssignedSubjects(data.id, createdBy);
   return data as InternalTestSeries;
+}
+
+export async function updateInternalTestSeries(
+  seriesId: string,
+  input: CreateInternalTestSeriesInput,
+): Promise<InternalTestSeries> {
+  if (!input.section_ids.length) {
+    throw new Error("Select at least one boys or girls section for this series.");
+  }
+
+  const uniqueSectionIds = [...new Set(input.section_ids)];
+  const currentSections = await fetchSeriesSections(seriesId);
+  const currentIds = currentSections.map((s) => s.id);
+  const removedIds = currentIds.filter((id) => !uniqueSectionIds.includes(id));
+
+  if (removedIds.length) {
+    const { data: blocked, error: blockedErr } = await supabase
+      .from("internal_test_section_meta")
+      .select("id, section_id, internal_tests!inner(series_id)")
+      .eq("internal_tests.series_id", seriesId)
+      .in("section_id", removedIds)
+      .limit(1);
+    if (blockedErr) throwErr(blockedErr);
+    if (blocked?.length) {
+      throw new Error(
+        "Cannot remove a section that already has subject papers or marks. Keep those sections or delete the papers first.",
+      );
+    }
+  }
+
+  const { data, error } = await supabase
+    .from("internal_test_series")
+    .update({
+      academic_session_id: input.academic_session_id,
+      academic_year_start: input.academic_year_start ?? currentAcademicYearStart(),
+      class_year_level: input.class_year_level,
+      name: input.name.trim(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", seriesId)
+    .select("*, academic_sessions(label)")
+    .single();
+  if (error) throwErr(error);
+
+  const addedIds = uniqueSectionIds.filter((id) => !currentIds.includes(id));
+  if (addedIds.length) {
+    const { error: addErr } = await supabase.from("internal_test_series_sections").insert(
+      addedIds.map((sectionId) => ({ series_id: seriesId, section_id: sectionId })),
+    );
+    if (addErr) throwErr(addErr);
+  }
+  if (removedIds.length) {
+    const { error: removeErr } = await supabase
+      .from("internal_test_series_sections")
+      .delete()
+      .eq("series_id", seriesId)
+      .in("section_id", removedIds);
+    if (removeErr) throwErr(removeErr);
+  }
+
+  const { error: testsErr } = await supabase
+    .from("internal_tests")
+    .update({
+      academic_session_id: data.academic_session_id,
+      academic_year_start: data.academic_year_start,
+      class_year_level: data.class_year_level,
+      test_name: data.name,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("series_id", seriesId);
+  if (testsErr) throwErr(testsErr);
+
+  await announceSeriesAssignedSubjects(seriesId, data.created_by);
+  return data as InternalTestSeries;
+}
+
+export async function deleteInternalTestSeries(seriesId: string): Promise<void> {
+  const { error } = await supabase.from("internal_test_series").delete().eq("id", seriesId);
+  if (error) throwErr(error);
 }
 
 export async function fetchTestsForSeries(seriesId: string): Promise<InternalTest[]> {
@@ -771,15 +858,184 @@ export type SeriesProgress = {
   papersPending: number;
   marksPending: number;
   published: number;
+  notIncluded: number;
 };
 
-export function summarizeSeriesProgress(tests: InternalTest[]): SeriesProgress {
-  const draft = tests.filter((t) => t.status === "draft");
+type SeriesActivityMeta = Pick<
+  InternalTestSectionMeta,
+  "internal_test_id" | "paper_received" | "marks_completed"
+>;
+
+export function testHasSeriesActivity(
+  test: InternalTest,
+  meta: SeriesActivityMeta[] = [],
+  testsWithMarks?: Set<string>,
+): boolean {
+  if (test.status === "published") return true;
+  if (testsWithMarks?.has(test.id)) return true;
+  if (test.paper_received) return true;
+  return meta.some(
+    (row) =>
+      row.internal_test_id === test.id && (row.paper_received || row.marks_completed),
+  );
+}
+
+export function summarizeSeriesProgress(
+  tests: InternalTest[],
+  meta: SeriesActivityMeta[] = [],
+  testsWithMarks?: Set<string>,
+): SeriesProgress {
   const uniqueSubjects = new Set(tests.map((t) => t.subject_name.trim().toLowerCase()));
+  const published = tests.filter((t) => t.status === "published").length;
+  const draft = tests.filter((t) => t.status === "draft");
+  const activeDraft = draft.filter((t) => testHasSeriesActivity(t, meta, testsWithMarks));
+  const notIncluded = draft.length - activeDraft.length;
   return {
     totalSubjects: uniqueSubjects.size || tests.length,
-    papersPending: draft.filter((t) => !t.paper_received).length,
-    marksPending: draft.length,
-    published: tests.filter((t) => t.status === "published").length,
+    papersPending: activeDraft.filter((t) => {
+      const rows = meta.filter((row) => row.internal_test_id === t.id);
+      return rows.length ? rows.some((row) => !row.paper_received) : !t.paper_received;
+    }).length,
+    marksPending: activeDraft.length,
+    published,
+    notIncluded,
   };
+}
+
+export function seriesCompletionPercent(progress: SeriesProgress): number {
+  const inPlay = progress.totalSubjects - progress.notIncluded;
+  return inPlay > 0 ? Math.round((progress.published / inPlay) * 100) : 0;
+}
+
+type CatalogSubjectRow = { id: string; name: string; is_active: boolean };
+
+function catalogSubjectFromJoin(
+  value: CatalogSubjectRow | CatalogSubjectRow[] | null,
+): CatalogSubjectRow | null {
+  if (!value) return null;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
+export async function announceSeriesAssignedSubjects(
+  seriesId: string,
+  createdBy?: string | null,
+): Promise<{ created: number; subjects: number }> {
+  const series = await fetchInternalTestSeriesById(seriesId);
+  if (!series) throw new Error("Test series not found.");
+
+  const sections = await fetchSeriesSections(seriesId);
+  if (!sections.length) return { created: 0, subjects: 0 };
+
+  const { data: assignments, error: assignErr } = await supabase
+    .from("intermediate_section_subjects")
+    .select("section_id, subject_id, teacher_user_id, intermediate_subjects(id, name, is_active)")
+    .in(
+      "section_id",
+      sections.map((section) => section.id),
+    );
+  if (assignErr) throwErr(assignErr);
+
+  const subjectById = new Map<string, { id: string; name: string }>();
+  for (const row of assignments ?? []) {
+    const subject = catalogSubjectFromJoin(
+      row.intermediate_subjects as CatalogSubjectRow | CatalogSubjectRow[] | null,
+    );
+    if (!subject || subject.is_active === false) continue;
+    if (!subjectById.has(subject.id)) {
+      subjectById.set(subject.id, { id: subject.id, name: subject.name });
+    }
+  }
+
+  const existing = await fetchTestsForSeries(seriesId);
+  const existingSubjectIds = new Set(
+    existing.map((test) => test.subject_id).filter((id): id is string => Boolean(id)),
+  );
+
+  const today = new Date().toISOString().slice(0, 10);
+  let created = 0;
+  for (const subject of subjectById.values()) {
+    if (existingSubjectIds.has(subject.id)) continue;
+    await createSeriesSubjectTest(
+      {
+        series_id: seriesId,
+        subject_id: subject.id,
+        test_date: today,
+        max_marks: 50,
+      },
+      createdBy,
+    );
+    created += 1;
+  }
+
+  await syncMissingSeriesSectionMeta(seriesId);
+  return { created, subjects: subjectById.size };
+}
+
+async function syncMissingSeriesSectionMeta(seriesId: string): Promise<void> {
+  const [tests, sections] = await Promise.all([
+    fetchTestsForSeries(seriesId),
+    fetchSeriesSections(seriesId),
+  ]);
+  const subjectTests = tests.filter((test) => test.subject_id && !test.section_id);
+  if (!subjectTests.length || !sections.length) return;
+
+  const { data: assignments, error: assignErr } = await supabase
+    .from("intermediate_section_subjects")
+    .select("section_id, subject_id, teacher_user_id")
+    .in(
+      "section_id",
+      sections.map((section) => section.id),
+    )
+    .in(
+      "subject_id",
+      subjectTests.map((test) => test.subject_id as string),
+    );
+  if (assignErr) throwErr(assignErr);
+
+  const existingMeta = await fetchSeriesTestSectionMeta(seriesId);
+  const have = new Set(
+    existingMeta.map((row) => `${row.internal_test_id}:${row.section_id}`),
+  );
+
+  const teacherIds = [
+    ...new Set(
+      (assignments ?? [])
+        .map((row) => row.teacher_user_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const nameById = new Map<string, string>();
+  if (teacherIds.length) {
+    const { data: profiles, error: profileErr } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", teacherIds);
+    if (profileErr) throwErr(profileErr);
+    for (const profile of profiles ?? []) {
+      nameById.set(profile.id, profile.full_name?.trim() || "Teacher");
+    }
+  }
+
+  const rows = [];
+  for (const test of subjectTests) {
+    for (const assignment of assignments ?? []) {
+      if (assignment.subject_id !== test.subject_id) continue;
+      const key = `${test.id}:${assignment.section_id}`;
+      if (have.has(key)) continue;
+      rows.push({
+        internal_test_id: test.id,
+        section_id: assignment.section_id,
+        subject_id: test.subject_id as string,
+        teacher_user_id: assignment.teacher_user_id,
+        teacher_name_snapshot: nameById.get(assignment.teacher_user_id) ?? "Teacher",
+      });
+    }
+  }
+
+  if (!rows.length) return;
+  const { error } = await supabase.from("internal_test_section_meta").upsert(rows, {
+    onConflict: "internal_test_id,section_id",
+    ignoreDuplicates: true,
+  });
+  if (error) throwErr(error);
 }

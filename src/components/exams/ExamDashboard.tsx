@@ -8,7 +8,9 @@ import { canManageExams } from "@/lib/exam-permissions";
 import {
   academicYearLabel,
   fetchInternalTestSeries,
+  fetchSeriesTestSectionMeta,
   fetchTestsForSeries,
+  seriesCompletionPercent,
   seriesName,
   summarizeSeriesProgress,
 } from "@/lib/internal-exams";
@@ -155,7 +157,7 @@ export function ExamDashboard() {
       (dashboard?.seriesProgress ?? []).map((row) => ({
         name: row.seriesName,
         published: row.published,
-        pending: Math.max(row.total - row.published, 0),
+        pending: Math.max(row.papersPending + row.awaitingMarks, 0),
       })),
     [dashboard?.seriesProgress],
   );
@@ -669,8 +671,12 @@ function SeriesRow({
     queryKey: ["internal-test-series-subjects", seriesId],
     queryFn: () => fetchTestsForSeries(seriesId),
   });
-  const progress = summarizeSeriesProgress(tests);
-  const pct = tests.length > 0 ? Math.round((progress.published / tests.length) * 100) : 0;
+  const { data: meta = [] } = useQuery({
+    queryKey: ["internal-test-series-section-meta", seriesId],
+    queryFn: () => fetchSeriesTestSectionMeta(seriesId),
+  });
+  const progress = summarizeSeriesProgress(tests, meta);
+  const pct = seriesCompletionPercent(progress);
 
   return (
     <TableRow>

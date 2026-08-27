@@ -35,7 +35,8 @@ function NewTestSeriesPage() {
       <div>
         <h1 className="text-3xl font-bold">Announce test series</h1>
         <p className="text-muted-foreground">
-          Create Test 1, Test 2, etc. Then add subjects per section with dates and teacher details.
+          Create Test 1, Test 2, etc. Papers are announced automatically for every subject already
+          assigned to the selected sections. Subjects without marks stay out of the series.
         </p>
       </div>
       <Card>
@@ -49,7 +50,7 @@ function NewTestSeriesPage() {
               setSaving(true);
               try {
                 const series = await createInternalTestSeries(values, user?.id ?? null);
-                toast.success("Test series created");
+                toast.success("Test series announced for assigned subjects");
                 navigate({ to: "/exams/series/$id", params: { id: series.id } });
               } catch (e) {
                 toast.error(e instanceof Error ? e.message : "Could not create series");

@@ -5,7 +5,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { canAccessIntermediateExams, canManageExams } from "@/lib/exam-permissions";
 import {
   academicYearLabel,
+  announceSeriesAssignedSubjects,
   createSeriesSubjectTest,
+  deleteInternalTestSeries,
   fetchInternalTestSeriesById,
   fetchSeriesSections,
   fetchSeriesTestSectionMeta,
@@ -13,14 +15,27 @@ import {
   formatSeriesSectionLabel,
   setInternalTestSectionPaperReceived,
   summarizeSeriesProgress,
+  testHasSeriesActivity,
+  updateInternalTestSeries,
 } from "@/lib/internal-exams";
 import { ordinalYearLabel } from "@/lib/academic";
 import { SeriesSubjectForm } from "@/components/exams/SeriesSubjectForm";
+import { InternalTestSeriesForm } from "@/components/exams/InternalTestSeriesForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, BookOpen, Plus } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/exams/series/$id")({
@@ -35,7 +50,11 @@ function TestSeriesDetailPage() {
   const allowed = canAccessIntermediateExams(roles, teacherScope);
   const canManage = canManageExams(roles);
   const [showAddSubject, setShowAddSubject] = useState(false);
+  const [showEditSeries, setShowEditSeries] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [savingSeries, setSavingSeries] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -65,7 +84,35 @@ function TestSeriesDetailPage() {
     queryFn: () => fetchSeriesTestSectionMeta(id),
   });
 
-  const progress = useMemo(() => summarizeSeriesProgress(tests), [tests]);
+  const progress = useMemo(() => summarizeSeriesProgress(tests, sectionMeta), [tests, sectionMeta]);
+
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["internal-test-series", id] });
+    qc.invalidateQueries({ queryKey: ["internal-test-series-subjects", id] });
+    qc.invalidateQueries({ queryKey: ["internal-test-series-sections", id] });
+    qc.invalidateQueries({ queryKey: ["internal-test-series-section-meta", id] });
+  };
+
+  useEffect(() => {
+    if (!canManage || !series || testsLoading) return;
+    let cancelled = false;
+    void announceSeriesAssignedSubjects(series.id, user?.id ?? null)
+      .then((result) => {
+        if (cancelled || result.created === 0) return;
+        toast.success(
+          `Announced ${result.created} assigned subject${result.created === 1 ? "" : "s"}`,
+        );
+        refresh();
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        toast.error(error instanceof Error ? error.message : "Could not announce assigned subjects");
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canManage, series?.id, testsLoading, user?.id]);
 
   if (loading || !allowed) {
     return <div className="p-8 text-center text-muted-foreground">Loading…</div>;
@@ -74,13 +121,6 @@ function TestSeriesDetailPage() {
   if (isLoading || !series) {
     return <div className="p-8 text-center text-muted-foreground">Loading series…</div>;
   }
-
-  const refresh = () => {
-    qc.invalidateQueries({ queryKey: ["internal-test-series", id] });
-    qc.invalidateQueries({ queryKey: ["internal-test-series-subjects", id] });
-    qc.invalidateQueries({ queryKey: ["internal-test-series-sections", id] });
-    qc.invalidateQueries({ queryKey: ["internal-test-series-section-meta", id] });
-  };
 
   return (
     <div className="space-y-6">
@@ -95,6 +135,10 @@ function TestSeriesDetailPage() {
               {series.academic_sessions?.label ?? "Session"} · {ordinalYearLabel(series.class_year_level)} ·{" "}
               {academicYearLabel(series.academic_year_start)}
             </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Announced for subjects assigned to these sections. Subjects without marks are not
+              included in the series.
+            </p>
             {seriesSections.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1">
                 {seriesSections.map((section) => (
@@ -106,7 +150,7 @@ function TestSeriesDetailPage() {
             )}
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {canManage && (
             <Button asChild variant="outline">
               <Link to="/exams/catalog">
@@ -116,7 +160,30 @@ function TestSeriesDetailPage() {
             </Button>
           )}
           {canManage && (
-            <Button onClick={() => setShowAddSubject((v) => !v)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowEditSeries((v) => !v);
+                setShowAddSubject(false);
+              }}
+            >
+              <Pencil className="mr-2 h-4 w-4" />
+              {showEditSeries ? "Hide edit" : "Edit series"}
+            </Button>
+          )}
+          {canManage && (
+            <Button variant="destructive" onClick={() => setConfirmDelete(true)}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete series
+            </Button>
+          )}
+          {canManage && (
+            <Button
+              onClick={() => {
+                setShowAddSubject((v) => !v);
+                setShowEditSeries(false);
+              }}
+            >
               <Plus className="mr-2 h-4 w-4" />
               {showAddSubject ? "Hide form" : "Add subject"}
             </Button>
@@ -124,12 +191,20 @@ function TestSeriesDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Subjects scheduled</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">Subjects announced</CardTitle>
           </CardHeader>
           <CardContent><div className="text-2xl font-bold">{progress.totalSubjects}</div></CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Not included</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-500">{progress.notIncluded}</div>
+          </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
@@ -154,6 +229,44 @@ function TestSeriesDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {canManage && showEditSeries && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Edit series</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <InternalTestSeriesForm
+              key={`${series.id}-${seriesSections.map((s) => s.id).sort().join(",")}`}
+              saving={savingSeries}
+              submitLabel="Save series"
+              initial={{
+                academic_session_id: series.academic_session_id,
+                academic_year_start: series.academic_year_start,
+                class_year_level: series.class_year_level,
+                name: series.name,
+                section_ids: seriesSections.map((s) => s.id),
+              }}
+              onSubmit={async (values) => {
+                setSavingSeries(true);
+                try {
+                  await updateInternalTestSeries(series.id, values);
+                  toast.success("Test series updated");
+                  setShowEditSeries(false);
+                  refresh();
+                  qc.invalidateQueries({ queryKey: ["internal-test-series"] });
+                  qc.invalidateQueries({ queryKey: ["internal-test-series-list"] });
+                  qc.invalidateQueries({ queryKey: ["exam-dashboard"] });
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Could not update series");
+                } finally {
+                  setSavingSeries(false);
+                }
+              }}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {canManage && showAddSubject && (
         <Card>
@@ -194,7 +307,8 @@ function TestSeriesDetailPage() {
             <p className="text-sm text-muted-foreground">Loading subjects…</p>
           ) : !tests.length ? (
             <p className="text-sm text-muted-foreground">
-              No subjects yet. Add Physics, Urdu, English, etc. Marks are uploaded per section for each subject.
+              No catalog subjects are assigned to these sections yet. Assign subjects in the
+              Intermediate catalog, then reopen this series — papers will be announced automatically.
             </p>
           ) : (
             <Table>
@@ -276,9 +390,13 @@ function TestSeriesDetailPage() {
                     </TableCell>
                     <TableCell>{test.max_marks}</TableCell>
                     <TableCell>
-                      <Badge variant={test.status === "published" ? "default" : "secondary"} className="capitalize">
-                        {test.status}
-                      </Badge>
+                      {test.status === "published" ? (
+                        <Badge>Published</Badge>
+                      ) : testHasSeriesActivity(test, meta) ? (
+                        <Badge variant="secondary">In progress</Badge>
+                      ) : (
+                        <Badge variant="outline">Not included</Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button asChild size="sm" variant="outline">
@@ -295,6 +413,41 @@ function TestSeriesDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {series.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes the series, its subjects, section papers, and entered marks. This cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleting}
+              onClick={async (event) => {
+                event.preventDefault();
+                setDeleting(true);
+                try {
+                  await deleteInternalTestSeries(series.id);
+                  toast.success("Test series deleted");
+                  qc.invalidateQueries({ queryKey: ["internal-test-series"] });
+                  qc.invalidateQueries({ queryKey: ["exam-dashboard"] });
+                  navigate({ to: "/exams" });
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Could not delete series");
+                  setDeleting(false);
+                }
+              }}
+            >
+              {deleting ? "Deleting…" : "Delete series"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

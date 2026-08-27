@@ -28,8 +28,9 @@ export function PublishTestDialog({ testLabel, disabled, publishing, onConfirm }
         <AlertDialogHeader>
           <AlertDialogTitle>Publish test results?</AlertDialogTitle>
           <AlertDialogDescription>
-            Students will see <strong>{testLabel}</strong> on the mobile app after publishing. Draft marks
-            cannot be edited by exam staff once published.
+            Students will see <strong>{testLabel}</strong> on the mobile app after publishing.
+            Sections without marks are left out of this subject. Draft marks cannot be edited once
+            published.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

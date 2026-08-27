@@ -44,8 +44,9 @@ export function SeriesSubjectForm({ series, onSubmit, saving }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Choose from the Intermediate catalog. Every section in {series.name} must already have a
-        teacher assigned for this subject.
+        Optional extra paper for {series.name}. It is announced only for sections that already have
+        this subject in the Intermediate catalog. Sections that never receive marks will not include
+        it in the series.
       </p>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">

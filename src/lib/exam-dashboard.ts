@@ -127,6 +127,14 @@ export async function fetchExamDashboardData(
           error: null,
         };
   if (metaResult.error) throwErr(metaResult.error);
+
+  const marksResult =
+    testIds.length > 0
+      ? await supabase.from("internal_test_marks").select("internal_test_id").in("internal_test_id", testIds)
+      : { data: [] as { internal_test_id: string }[], error: null };
+  if (marksResult.error) throwErr(marksResult.error);
+  const testsWithMarks = new Set((marksResult.data ?? []).map((row) => row.internal_test_id));
+
   const metaByTest = new Map<string, typeof metaResult.data>();
   for (const row of metaResult.data ?? []) {
     const current = metaByTest.get(row.internal_test_id) ?? [];
@@ -141,6 +149,11 @@ export async function fetchExamDashboardData(
     const meta = metaByTest.get(test.id) ?? [];
     return meta.length ? meta.every((row) => row.marks_completed) : test.status === "published";
   };
+  const hasActivity = (test: InternalTest) => {
+    if (test.status === "published" || testsWithMarks.has(test.id) || test.paper_received) return true;
+    const meta = metaByTest.get(test.id) ?? [];
+    return meta.some((row) => row.paper_received || row.marks_completed);
+  };
   const teacherNames = (test: InternalTest) => {
     const names = [
       ...new Set(
@@ -153,27 +166,30 @@ export async function fetchExamDashboardData(
   };
 
   const draftTests = allTests.filter((t) => t.status === "draft");
+  const activeDrafts = draftTests.filter((test) => hasActivity(test));
   const publishedCount = allTests.filter((test) => test.status === "published").length;
-  const papersPending = draftTests.filter((test) => !paperReceived(test)).length;
-  const awaitingMarks = draftTests.filter(
+  const papersPending = activeDrafts.filter((test) => !paperReceived(test)).length;
+  const awaitingMarks = activeDrafts.filter(
     (test) => paperReceived(test) && !marksCompleted(test),
   ).length;
+  const notIncluded = draftTests.length - activeDrafts.length;
   const progress = {
     totalSubjects: new Set(
       allTests.map((test) => test.subject_id ?? test.subject_name.trim().toLowerCase()),
     ).size,
     papersPending,
-    marksPending: draftTests.filter((test) => !marksCompleted(test)).length,
+    marksPending: activeDrafts.filter((test) => !marksCompleted(test)).length,
     published: publishedCount,
   };
 
-  const completionPercent =
-    allTests.length > 0 ? Math.round((publishedCount / allTests.length) * 100) : 0;
+  const inPlay = publishedCount + activeDrafts.length;
+  const completionPercent = inPlay > 0 ? Math.round((publishedCount / inPlay) * 100) : 0;
 
   const pipelineSlices: ExamPipelineSlice[] = [
     { name: "Published", value: publishedCount, color: "#22c55e" },
     { name: "Awaiting marks", value: awaitingMarks, color: "#2563eb" },
     { name: "Papers pending", value: papersPending, color: "#f59e0b" },
+    { name: "Not included", value: notIncluded, color: "#94a3b8" },
   ].filter((row) => row.value > 0);
 
   const pipelineData =
@@ -181,8 +197,8 @@ export async function fetchExamDashboardData(
       ? pipelineSlices
       : [{ name: "Not started", value: 1, color: "#cbd5e1" }];
 
-  const testsToday = draftTests.filter((t) => t.test_date === today).length;
-  const testsThisWeek = draftTests.filter((t) => t.test_date >= today && t.test_date <= weekEnd).length;
+  const testsToday = activeDrafts.filter((t) => t.test_date === today).length;
+  const testsThisWeek = activeDrafts.filter((t) => t.test_date >= today && t.test_date <= weekEnd).length;
 
   const upcomingTests = draftTests.filter((t) => {
     const horizonEnd = addDaysIso(today, horizonDays - 1);
@@ -215,30 +231,30 @@ export async function fetchExamDashboardData(
   const seriesProgress: ExamSeriesProgressRow[] = (seriesRows ?? []).map((series) => {
     const seriesTests = testsBySeries.get(series.id) ?? [];
     const published = seriesTests.filter((test) => test.status === "published").length;
-    const seriesPaperPending = seriesTests.filter(
-      (test) => test.status === "draft" && !paperReceived(test),
+    const seriesActive = seriesTests.filter(
+      (test) => test.status === "draft" && hasActivity(test),
+    );
+    const seriesPaperPending = seriesActive.filter((test) => !paperReceived(test)).length;
+    const awaiting = seriesActive.filter(
+      (test) => paperReceived(test) && !marksCompleted(test),
     ).length;
-    const awaiting = seriesTests.filter(
-      (test) =>
-        test.status === "draft" && paperReceived(test) && !marksCompleted(test),
-    ).length;
-    const total = seriesTests.length;
+    const inPlayCount = published + seriesActive.length;
     return {
       seriesId: series.id,
       seriesName: series.name,
       classYearLevel: series.class_year_level,
-      total,
+      total: seriesTests.length,
       published,
       papersPending: seriesPaperPending,
       awaitingMarks: awaiting,
-      completionPercent: total > 0 ? Math.round((published / total) * 100) : 0,
+      completionPercent: inPlayCount > 0 ? Math.round((published / inPlayCount) * 100) : 0,
     };
   });
 
   const seriesName = (t: InternalTest) => t.internal_test_series?.name ?? t.test_name;
 
   const actionItems: ExamDashboardAction[] = [];
-  for (const test of draftTests) {
+  for (const test of activeDrafts) {
     const base = {
       testId: test.id,
       seriesName: seriesName(test),

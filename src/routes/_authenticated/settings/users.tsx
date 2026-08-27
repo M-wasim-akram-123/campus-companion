@@ -547,9 +547,10 @@ function UserManagement() {
                 {usersError.message.includes("SUPABASE_SERVICE_ROLE_KEY") ||
                 usersError.message.includes("Unregistered API key") ? (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Server Auth Admin needs the legacy <code>service_role</code> JWT in
-                    <code> SUPABASE_SERVICE_ROLE_KEY</code>. Restart the dev server after updating
-                    <code> .env</code>.
+                    Auth Admin needs the legacy <code>service_role</code> JWT (starts with{" "}
+                    <code>eyJ</code>) in <code>SUPABASE_SERVICE_ROLE_KEY</code>. Local{" "}
+                    <code>.env</code> is not used on staging — set the same value in the host
+                    environment (Cloudflare/Lovable secrets), without quotes, then redeploy.
                   </p>
                 ) : null}
               </div>

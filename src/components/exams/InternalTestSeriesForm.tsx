@@ -15,14 +15,25 @@ const EMPTY_SECTIONS: SeriesSectionOption[] = [];
 type Props = {
   onSubmit: (values: CreateInternalTestSeriesInput) => Promise<void>;
   saving?: boolean;
+  initial?: {
+    academic_session_id: string;
+    academic_year_start: number;
+    class_year_level: number;
+    name: string;
+    section_ids: string[];
+  };
+  submitLabel?: string;
 };
 
-export function InternalTestSeriesForm({ onSubmit, saving }: Props) {
-  const [sessionId, setSessionId] = useState("");
-  const [academicYearStart, setAcademicYearStart] = useState(String(currentAcademicYearStart()));
-  const [classYearLevel, setClassYearLevel] = useState("1");
-  const [name, setName] = useState("");
-  const [sectionIds, setSectionIds] = useState<string[]>([]);
+export function InternalTestSeriesForm({ onSubmit, saving, initial, submitLabel }: Props) {
+  const [sessionId, setSessionId] = useState(initial?.academic_session_id ?? "");
+  const [academicYearStart, setAcademicYearStart] = useState(
+    String(initial?.academic_year_start ?? currentAcademicYearStart()),
+  );
+  const [classYearLevel, setClassYearLevel] = useState(String(initial?.class_year_level ?? 1));
+  const [name, setName] = useState(initial?.name ?? "");
+  const [sectionIds, setSectionIds] = useState<string[]>(initial?.section_ids ?? []);
+  const isEdit = Boolean(initial);
 
   const { data: sessions } = useQuery({
     queryKey: ["academic-sessions"],
@@ -38,13 +49,14 @@ export function InternalTestSeriesForm({ onSubmit, saving }: Props) {
   const sections = sectionsData ?? EMPTY_SECTIONS;
 
   useEffect(() => {
-    if (!sessionId && sessions?.length) {
+    if (!sessionId && !initial && sessions?.length) {
       const active = sessions.find((s) => s.is_active) ?? sessions[0];
       setSessionId(active.id);
     }
-  }, [sessionId, sessions]);
+  }, [sessionId, sessions, initial]);
 
   useEffect(() => {
+    if (!sections.length) return;
     setSectionIds((prev) => {
       const next = prev.filter((id) => sections.some((s) => s.id === id));
       return next.length === prev.length && next.every((id, i) => id === prev[i]) ? prev : next;
@@ -111,13 +123,18 @@ export function InternalTestSeriesForm({ onSubmit, saving }: Props) {
             required
           />
           <p className="text-xs text-muted-foreground">
-            Students will see all subjects grouped under this name.
+            Students will see this series name. Papers are announced for subjects already assigned
+            to the selected sections.
           </p>
         </div>
       </div>
 
       <div className="space-y-2 md:col-span-2">
         <Label>Sections</Label>
+        <p className="text-xs text-muted-foreground">
+          The series is announced for catalog subjects assigned to these sections (1st, 2nd, 3rd,
+          or any other assigned subject). Leave a subject without marks and it will not be included.
+        </p>
         <SeriesSectionPicker
           sections={sections}
           selectedIds={sectionIds}
@@ -130,7 +147,7 @@ export function InternalTestSeriesForm({ onSubmit, saving }: Props) {
         type="submit"
         disabled={saving || !sessionId || !name.trim() || !sectionIds.length}
       >
-        {saving ? "Creating…" : "Create test series"}
+        {saving ? (isEdit ? "Saving…" : "Creating…") : submitLabel ?? (isEdit ? "Save changes" : "Create test series")}
       </Button>
     </form>
   );

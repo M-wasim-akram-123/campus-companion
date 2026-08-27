@@ -89,7 +89,19 @@ export const Route = createFileRoute("/api/admin/users")({
             supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
           ]);
 
-          if (authUsers.error) return json({ error: authUsers.error.message }, 500);
+          if (authUsers.error) {
+            const message = authUsers.error.message ?? "";
+            if (/unregistered api key/i.test(message)) {
+              return json(
+                {
+                  error:
+                    "Unregistered API key. Staging is not using the local .env file. Set SUPABASE_SERVICE_ROLE_KEY on the host to the legacy service_role JWT (starts with eyJ) from Supabase → Settings → API. Paste without quotes, then redeploy.",
+                },
+                500,
+              );
+            }
+            return json({ error: message }, 500);
+          }
 
           const roleMap = new Map<string, AppRole[]>();
           for (const r of roles ?? []) {

@@ -1,12 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
-import WebSocket from "ws";
 import { userIdFromAccessToken } from "@/lib/auth-session";
+import { supabasePublishableKey, supabaseUrl } from "@/lib/supabase-env.server";
 import type { Database } from "@/integrations/supabase/types";
 
 function supabasePublicConfig() {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const publishableKey =
-    process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const url = supabaseUrl();
+  const publishableKey = supabasePublishableKey();
   if (!url || !publishableKey) {
     throw new Error(
       "Missing Supabase environment variable(s): SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY.",
@@ -18,7 +17,6 @@ function supabasePublicConfig() {
 function createUserClient(token: string) {
   const { url, publishableKey } = supabasePublicConfig();
   return createClient<Database>(url, publishableKey, {
-    realtime: { transport: WebSocket },
     global: { headers: { Authorization: `Bearer ${token}` } },
     auth: {
       storage: undefined,
