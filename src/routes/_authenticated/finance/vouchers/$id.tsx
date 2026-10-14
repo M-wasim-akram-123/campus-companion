@@ -64,7 +64,7 @@ function VoucherDetail() {
       const { data: st } = await supabase
         .from("students")
         .select(
-          "*, programs(name), classes(name), sections(name, gender), academic_sessions(label)",
+          "*, programs(name), classes(name), sections!students_section_id_fkey(name, gender), academic_sessions(label)",
         )
         .eq("id", v.student_id)
         .single();

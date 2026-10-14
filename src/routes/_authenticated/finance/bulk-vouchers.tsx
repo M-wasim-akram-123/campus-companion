@@ -62,7 +62,7 @@ function BulkVouchersPage() {
     queryFn: async () => {
       const { data: students } = await supabase
         .from("students")
-        .select("section_id, sections(id, name, gender), classes(name), programs(name)")
+        .select("section_id, sections!students_section_id_fkey(id, name, gender), classes(name), programs(name)")
         .eq("academic_session_id", sid)
         .eq("status", "active")
         .not("section_id", "is", null);

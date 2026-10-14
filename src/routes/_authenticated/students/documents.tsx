@@ -32,7 +32,7 @@ function StudentDocumentsReport() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("students")
-        .select("id, full_name, roll_number, gender, class_id, section_id, academic_session_id, classes(name), sections(name, gender), academic_sessions(label)")
+        .select("id, full_name, roll_number, gender, class_id, section_id, academic_session_id, classes(name), sections!students_section_id_fkey(name, gender), academic_sessions(label)")
         .order("roll_number");
       if (error) throw new Error(error.message);
       return data ?? [];

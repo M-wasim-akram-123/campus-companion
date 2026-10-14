@@ -274,7 +274,7 @@ export async function runSessionPromotions(
   let studentQuery = client
     .from("students")
     .select(
-      "id, roll_number, status, enrollment_type, program_id, class_id, section_id, academic_session_id, admission_year_level, classes(year_level), sections(name, gender, session_id), academic_sessions(start_year, end_year), programs(type)",
+      "id, roll_number, status, enrollment_type, program_id, class_id, section_id, academic_session_id, admission_year_level, classes(year_level), sections!students_section_id_fkey(name, gender, session_id), academic_sessions(start_year, end_year), programs(type)",
     )
     .eq("status", "active")
     .eq("enrollment_type", "regular");

@@ -254,7 +254,7 @@ function OverdueFollowUp() {
     const { data, error } = await supabase
       .from("student_fee_installments")
       .select(
-        "*, students(id, full_name, roll_number, father_name, phone, guardian_phone, guardian_name, academic_session_id, section_id, programs(name), sections(name, gender))",
+        "*, students(id, full_name, roll_number, father_name, phone, guardian_phone, guardian_name, academic_session_id, section_id, programs(name), sections!students_section_id_fkey(name, gender))",
       )
       .in("student_id", studentIds)
       .order("sort_order");

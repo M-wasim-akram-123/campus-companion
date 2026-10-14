@@ -50,7 +50,7 @@ function StudentsList() {
       const { data, error: queryError } = await supabase
         .from("students")
         .select(
-          "*, programs(name, type, duration_years), classes(name, year_level), sections(name, gender), academic_sessions(label, start_year, end_year)",
+          "*, programs(name, type, duration_years), classes(name, year_level), sections!students_section_id_fkey(name, gender), academic_sessions(label, start_year, end_year)",
         )
         .order("created_at", { ascending: false });
       if (queryError) throw queryError;
