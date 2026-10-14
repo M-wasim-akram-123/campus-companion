@@ -138,7 +138,7 @@ function FeeCollection() {
       let query = supabase
         .from("students")
         .select(
-          "id, full_name, roll_number, programs!inner(name, type), classes(name), sections(name, gender), academic_sessions(label)",
+          "id, full_name, roll_number, programs!inner(name, type), classes(name), sections!students_section_id_fkey(name, gender), academic_sessions(label)",
         )
         .eq("status", "active")
         .order("full_name")
@@ -178,7 +178,7 @@ function FeeCollection() {
       let query = supabase
         .from("students")
         .select(
-          "id, full_name, roll_number, programs!inner(name, type), classes(name), sections(name, gender), academic_sessions(label)",
+          "id, full_name, roll_number, programs!inner(name, type), classes(name), sections!students_section_id_fkey(name, gender), academic_sessions(label)",
         )
         .eq("id", selectedId!);
       if (programTypeFilter) {

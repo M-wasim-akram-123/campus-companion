@@ -121,7 +121,7 @@ function Dashboard() {
         canViewStudents
           ? supabase
               .from("students")
-              .select("id, full_name, roll_number, status, created_at, program_id, academic_session_id, programs(name), sections(name, gender), academic_sessions(label)")
+              .select("id, full_name, roll_number, status, created_at, program_id, academic_session_id, programs(name), sections!students_section_id_fkey(name, gender), academic_sessions(label)")
               .order("created_at", { ascending: false })
           : Promise.resolve({ data: [] }),
         canViewFinance

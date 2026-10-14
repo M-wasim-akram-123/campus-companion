@@ -157,7 +157,7 @@ export async function fetchIntermediateReport(input: {
   let query = supabase
     .from("student_academic_ledger")
     .select(
-      "*, students(full_name, roll_number), sections(name, gender)",
+      "*, students(full_name, roll_number), sections!internal_tests_section_id_fkey(name, gender)",
     )
     .eq("academic_session_id", input.sessionId)
     .in("event_type", ["test_published", "mark_corrected"])

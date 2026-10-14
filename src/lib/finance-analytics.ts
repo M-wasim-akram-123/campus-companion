@@ -146,7 +146,7 @@ export async function fetchSessionRevenueAnalytics(sessionId: string): Promise<S
     await Promise.all([
       supabase
         .from("students")
-        .select("id, status, section_id, sections(name, gender), classes(name), programs(name)")
+        .select("id, status, section_id, sections!students_section_id_fkey(name, gender), classes(name), programs(name)")
         .eq("academic_session_id", sessionId),
       supabase
         .from("students")
@@ -531,7 +531,7 @@ export async function fetchYearEndLedgerRows(sessionId: string, academicYearStar
         guardian_phone,
         programs(name),
         classes(name),
-        sections(name, gender)
+        sections!students_section_id_fkey(name, gender)
       )
     `,
     )

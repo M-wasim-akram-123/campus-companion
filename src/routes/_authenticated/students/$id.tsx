@@ -138,7 +138,7 @@ function StudentDetail() {
       const { data, error } = await supabase
         .from("students")
         .select(
-          "*, programs(name, duration_years), classes(name, year_level), sections(name, gender), academic_sessions(label, start_year, end_year)",
+          "*, programs(name, duration_years), classes(name, year_level), sections!students_section_id_fkey(name, gender), academic_sessions(label, start_year, end_year)",
         )
         .eq("id", id)
         .single();

@@ -77,7 +77,7 @@ export async function fetchMyStudentProfile() {
   if (!userId) throw new Error("You must be logged in.");
   const { data, error } = await supabase
     .from("students")
-    .select("id, full_name, roll_number, user_id, programs(name), classes(name), sections(name, gender), academic_sessions(label)")
+    .select("id, full_name, roll_number, user_id, programs(name), classes(name), sections!students_section_id_fkey(name, gender), academic_sessions(label)")
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw new Error(error.message);

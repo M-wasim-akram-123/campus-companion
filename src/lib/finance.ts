@@ -512,7 +512,7 @@ async function fetchVoucherGeneratorStudents(
 ) {
   let query = supabase
     .from("students")
-    .select("id, full_name, roll_number, section_id, sections(name, gender)")
+    .select("id, full_name, roll_number, section_id, sections!students_section_id_fkey(name, gender)")
     .eq("academic_session_id", params.sessionId)
     .eq("status", "active")
     .order("roll_number");
@@ -1114,7 +1114,7 @@ export async function fetchOverdueInstallments() {
   const { data, error } = await supabase
     .from("student_fee_installments")
     .select(
-      "*, students(id, full_name, roll_number, father_name, phone, guardian_phone, guardian_name, academic_session_id, section_id, programs(name), sections(name, gender))",
+      "*, students(id, full_name, roll_number, father_name, phone, guardian_phone, guardian_name, academic_session_id, section_id, programs(name), sections!students_section_id_fkey(name, gender))",
     )
     .neq("status", "paid")
     .neq("status", "written_off")

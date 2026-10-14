@@ -327,7 +327,7 @@ export default function App() {
     if (!user.user) return;
     const { data: studentRow, error: studentError } = await supabase
       .from("students")
-      .select("id, full_name, father_name, roll_number, cnic, date_of_birth, gender, phone, email, address, guardian_name, guardian_phone, guardian_occupation, guardian_details, matric_school, matric_marks_obtained, matric_marks_total, programs(name), classes(name), sections(name, gender), academic_sessions(label), user_id")
+      .select("id, full_name, father_name, roll_number, cnic, date_of_birth, gender, phone, email, address, guardian_name, guardian_phone, guardian_occupation, guardian_details, matric_school, matric_marks_obtained, matric_marks_total, programs(name), classes(name), sections!students_section_id_fkey(name, gender), academic_sessions(label), user_id")
       .eq("user_id", user.user.id)
       .maybeSingle();
     if (studentError) throw studentError;
