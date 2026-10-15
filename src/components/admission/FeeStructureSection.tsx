@@ -704,8 +704,8 @@ export function FeeStructureSection({
       installmentCount: isClassesOnly
         ? feeClearanceMonths
         : usesCollectionPlan
-          ? selectedCollectionPlan!.collection_months.length
-          : installmentCount,
+          ? (selectedCollectionPlan?.collection_months.length ?? 4)
+          : (installmentCount ?? 4),
       startAfterMonths: isClassesOnly ? 0 : startAfterMonths,
       firstInstallmentDate: isClassesOnly
         ? classesOnlyInstallmentRows[0]?.due_date ?? todayString()

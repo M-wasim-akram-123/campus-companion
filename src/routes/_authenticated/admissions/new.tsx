@@ -457,7 +457,8 @@ function NewAdmission() {
     setSaving(true);
     let createdStudentId: string | null = null;
     try {
-      const roll_number = await generateAdmissionNumber(form.academic_session_id);
+      const programType = selectedProgram?.type === "bs" ? "bs" : "intermediate";
+      const roll_number = await generateAdmissionNumber(form.academic_session_id, programType);
 
       let photo_url: string | null = null;
       if (photo) {

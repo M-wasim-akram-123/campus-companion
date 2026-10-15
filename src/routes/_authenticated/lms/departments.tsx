@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { canManageLmsAcademics } from "@/lib/lms/permissions";
@@ -9,6 +10,13 @@ import { LmsPageHeader } from "@/components/lms/LmsPageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -26,6 +34,7 @@ function LmsDepartmentsPage() {
   const qc = useQueryClient();
   const { roles } = useAuth();
   const canManage = canManageLmsAcademics(roles);
+  const [editingHodFor, setEditingHodFor] = useState<string | null>(null);
 
   const { data: departments = [], isLoading } = useQuery({
     queryKey: ["lms-departments"],
@@ -43,6 +52,17 @@ function LmsDepartmentsPage() {
       toast.success("Program updated");
       qc.invalidateQueries({ queryKey: ["lms-departments"] });
       qc.invalidateQueries({ queryKey: ["lms-dashboard"] });
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const assignHod = useMutation({
+    mutationFn: ({ id, hodUserId }: { id: string; hodUserId: string | null }) =>
+      updateDepartment(id, { hod_user_id: hodUserId }),
+    onSuccess: () => {
+      toast.success("HOD assigned");
+      setEditingHodFor(null);
+      qc.invalidateQueries({ queryKey: ["lms-departments"] });
     },
     onError: (error) => toast.error(error.message),
   });
@@ -111,8 +131,52 @@ function LmsDepartmentsPage() {
                     </TableCell>
                     <TableCell>{department.semester_count}</TableCell>
                     <TableCell>
-                      {hods.find((hod) => hod.id === department.hod_user_id)?.fullName ??
-                        "Not assigned"}
+                      {canManage ? (
+                        editingHodFor === department.id ? (
+                          <div className="flex items-center gap-2">
+                            <Select
+                              value={department.hod_user_id ?? "none"}
+                              onValueChange={(value) =>
+                                assignHod.mutate({
+                                  id: department.id,
+                                  hodUserId: value === "none" ? null : value,
+                                })
+                              }
+                            >
+                              <SelectTrigger className="w-[200px]">
+                                <SelectValue placeholder="Select HOD" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">Not assigned</SelectItem>
+                                {hods.map((hod) => (
+                                  <SelectItem key={hod.id} value={hod.id}>
+                                    {hod.fullName}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setEditingHodFor(null)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setEditingHodFor(department.id)}
+                          >
+                            {hods.find((hod) => hod.id === department.hod_user_id)?.fullName ??
+                              "Assign HOD"}
+                          </Button>
+                        )
+                      ) : (
+                        hods.find((hod) => hod.id === department.hod_user_id)?.fullName ??
+                        "Not assigned"
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={department.is_active ? "default" : "secondary"}>
