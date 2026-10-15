@@ -188,7 +188,7 @@ export async function fetchRollNoSlipRows(sessionId?: string): Promise<RollNoSli
   let studentQuery = supabase
     .from("students")
     .select(
-      "id, full_name, roll_number, father_name, phone, guardian_phone, academic_session_id, class_id, section_id, program_id, status, programs(name), classes(name, year_level), sections(name, gender), academic_sessions(label)",
+      "id, full_name, roll_number, father_name, phone, guardian_phone, academic_session_id, class_id, section_id, program_id, status, programs(name), classes(name, year_level), sections!students_section_id_fkey(name, gender), academic_sessions(label)",
     )
     .eq("status", "active")
     .order("full_name");
@@ -500,7 +500,7 @@ export async function fetchRollNoSlipPendingRecoveries() {
   const { data, error } = await supabase
     .from("roll_no_slip_requests")
     .select(
-      "*, students(full_name, roll_number, programs(name), sections(name, gender))",
+      "*, students(full_name, roll_number, programs(name), sections!students_section_id_fkey(name, gender))",
     )
     .in("status", ["approved", "released"])
     .order("released_at", { ascending: false, nullsFirst: false });

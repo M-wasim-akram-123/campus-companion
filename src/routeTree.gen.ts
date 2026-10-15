@@ -9,72 +9,76 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated/students/index'
-import { Route as AuthenticatedLmsIndexRouteImport } from './routes/_authenticated/lms/index'
-import { Route as AuthenticatedInquiriesIndexRouteImport } from './routes/_authenticated/inquiries/index'
-import { Route as AuthenticatedFinanceIndexRouteImport } from './routes/_authenticated/finance/index'
-import { Route as AuthenticatedExamsIndexRouteImport } from './routes/_authenticated/exams/index'
-import { Route as AuthenticatedAnnouncementsIndexRouteImport } from './routes/_authenticated/announcements/index'
-import { Route as ApiWhatsappCheckNumberRouteImport } from './routes/api/whatsapp/check-number'
-import { Route as ApiStudentDocumentsZipRouteImport } from './routes/api/student-documents/zip'
-import { Route as ApiStudentDocumentsAccountRouteImport } from './routes/api/student-documents/account'
-import { Route as ApiStaffProfilesRouteImport } from './routes/api/staff/profiles'
-import { Route as ApiStaffByRoleRouteImport } from './routes/api/staff/by-role'
-import { Route as ApiFinanceCampusInchargeCollectionRouteImport } from './routes/api/finance/campus-incharge-collection'
-import { Route as ApiBoardGazetteLookupRouteImport } from './routes/api/board-gazette/lookup'
-import { Route as ApiBoardGazetteImportsRouteImport } from './routes/api/board-gazette/imports'
-import { Route as ApiBoardGazetteImportRouteImport } from './routes/api/board-gazette/import'
-import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
-import { Route as ApiAdminUsersRouteImport } from './routes/api/admin/users'
-import { Route as ApiAcademicRunPromotionsRouteImport } from './routes/api/academic/run-promotions'
-import { Route as AuthenticatedStudentsRollNoSlipsRouteImport } from './routes/_authenticated/students/roll-no-slips'
-import { Route as AuthenticatedStudentsDocumentsRouteImport } from './routes/_authenticated/students/documents'
-import { Route as AuthenticatedStudentsIdRouteImport } from './routes/_authenticated/students/$id'
-import { Route as AuthenticatedSettingsUsersRouteImport } from './routes/_authenticated/settings/users'
-import { Route as AuthenticatedSettingsProfileRouteImport } from './routes/_authenticated/settings/profile'
-import { Route as AuthenticatedSettingsFeesRouteImport } from './routes/_authenticated/settings/fees'
-import { Route as AuthenticatedSettingsCollectionPlansRouteImport } from './routes/_authenticated/settings/collection-plans'
-import { Route as AuthenticatedSettingsBoardGazetteRouteImport } from './routes/_authenticated/settings/board-gazette'
-import { Route as AuthenticatedSettingsAcademicRouteImport } from './routes/_authenticated/settings/academic'
-import { Route as AuthenticatedLmsTeachersRouteImport } from './routes/_authenticated/lms/teachers'
-import { Route as AuthenticatedLmsSemestersRouteImport } from './routes/_authenticated/lms/semesters'
-import { Route as AuthenticatedLmsSalaryRouteImport } from './routes/_authenticated/lms/salary'
-import { Route as AuthenticatedLmsOfferingsRouteImport } from './routes/_authenticated/lms/offerings'
-import { Route as AuthenticatedLmsMyClassesRouteImport } from './routes/_authenticated/lms/my-classes'
-import { Route as AuthenticatedLmsDepartmentsRouteImport } from './routes/_authenticated/lms/departments'
-import { Route as AuthenticatedLmsDeliveriesRouteImport } from './routes/_authenticated/lms/deliveries'
-import { Route as AuthenticatedLmsCoursesRouteImport } from './routes/_authenticated/lms/courses'
-import { Route as AuthenticatedLmsClassesRouteImport } from './routes/_authenticated/lms/classes'
-import { Route as AuthenticatedLmsCalendarRouteImport } from './routes/_authenticated/lms/calendar'
-import { Route as AuthenticatedInquiriesNewRouteImport } from './routes/_authenticated/inquiries/new'
-import { Route as AuthenticatedInquiriesIdRouteImport } from './routes/_authenticated/inquiries/$id'
-import { Route as AuthenticatedFinanceScanRouteImport } from './routes/_authenticated/finance/scan'
-import { Route as AuthenticatedFinanceReportsRouteImport } from './routes/_authenticated/finance/reports'
-import { Route as AuthenticatedFinanceDuesRouteImport } from './routes/_authenticated/finance/dues'
-import { Route as AuthenticatedFinanceCollectRouteImport } from './routes/_authenticated/finance/collect'
-import { Route as AuthenticatedFinanceBulkVouchersRouteImport } from './routes/_authenticated/finance/bulk-vouchers'
-import { Route as AuthenticatedExamsReportsRouteImport } from './routes/_authenticated/exams/reports'
-import { Route as AuthenticatedExamsCatalogRouteImport } from './routes/_authenticated/exams/catalog'
-import { Route as AuthenticatedAnnouncementsNewRouteImport } from './routes/_authenticated/announcements/new'
 import { Route as AuthenticatedAdmissionsNewRouteImport } from './routes/_authenticated/admissions/new'
-import { Route as AuthenticatedFinanceVouchersIndexRouteImport } from './routes/_authenticated/finance/vouchers/index'
-import { Route as ApiPublicHooksAutoVouchersRouteImport } from './routes/api/public/hooks/auto-vouchers'
-import { Route as AuthenticatedFinanceVouchersNewRouteImport } from './routes/_authenticated/finance/vouchers/new'
-import { Route as AuthenticatedFinanceVouchersLookupRouteImport } from './routes/_authenticated/finance/vouchers/lookup'
-import { Route as AuthenticatedFinanceVouchersIdRouteImport } from './routes/_authenticated/finance/vouchers/$id'
-import { Route as AuthenticatedExamsTestsNewRouteImport } from './routes/_authenticated/exams/tests/new'
-import { Route as AuthenticatedExamsTestsIdRouteImport } from './routes/_authenticated/exams/tests/$id'
-import { Route as AuthenticatedExamsSeriesNewRouteImport } from './routes/_authenticated/exams/series/new'
+import { Route as AuthenticatedAnnouncementsIndexRouteImport } from './routes/_authenticated/announcements/index'
+import { Route as AuthenticatedAnnouncementsNewRouteImport } from './routes/_authenticated/announcements/new'
+import { Route as AuthenticatedExamsIndexRouteImport } from './routes/_authenticated/exams/index'
+import { Route as AuthenticatedExamsCatalogRouteImport } from './routes/_authenticated/exams/catalog'
+import { Route as AuthenticatedExamsReportsRouteImport } from './routes/_authenticated/exams/reports'
+import { Route as AuthenticatedFinanceIndexRouteImport } from './routes/_authenticated/finance/index'
+import { Route as AuthenticatedFinanceBulkVouchersRouteImport } from './routes/_authenticated/finance/bulk-vouchers'
+import { Route as AuthenticatedFinanceCollectRouteImport } from './routes/_authenticated/finance/collect'
+import { Route as AuthenticatedFinanceDuesRouteImport } from './routes/_authenticated/finance/dues'
+import { Route as AuthenticatedFinanceReportsRouteImport } from './routes/_authenticated/finance/reports'
+import { Route as AuthenticatedFinanceScanRouteImport } from './routes/_authenticated/finance/scan'
+import { Route as AuthenticatedInquiriesIndexRouteImport } from './routes/_authenticated/inquiries/index'
+import { Route as AuthenticatedInquiriesIdRouteImport } from './routes/_authenticated/inquiries/$id'
+import { Route as AuthenticatedInquiriesNewRouteImport } from './routes/_authenticated/inquiries/new'
+import { Route as AuthenticatedLmsIndexRouteImport } from './routes/_authenticated/lms/index'
+import { Route as AuthenticatedLmsCalendarRouteImport } from './routes/_authenticated/lms/calendar'
+import { Route as AuthenticatedLmsClassesRouteImport } from './routes/_authenticated/lms/classes'
+import { Route as AuthenticatedLmsCoursesRouteImport } from './routes/_authenticated/lms/courses'
+import { Route as AuthenticatedLmsDeliveriesRouteImport } from './routes/_authenticated/lms/deliveries'
+import { Route as AuthenticatedLmsDepartmentsRouteImport } from './routes/_authenticated/lms/departments'
+import { Route as AuthenticatedLmsMyClassesRouteImport } from './routes/_authenticated/lms/my-classes'
+import { Route as AuthenticatedLmsOfferingsRouteImport } from './routes/_authenticated/lms/offerings'
+import { Route as AuthenticatedLmsSalaryRouteImport } from './routes/_authenticated/lms/salary'
+import { Route as AuthenticatedLmsSemestersRouteImport } from './routes/_authenticated/lms/semesters'
+import { Route as AuthenticatedLmsTeachersRouteImport } from './routes/_authenticated/lms/teachers'
+import { Route as AuthenticatedSettingsAcademicRouteImport } from './routes/_authenticated/settings/academic'
+import { Route as AuthenticatedSettingsBoardGazetteRouteImport } from './routes/_authenticated/settings/board-gazette'
+import { Route as AuthenticatedSettingsCollectionPlansRouteImport } from './routes/_authenticated/settings/collection-plans'
+import { Route as AuthenticatedSettingsFeesRouteImport } from './routes/_authenticated/settings/fees'
+import { Route as AuthenticatedSettingsProfileRouteImport } from './routes/_authenticated/settings/profile'
+import { Route as AuthenticatedSettingsUsersRouteImport } from './routes/_authenticated/settings/users'
+import { Route as AuthenticatedStudentsIndexRouteImport } from './routes/_authenticated/students/index'
+import { Route as AuthenticatedStudentsIdRouteImport } from './routes/_authenticated/students/$id'
+import { Route as AuthenticatedStudentsDocumentsRouteImport } from './routes/_authenticated/students/documents'
+import { Route as AuthenticatedStudentsRollNoSlipsRouteImport } from './routes/_authenticated/students/roll-no-slips'
+import { Route as ApiAcademicRunPromotionsRouteImport } from './routes/api/academic/run-promotions'
+import { Route as ApiAdminUsersRouteImport } from './routes/api/admin/users'
+import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
+import { Route as ApiBoardGazetteImportRouteImport } from './routes/api/board-gazette/import'
+import { Route as ApiBoardGazetteImportsRouteImport } from './routes/api/board-gazette/imports'
+import { Route as ApiBoardGazetteLookupRouteImport } from './routes/api/board-gazette/lookup'
+import { Route as ApiFinanceCampusInchargeCollectionRouteImport } from './routes/api/finance/campus-incharge-collection'
+import { Route as ApiStaffByRoleRouteImport } from './routes/api/staff/by-role'
+import { Route as ApiStaffProfilesRouteImport } from './routes/api/staff/profiles'
+import { Route as ApiStudentDocumentsAccountRouteImport } from './routes/api/student-documents/account'
+import { Route as ApiStudentDocumentsZipRouteImport } from './routes/api/student-documents/zip'
+import { Route as ApiWhatsappCheckNumberRouteImport } from './routes/api/whatsapp/check-number'
 import { Route as AuthenticatedExamsSeriesIdRouteImport } from './routes/_authenticated/exams/series/$id'
+import { Route as AuthenticatedExamsSeriesNewRouteImport } from './routes/_authenticated/exams/series/new'
+import { Route as AuthenticatedExamsTestsIdRouteImport } from './routes/_authenticated/exams/tests/$id'
+import { Route as AuthenticatedExamsTestsNewRouteImport } from './routes/_authenticated/exams/tests/new'
+import { Route as AuthenticatedFinanceVouchersIndexRouteImport } from './routes/_authenticated/finance/vouchers/index'
+import { Route as AuthenticatedFinanceVouchersIdRouteImport } from './routes/_authenticated/finance/vouchers/$id'
+import { Route as AuthenticatedFinanceVouchersLookupRouteImport } from './routes/_authenticated/finance/vouchers/lookup'
+import { Route as AuthenticatedFinanceVouchersNewRouteImport } from './routes/_authenticated/finance/vouchers/new'
+import { Route as ApiPublicHooksAutoVouchersRouteImport } from './routes/api/public/hooks/auto-vouchers'
 
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -82,13 +86,9 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -96,265 +96,16 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedStudentsIndexRoute =
-  AuthenticatedStudentsIndexRouteImport.update({
-    id: '/students/',
-    path: '/students/',
+const AuthenticatedAdmissionsNewRoute =
+  AuthenticatedAdmissionsNewRouteImport.update({
+    id: '/admissions/new',
+    path: '/admissions/new',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedLmsIndexRoute = AuthenticatedLmsIndexRouteImport.update({
-  id: '/lms/',
-  path: '/lms/',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedInquiriesIndexRoute =
-  AuthenticatedInquiriesIndexRouteImport.update({
-    id: '/inquiries/',
-    path: '/inquiries/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedFinanceIndexRoute =
-  AuthenticatedFinanceIndexRouteImport.update({
-    id: '/finance/',
-    path: '/finance/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedExamsIndexRoute = AuthenticatedExamsIndexRouteImport.update({
-  id: '/exams/',
-  path: '/exams/',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedAnnouncementsIndexRoute =
   AuthenticatedAnnouncementsIndexRouteImport.update({
     id: '/announcements/',
     path: '/announcements/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const ApiWhatsappCheckNumberRoute = ApiWhatsappCheckNumberRouteImport.update({
-  id: '/api/whatsapp/check-number',
-  path: '/api/whatsapp/check-number',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiStudentDocumentsZipRoute = ApiStudentDocumentsZipRouteImport.update({
-  id: '/api/student-documents/zip',
-  path: '/api/student-documents/zip',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiStudentDocumentsAccountRoute =
-  ApiStudentDocumentsAccountRouteImport.update({
-    id: '/api/student-documents/account',
-    path: '/api/student-documents/account',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiStaffProfilesRoute = ApiStaffProfilesRouteImport.update({
-  id: '/api/staff/profiles',
-  path: '/api/staff/profiles',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiStaffByRoleRoute = ApiStaffByRoleRouteImport.update({
-  id: '/api/staff/by-role',
-  path: '/api/staff/by-role',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiFinanceCampusInchargeCollectionRoute =
-  ApiFinanceCampusInchargeCollectionRouteImport.update({
-    id: '/api/finance/campus-incharge-collection',
-    path: '/api/finance/campus-incharge-collection',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiBoardGazetteLookupRoute = ApiBoardGazetteLookupRouteImport.update({
-  id: '/api/board-gazette/lookup',
-  path: '/api/board-gazette/lookup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiBoardGazetteImportsRoute = ApiBoardGazetteImportsRouteImport.update({
-  id: '/api/board-gazette/imports',
-  path: '/api/board-gazette/imports',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiBoardGazetteImportRoute = ApiBoardGazetteImportRouteImport.update({
-  id: '/api/board-gazette/import',
-  path: '/api/board-gazette/import',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAuthSessionRoute = ApiAuthSessionRouteImport.update({
-  id: '/api/auth/session',
-  path: '/api/auth/session',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAdminUsersRoute = ApiAdminUsersRouteImport.update({
-  id: '/api/admin/users',
-  path: '/api/admin/users',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiAcademicRunPromotionsRoute =
-  ApiAcademicRunPromotionsRouteImport.update({
-    id: '/api/academic/run-promotions',
-    path: '/api/academic/run-promotions',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthenticatedStudentsRollNoSlipsRoute =
-  AuthenticatedStudentsRollNoSlipsRouteImport.update({
-    id: '/students/roll-no-slips',
-    path: '/students/roll-no-slips',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedStudentsDocumentsRoute =
-  AuthenticatedStudentsDocumentsRouteImport.update({
-    id: '/students/documents',
-    path: '/students/documents',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedStudentsIdRoute = AuthenticatedStudentsIdRouteImport.update({
-  id: '/students/$id',
-  path: '/students/$id',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedSettingsUsersRoute =
-  AuthenticatedSettingsUsersRouteImport.update({
-    id: '/settings/users',
-    path: '/settings/users',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedSettingsProfileRoute =
-  AuthenticatedSettingsProfileRouteImport.update({
-    id: '/settings/profile',
-    path: '/settings/profile',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedSettingsFeesRoute =
-  AuthenticatedSettingsFeesRouteImport.update({
-    id: '/settings/fees',
-    path: '/settings/fees',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedSettingsCollectionPlansRoute =
-  AuthenticatedSettingsCollectionPlansRouteImport.update({
-    id: '/settings/collection-plans',
-    path: '/settings/collection-plans',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedSettingsBoardGazetteRoute =
-  AuthenticatedSettingsBoardGazetteRouteImport.update({
-    id: '/settings/board-gazette',
-    path: '/settings/board-gazette',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedSettingsAcademicRoute =
-  AuthenticatedSettingsAcademicRouteImport.update({
-    id: '/settings/academic',
-    path: '/settings/academic',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedLmsTeachersRoute =
-  AuthenticatedLmsTeachersRouteImport.update({
-    id: '/lms/teachers',
-    path: '/lms/teachers',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedLmsSemestersRoute =
-  AuthenticatedLmsSemestersRouteImport.update({
-    id: '/lms/semesters',
-    path: '/lms/semesters',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedLmsSalaryRoute = AuthenticatedLmsSalaryRouteImport.update({
-  id: '/lms/salary',
-  path: '/lms/salary',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedLmsOfferingsRoute =
-  AuthenticatedLmsOfferingsRouteImport.update({
-    id: '/lms/offerings',
-    path: '/lms/offerings',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedLmsMyClassesRoute =
-  AuthenticatedLmsMyClassesRouteImport.update({
-    id: '/lms/my-classes',
-    path: '/lms/my-classes',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedLmsDepartmentsRoute =
-  AuthenticatedLmsDepartmentsRouteImport.update({
-    id: '/lms/departments',
-    path: '/lms/departments',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedLmsDeliveriesRoute =
-  AuthenticatedLmsDeliveriesRouteImport.update({
-    id: '/lms/deliveries',
-    path: '/lms/deliveries',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedLmsCoursesRoute = AuthenticatedLmsCoursesRouteImport.update({
-  id: '/lms/courses',
-  path: '/lms/courses',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedLmsClassesRoute = AuthenticatedLmsClassesRouteImport.update({
-  id: '/lms/classes',
-  path: '/lms/classes',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedLmsCalendarRoute =
-  AuthenticatedLmsCalendarRouteImport.update({
-    id: '/lms/calendar',
-    path: '/lms/calendar',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedInquiriesNewRoute =
-  AuthenticatedInquiriesNewRouteImport.update({
-    id: '/inquiries/new',
-    path: '/inquiries/new',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedInquiriesIdRoute =
-  AuthenticatedInquiriesIdRouteImport.update({
-    id: '/inquiries/$id',
-    path: '/inquiries/$id',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedFinanceScanRoute =
-  AuthenticatedFinanceScanRouteImport.update({
-    id: '/finance/scan',
-    path: '/finance/scan',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedFinanceReportsRoute =
-  AuthenticatedFinanceReportsRouteImport.update({
-    id: '/finance/reports',
-    path: '/finance/reports',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedFinanceDuesRoute =
-  AuthenticatedFinanceDuesRouteImport.update({
-    id: '/finance/dues',
-    path: '/finance/dues',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedFinanceCollectRoute =
-  AuthenticatedFinanceCollectRouteImport.update({
-    id: '/finance/collect',
-    path: '/finance/collect',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedFinanceBulkVouchersRoute =
-  AuthenticatedFinanceBulkVouchersRouteImport.update({
-    id: '/finance/bulk-vouchers',
-    path: '/finance/bulk-vouchers',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedExamsReportsRoute =
-  AuthenticatedExamsReportsRouteImport.update({
-    id: '/exams/reports',
-    path: '/exams/reports',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedExamsCatalogRoute =
-  AuthenticatedExamsCatalogRouteImport.update({
-    id: '/exams/catalog',
-    path: '/exams/catalog',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAnnouncementsNewRoute =
@@ -363,52 +114,265 @@ const AuthenticatedAnnouncementsNewRoute =
     path: '/announcements/new',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedAdmissionsNewRoute =
-  AuthenticatedAdmissionsNewRouteImport.update({
-    id: '/admissions/new',
-    path: '/admissions/new',
+const AuthenticatedExamsIndexRoute = AuthenticatedExamsIndexRouteImport.update({
+  id: '/exams/',
+  path: '/exams/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedExamsCatalogRoute =
+  AuthenticatedExamsCatalogRouteImport.update({
+    id: '/exams/catalog',
+    path: '/exams/catalog',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedFinanceVouchersIndexRoute =
-  AuthenticatedFinanceVouchersIndexRouteImport.update({
-    id: '/finance/vouchers/',
-    path: '/finance/vouchers/',
+const AuthenticatedExamsReportsRoute =
+  AuthenticatedExamsReportsRouteImport.update({
+    id: '/exams/reports',
+    path: '/exams/reports',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const ApiPublicHooksAutoVouchersRoute =
-  ApiPublicHooksAutoVouchersRouteImport.update({
-    id: '/api/public/hooks/auto-vouchers',
-    path: '/api/public/hooks/auto-vouchers',
+const AuthenticatedFinanceIndexRoute =
+  AuthenticatedFinanceIndexRouteImport.update({
+    id: '/finance/',
+    path: '/finance/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceBulkVouchersRoute =
+  AuthenticatedFinanceBulkVouchersRouteImport.update({
+    id: '/finance/bulk-vouchers',
+    path: '/finance/bulk-vouchers',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceCollectRoute =
+  AuthenticatedFinanceCollectRouteImport.update({
+    id: '/finance/collect',
+    path: '/finance/collect',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceDuesRoute =
+  AuthenticatedFinanceDuesRouteImport.update({
+    id: '/finance/dues',
+    path: '/finance/dues',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceReportsRoute =
+  AuthenticatedFinanceReportsRouteImport.update({
+    id: '/finance/reports',
+    path: '/finance/reports',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceScanRoute =
+  AuthenticatedFinanceScanRouteImport.update({
+    id: '/finance/scan',
+    path: '/finance/scan',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedInquiriesIndexRoute =
+  AuthenticatedInquiriesIndexRouteImport.update({
+    id: '/inquiries/',
+    path: '/inquiries/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedInquiriesIdRoute =
+  AuthenticatedInquiriesIdRouteImport.update({
+    id: '/inquiries/$id',
+    path: '/inquiries/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedInquiriesNewRoute =
+  AuthenticatedInquiriesNewRouteImport.update({
+    id: '/inquiries/new',
+    path: '/inquiries/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLmsIndexRoute = AuthenticatedLmsIndexRouteImport.update({
+  id: '/lms/',
+  path: '/lms/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLmsCalendarRoute =
+  AuthenticatedLmsCalendarRouteImport.update({
+    id: '/lms/calendar',
+    path: '/lms/calendar',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLmsClassesRoute = AuthenticatedLmsClassesRouteImport.update({
+  id: '/lms/classes',
+  path: '/lms/classes',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLmsCoursesRoute = AuthenticatedLmsCoursesRouteImport.update({
+  id: '/lms/courses',
+  path: '/lms/courses',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLmsDeliveriesRoute =
+  AuthenticatedLmsDeliveriesRouteImport.update({
+    id: '/lms/deliveries',
+    path: '/lms/deliveries',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLmsDepartmentsRoute =
+  AuthenticatedLmsDepartmentsRouteImport.update({
+    id: '/lms/departments',
+    path: '/lms/departments',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLmsMyClassesRoute =
+  AuthenticatedLmsMyClassesRouteImport.update({
+    id: '/lms/my-classes',
+    path: '/lms/my-classes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLmsOfferingsRoute =
+  AuthenticatedLmsOfferingsRouteImport.update({
+    id: '/lms/offerings',
+    path: '/lms/offerings',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLmsSalaryRoute = AuthenticatedLmsSalaryRouteImport.update({
+  id: '/lms/salary',
+  path: '/lms/salary',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLmsSemestersRoute =
+  AuthenticatedLmsSemestersRouteImport.update({
+    id: '/lms/semesters',
+    path: '/lms/semesters',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedLmsTeachersRoute =
+  AuthenticatedLmsTeachersRouteImport.update({
+    id: '/lms/teachers',
+    path: '/lms/teachers',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSettingsAcademicRoute =
+  AuthenticatedSettingsAcademicRouteImport.update({
+    id: '/settings/academic',
+    path: '/settings/academic',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSettingsBoardGazetteRoute =
+  AuthenticatedSettingsBoardGazetteRouteImport.update({
+    id: '/settings/board-gazette',
+    path: '/settings/board-gazette',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSettingsCollectionPlansRoute =
+  AuthenticatedSettingsCollectionPlansRouteImport.update({
+    id: '/settings/collection-plans',
+    path: '/settings/collection-plans',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSettingsFeesRoute =
+  AuthenticatedSettingsFeesRouteImport.update({
+    id: '/settings/fees',
+    path: '/settings/fees',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSettingsProfileRoute =
+  AuthenticatedSettingsProfileRouteImport.update({
+    id: '/settings/profile',
+    path: '/settings/profile',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSettingsUsersRoute =
+  AuthenticatedSettingsUsersRouteImport.update({
+    id: '/settings/users',
+    path: '/settings/users',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedStudentsIndexRoute =
+  AuthenticatedStudentsIndexRouteImport.update({
+    id: '/students/',
+    path: '/students/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedStudentsIdRoute = AuthenticatedStudentsIdRouteImport.update({
+  id: '/students/$id',
+  path: '/students/$id',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedStudentsDocumentsRoute =
+  AuthenticatedStudentsDocumentsRouteImport.update({
+    id: '/students/documents',
+    path: '/students/documents',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedStudentsRollNoSlipsRoute =
+  AuthenticatedStudentsRollNoSlipsRouteImport.update({
+    id: '/students/roll-no-slips',
+    path: '/students/roll-no-slips',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const ApiAcademicRunPromotionsRoute =
+  ApiAcademicRunPromotionsRouteImport.update({
+    id: '/api/academic/run-promotions',
+    path: '/api/academic/run-promotions',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AuthenticatedFinanceVouchersNewRoute =
-  AuthenticatedFinanceVouchersNewRouteImport.update({
-    id: '/finance/vouchers/new',
-    path: '/finance/vouchers/new',
-    getParentRoute: () => AuthenticatedRoute,
+const ApiAdminUsersRoute = ApiAdminUsersRouteImport.update({
+  id: '/api/admin/users',
+  path: '/api/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSessionRoute = ApiAuthSessionRouteImport.update({
+  id: '/api/auth/session',
+  path: '/api/auth/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBoardGazetteImportRoute = ApiBoardGazetteImportRouteImport.update({
+  id: '/api/board-gazette/import',
+  path: '/api/board-gazette/import',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBoardGazetteImportsRoute = ApiBoardGazetteImportsRouteImport.update({
+  id: '/api/board-gazette/imports',
+  path: '/api/board-gazette/imports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBoardGazetteLookupRoute = ApiBoardGazetteLookupRouteImport.update({
+  id: '/api/board-gazette/lookup',
+  path: '/api/board-gazette/lookup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFinanceCampusInchargeCollectionRoute =
+  ApiFinanceCampusInchargeCollectionRouteImport.update({
+    id: '/api/finance/campus-incharge-collection',
+    path: '/api/finance/campus-incharge-collection',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const AuthenticatedFinanceVouchersLookupRoute =
-  AuthenticatedFinanceVouchersLookupRouteImport.update({
-    id: '/finance/vouchers/lookup',
-    path: '/finance/vouchers/lookup',
-    getParentRoute: () => AuthenticatedRoute,
+const ApiStaffByRoleRoute = ApiStaffByRoleRouteImport.update({
+  id: '/api/staff/by-role',
+  path: '/api/staff/by-role',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStaffProfilesRoute = ApiStaffProfilesRouteImport.update({
+  id: '/api/staff/profiles',
+  path: '/api/staff/profiles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStudentDocumentsAccountRoute =
+  ApiStudentDocumentsAccountRouteImport.update({
+    id: '/api/student-documents/account',
+    path: '/api/student-documents/account',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const AuthenticatedFinanceVouchersIdRoute =
-  AuthenticatedFinanceVouchersIdRouteImport.update({
-    id: '/finance/vouchers/$id',
-    path: '/finance/vouchers/$id',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedExamsTestsNewRoute =
-  AuthenticatedExamsTestsNewRouteImport.update({
-    id: '/exams/tests/new',
-    path: '/exams/tests/new',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedExamsTestsIdRoute =
-  AuthenticatedExamsTestsIdRouteImport.update({
-    id: '/exams/tests/$id',
-    path: '/exams/tests/$id',
+const ApiStudentDocumentsZipRoute = ApiStudentDocumentsZipRouteImport.update({
+  id: '/api/student-documents/zip',
+  path: '/api/student-documents/zip',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWhatsappCheckNumberRoute = ApiWhatsappCheckNumberRouteImport.update({
+  id: '/api/whatsapp/check-number',
+  path: '/api/whatsapp/check-number',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedExamsSeriesIdRoute =
+  AuthenticatedExamsSeriesIdRouteImport.update({
+    id: '/exams/series/$id',
+    path: '/exams/series/$id',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedExamsSeriesNewRoute =
@@ -417,11 +381,47 @@ const AuthenticatedExamsSeriesNewRoute =
     path: '/exams/series/new',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedExamsSeriesIdRoute =
-  AuthenticatedExamsSeriesIdRouteImport.update({
-    id: '/exams/series/$id',
-    path: '/exams/series/$id',
+const AuthenticatedExamsTestsIdRoute =
+  AuthenticatedExamsTestsIdRouteImport.update({
+    id: '/exams/tests/$id',
+    path: '/exams/tests/$id',
     getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedExamsTestsNewRoute =
+  AuthenticatedExamsTestsNewRouteImport.update({
+    id: '/exams/tests/new',
+    path: '/exams/tests/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceVouchersIndexRoute =
+  AuthenticatedFinanceVouchersIndexRouteImport.update({
+    id: '/finance/vouchers/',
+    path: '/finance/vouchers/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceVouchersIdRoute =
+  AuthenticatedFinanceVouchersIdRouteImport.update({
+    id: '/finance/vouchers/$id',
+    path: '/finance/vouchers/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceVouchersLookupRoute =
+  AuthenticatedFinanceVouchersLookupRouteImport.update({
+    id: '/finance/vouchers/lookup',
+    path: '/finance/vouchers/lookup',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedFinanceVouchersNewRoute =
+  AuthenticatedFinanceVouchersNewRouteImport.update({
+    id: '/finance/vouchers/new',
+    path: '/finance/vouchers/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const ApiPublicHooksAutoVouchersRoute =
+  ApiPublicHooksAutoVouchersRouteImport.update({
+    id: '/api/public/hooks/auto-vouchers',
+    path: '/api/public/hooks/auto-vouchers',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -830,18 +830,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -851,11 +844,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard': {
@@ -865,39 +865,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/students/': {
-      id: '/_authenticated/students/'
-      path: '/students'
-      fullPath: '/students/'
-      preLoaderRoute: typeof AuthenticatedStudentsIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/lms/': {
-      id: '/_authenticated/lms/'
-      path: '/lms'
-      fullPath: '/lms/'
-      preLoaderRoute: typeof AuthenticatedLmsIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/inquiries/': {
-      id: '/_authenticated/inquiries/'
-      path: '/inquiries'
-      fullPath: '/inquiries/'
-      preLoaderRoute: typeof AuthenticatedInquiriesIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/finance/': {
-      id: '/_authenticated/finance/'
-      path: '/finance'
-      fullPath: '/finance/'
-      preLoaderRoute: typeof AuthenticatedFinanceIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/exams/': {
-      id: '/_authenticated/exams/'
-      path: '/exams'
-      fullPath: '/exams/'
-      preLoaderRoute: typeof AuthenticatedExamsIndexRouteImport
+    '/_authenticated/admissions/new': {
+      id: '/_authenticated/admissions/new'
+      path: '/admissions/new'
+      fullPath: '/admissions/new'
+      preLoaderRoute: typeof AuthenticatedAdmissionsNewRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/announcements/': {
@@ -907,277 +879,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnnouncementsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/api/whatsapp/check-number': {
-      id: '/api/whatsapp/check-number'
-      path: '/api/whatsapp/check-number'
-      fullPath: '/api/whatsapp/check-number'
-      preLoaderRoute: typeof ApiWhatsappCheckNumberRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/student-documents/zip': {
-      id: '/api/student-documents/zip'
-      path: '/api/student-documents/zip'
-      fullPath: '/api/student-documents/zip'
-      preLoaderRoute: typeof ApiStudentDocumentsZipRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/student-documents/account': {
-      id: '/api/student-documents/account'
-      path: '/api/student-documents/account'
-      fullPath: '/api/student-documents/account'
-      preLoaderRoute: typeof ApiStudentDocumentsAccountRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/staff/profiles': {
-      id: '/api/staff/profiles'
-      path: '/api/staff/profiles'
-      fullPath: '/api/staff/profiles'
-      preLoaderRoute: typeof ApiStaffProfilesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/staff/by-role': {
-      id: '/api/staff/by-role'
-      path: '/api/staff/by-role'
-      fullPath: '/api/staff/by-role'
-      preLoaderRoute: typeof ApiStaffByRoleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/finance/campus-incharge-collection': {
-      id: '/api/finance/campus-incharge-collection'
-      path: '/api/finance/campus-incharge-collection'
-      fullPath: '/api/finance/campus-incharge-collection'
-      preLoaderRoute: typeof ApiFinanceCampusInchargeCollectionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/board-gazette/lookup': {
-      id: '/api/board-gazette/lookup'
-      path: '/api/board-gazette/lookup'
-      fullPath: '/api/board-gazette/lookup'
-      preLoaderRoute: typeof ApiBoardGazetteLookupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/board-gazette/imports': {
-      id: '/api/board-gazette/imports'
-      path: '/api/board-gazette/imports'
-      fullPath: '/api/board-gazette/imports'
-      preLoaderRoute: typeof ApiBoardGazetteImportsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/board-gazette/import': {
-      id: '/api/board-gazette/import'
-      path: '/api/board-gazette/import'
-      fullPath: '/api/board-gazette/import'
-      preLoaderRoute: typeof ApiBoardGazetteImportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/auth/session': {
-      id: '/api/auth/session'
-      path: '/api/auth/session'
-      fullPath: '/api/auth/session'
-      preLoaderRoute: typeof ApiAuthSessionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/admin/users': {
-      id: '/api/admin/users'
-      path: '/api/admin/users'
-      fullPath: '/api/admin/users'
-      preLoaderRoute: typeof ApiAdminUsersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/academic/run-promotions': {
-      id: '/api/academic/run-promotions'
-      path: '/api/academic/run-promotions'
-      fullPath: '/api/academic/run-promotions'
-      preLoaderRoute: typeof ApiAcademicRunPromotionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/students/roll-no-slips': {
-      id: '/_authenticated/students/roll-no-slips'
-      path: '/students/roll-no-slips'
-      fullPath: '/students/roll-no-slips'
-      preLoaderRoute: typeof AuthenticatedStudentsRollNoSlipsRouteImport
+    '/_authenticated/announcements/new': {
+      id: '/_authenticated/announcements/new'
+      path: '/announcements/new'
+      fullPath: '/announcements/new'
+      preLoaderRoute: typeof AuthenticatedAnnouncementsNewRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/students/documents': {
-      id: '/_authenticated/students/documents'
-      path: '/students/documents'
-      fullPath: '/students/documents'
-      preLoaderRoute: typeof AuthenticatedStudentsDocumentsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/students/$id': {
-      id: '/_authenticated/students/$id'
-      path: '/students/$id'
-      fullPath: '/students/$id'
-      preLoaderRoute: typeof AuthenticatedStudentsIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/settings/users': {
-      id: '/_authenticated/settings/users'
-      path: '/settings/users'
-      fullPath: '/settings/users'
-      preLoaderRoute: typeof AuthenticatedSettingsUsersRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/settings/profile': {
-      id: '/_authenticated/settings/profile'
-      path: '/settings/profile'
-      fullPath: '/settings/profile'
-      preLoaderRoute: typeof AuthenticatedSettingsProfileRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/settings/fees': {
-      id: '/_authenticated/settings/fees'
-      path: '/settings/fees'
-      fullPath: '/settings/fees'
-      preLoaderRoute: typeof AuthenticatedSettingsFeesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/settings/collection-plans': {
-      id: '/_authenticated/settings/collection-plans'
-      path: '/settings/collection-plans'
-      fullPath: '/settings/collection-plans'
-      preLoaderRoute: typeof AuthenticatedSettingsCollectionPlansRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/settings/board-gazette': {
-      id: '/_authenticated/settings/board-gazette'
-      path: '/settings/board-gazette'
-      fullPath: '/settings/board-gazette'
-      preLoaderRoute: typeof AuthenticatedSettingsBoardGazetteRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/settings/academic': {
-      id: '/_authenticated/settings/academic'
-      path: '/settings/academic'
-      fullPath: '/settings/academic'
-      preLoaderRoute: typeof AuthenticatedSettingsAcademicRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/lms/teachers': {
-      id: '/_authenticated/lms/teachers'
-      path: '/lms/teachers'
-      fullPath: '/lms/teachers'
-      preLoaderRoute: typeof AuthenticatedLmsTeachersRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/lms/semesters': {
-      id: '/_authenticated/lms/semesters'
-      path: '/lms/semesters'
-      fullPath: '/lms/semesters'
-      preLoaderRoute: typeof AuthenticatedLmsSemestersRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/lms/salary': {
-      id: '/_authenticated/lms/salary'
-      path: '/lms/salary'
-      fullPath: '/lms/salary'
-      preLoaderRoute: typeof AuthenticatedLmsSalaryRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/lms/offerings': {
-      id: '/_authenticated/lms/offerings'
-      path: '/lms/offerings'
-      fullPath: '/lms/offerings'
-      preLoaderRoute: typeof AuthenticatedLmsOfferingsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/lms/my-classes': {
-      id: '/_authenticated/lms/my-classes'
-      path: '/lms/my-classes'
-      fullPath: '/lms/my-classes'
-      preLoaderRoute: typeof AuthenticatedLmsMyClassesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/lms/departments': {
-      id: '/_authenticated/lms/departments'
-      path: '/lms/departments'
-      fullPath: '/lms/departments'
-      preLoaderRoute: typeof AuthenticatedLmsDepartmentsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/lms/deliveries': {
-      id: '/_authenticated/lms/deliveries'
-      path: '/lms/deliveries'
-      fullPath: '/lms/deliveries'
-      preLoaderRoute: typeof AuthenticatedLmsDeliveriesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/lms/courses': {
-      id: '/_authenticated/lms/courses'
-      path: '/lms/courses'
-      fullPath: '/lms/courses'
-      preLoaderRoute: typeof AuthenticatedLmsCoursesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/lms/classes': {
-      id: '/_authenticated/lms/classes'
-      path: '/lms/classes'
-      fullPath: '/lms/classes'
-      preLoaderRoute: typeof AuthenticatedLmsClassesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/lms/calendar': {
-      id: '/_authenticated/lms/calendar'
-      path: '/lms/calendar'
-      fullPath: '/lms/calendar'
-      preLoaderRoute: typeof AuthenticatedLmsCalendarRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/inquiries/new': {
-      id: '/_authenticated/inquiries/new'
-      path: '/inquiries/new'
-      fullPath: '/inquiries/new'
-      preLoaderRoute: typeof AuthenticatedInquiriesNewRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/inquiries/$id': {
-      id: '/_authenticated/inquiries/$id'
-      path: '/inquiries/$id'
-      fullPath: '/inquiries/$id'
-      preLoaderRoute: typeof AuthenticatedInquiriesIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/finance/scan': {
-      id: '/_authenticated/finance/scan'
-      path: '/finance/scan'
-      fullPath: '/finance/scan'
-      preLoaderRoute: typeof AuthenticatedFinanceScanRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/finance/reports': {
-      id: '/_authenticated/finance/reports'
-      path: '/finance/reports'
-      fullPath: '/finance/reports'
-      preLoaderRoute: typeof AuthenticatedFinanceReportsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/finance/dues': {
-      id: '/_authenticated/finance/dues'
-      path: '/finance/dues'
-      fullPath: '/finance/dues'
-      preLoaderRoute: typeof AuthenticatedFinanceDuesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/finance/collect': {
-      id: '/_authenticated/finance/collect'
-      path: '/finance/collect'
-      fullPath: '/finance/collect'
-      preLoaderRoute: typeof AuthenticatedFinanceCollectRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/finance/bulk-vouchers': {
-      id: '/_authenticated/finance/bulk-vouchers'
-      path: '/finance/bulk-vouchers'
-      fullPath: '/finance/bulk-vouchers'
-      preLoaderRoute: typeof AuthenticatedFinanceBulkVouchersRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/exams/reports': {
-      id: '/_authenticated/exams/reports'
-      path: '/exams/reports'
-      fullPath: '/exams/reports'
-      preLoaderRoute: typeof AuthenticatedExamsReportsRouteImport
+    '/_authenticated/exams/': {
+      id: '/_authenticated/exams/'
+      path: '/exams'
+      fullPath: '/exams/'
+      preLoaderRoute: typeof AuthenticatedExamsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/exams/catalog': {
@@ -1187,67 +900,312 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedExamsCatalogRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/announcements/new': {
-      id: '/_authenticated/announcements/new'
-      path: '/announcements/new'
-      fullPath: '/announcements/new'
-      preLoaderRoute: typeof AuthenticatedAnnouncementsNewRouteImport
+    '/_authenticated/exams/reports': {
+      id: '/_authenticated/exams/reports'
+      path: '/exams/reports'
+      fullPath: '/exams/reports'
+      preLoaderRoute: typeof AuthenticatedExamsReportsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/admissions/new': {
-      id: '/_authenticated/admissions/new'
-      path: '/admissions/new'
-      fullPath: '/admissions/new'
-      preLoaderRoute: typeof AuthenticatedAdmissionsNewRouteImport
+    '/_authenticated/finance/': {
+      id: '/_authenticated/finance/'
+      path: '/finance'
+      fullPath: '/finance/'
+      preLoaderRoute: typeof AuthenticatedFinanceIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/finance/vouchers/': {
-      id: '/_authenticated/finance/vouchers/'
-      path: '/finance/vouchers'
-      fullPath: '/finance/vouchers/'
-      preLoaderRoute: typeof AuthenticatedFinanceVouchersIndexRouteImport
+    '/_authenticated/finance/bulk-vouchers': {
+      id: '/_authenticated/finance/bulk-vouchers'
+      path: '/finance/bulk-vouchers'
+      fullPath: '/finance/bulk-vouchers'
+      preLoaderRoute: typeof AuthenticatedFinanceBulkVouchersRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/api/public/hooks/auto-vouchers': {
-      id: '/api/public/hooks/auto-vouchers'
-      path: '/api/public/hooks/auto-vouchers'
-      fullPath: '/api/public/hooks/auto-vouchers'
-      preLoaderRoute: typeof ApiPublicHooksAutoVouchersRouteImport
+    '/_authenticated/finance/collect': {
+      id: '/_authenticated/finance/collect'
+      path: '/finance/collect'
+      fullPath: '/finance/collect'
+      preLoaderRoute: typeof AuthenticatedFinanceCollectRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/finance/dues': {
+      id: '/_authenticated/finance/dues'
+      path: '/finance/dues'
+      fullPath: '/finance/dues'
+      preLoaderRoute: typeof AuthenticatedFinanceDuesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/finance/reports': {
+      id: '/_authenticated/finance/reports'
+      path: '/finance/reports'
+      fullPath: '/finance/reports'
+      preLoaderRoute: typeof AuthenticatedFinanceReportsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/finance/scan': {
+      id: '/_authenticated/finance/scan'
+      path: '/finance/scan'
+      fullPath: '/finance/scan'
+      preLoaderRoute: typeof AuthenticatedFinanceScanRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/inquiries/': {
+      id: '/_authenticated/inquiries/'
+      path: '/inquiries'
+      fullPath: '/inquiries/'
+      preLoaderRoute: typeof AuthenticatedInquiriesIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/inquiries/$id': {
+      id: '/_authenticated/inquiries/$id'
+      path: '/inquiries/$id'
+      fullPath: '/inquiries/$id'
+      preLoaderRoute: typeof AuthenticatedInquiriesIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/inquiries/new': {
+      id: '/_authenticated/inquiries/new'
+      path: '/inquiries/new'
+      fullPath: '/inquiries/new'
+      preLoaderRoute: typeof AuthenticatedInquiriesNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/': {
+      id: '/_authenticated/lms/'
+      path: '/lms'
+      fullPath: '/lms/'
+      preLoaderRoute: typeof AuthenticatedLmsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/calendar': {
+      id: '/_authenticated/lms/calendar'
+      path: '/lms/calendar'
+      fullPath: '/lms/calendar'
+      preLoaderRoute: typeof AuthenticatedLmsCalendarRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/classes': {
+      id: '/_authenticated/lms/classes'
+      path: '/lms/classes'
+      fullPath: '/lms/classes'
+      preLoaderRoute: typeof AuthenticatedLmsClassesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/courses': {
+      id: '/_authenticated/lms/courses'
+      path: '/lms/courses'
+      fullPath: '/lms/courses'
+      preLoaderRoute: typeof AuthenticatedLmsCoursesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/deliveries': {
+      id: '/_authenticated/lms/deliveries'
+      path: '/lms/deliveries'
+      fullPath: '/lms/deliveries'
+      preLoaderRoute: typeof AuthenticatedLmsDeliveriesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/departments': {
+      id: '/_authenticated/lms/departments'
+      path: '/lms/departments'
+      fullPath: '/lms/departments'
+      preLoaderRoute: typeof AuthenticatedLmsDepartmentsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/my-classes': {
+      id: '/_authenticated/lms/my-classes'
+      path: '/lms/my-classes'
+      fullPath: '/lms/my-classes'
+      preLoaderRoute: typeof AuthenticatedLmsMyClassesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/offerings': {
+      id: '/_authenticated/lms/offerings'
+      path: '/lms/offerings'
+      fullPath: '/lms/offerings'
+      preLoaderRoute: typeof AuthenticatedLmsOfferingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/salary': {
+      id: '/_authenticated/lms/salary'
+      path: '/lms/salary'
+      fullPath: '/lms/salary'
+      preLoaderRoute: typeof AuthenticatedLmsSalaryRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/semesters': {
+      id: '/_authenticated/lms/semesters'
+      path: '/lms/semesters'
+      fullPath: '/lms/semesters'
+      preLoaderRoute: typeof AuthenticatedLmsSemestersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lms/teachers': {
+      id: '/_authenticated/lms/teachers'
+      path: '/lms/teachers'
+      fullPath: '/lms/teachers'
+      preLoaderRoute: typeof AuthenticatedLmsTeachersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/academic': {
+      id: '/_authenticated/settings/academic'
+      path: '/settings/academic'
+      fullPath: '/settings/academic'
+      preLoaderRoute: typeof AuthenticatedSettingsAcademicRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/board-gazette': {
+      id: '/_authenticated/settings/board-gazette'
+      path: '/settings/board-gazette'
+      fullPath: '/settings/board-gazette'
+      preLoaderRoute: typeof AuthenticatedSettingsBoardGazetteRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/collection-plans': {
+      id: '/_authenticated/settings/collection-plans'
+      path: '/settings/collection-plans'
+      fullPath: '/settings/collection-plans'
+      preLoaderRoute: typeof AuthenticatedSettingsCollectionPlansRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/fees': {
+      id: '/_authenticated/settings/fees'
+      path: '/settings/fees'
+      fullPath: '/settings/fees'
+      preLoaderRoute: typeof AuthenticatedSettingsFeesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/profile': {
+      id: '/_authenticated/settings/profile'
+      path: '/settings/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof AuthenticatedSettingsProfileRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/users': {
+      id: '/_authenticated/settings/users'
+      path: '/settings/users'
+      fullPath: '/settings/users'
+      preLoaderRoute: typeof AuthenticatedSettingsUsersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/students/': {
+      id: '/_authenticated/students/'
+      path: '/students'
+      fullPath: '/students/'
+      preLoaderRoute: typeof AuthenticatedStudentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/students/$id': {
+      id: '/_authenticated/students/$id'
+      path: '/students/$id'
+      fullPath: '/students/$id'
+      preLoaderRoute: typeof AuthenticatedStudentsIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/students/documents': {
+      id: '/_authenticated/students/documents'
+      path: '/students/documents'
+      fullPath: '/students/documents'
+      preLoaderRoute: typeof AuthenticatedStudentsDocumentsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/students/roll-no-slips': {
+      id: '/_authenticated/students/roll-no-slips'
+      path: '/students/roll-no-slips'
+      fullPath: '/students/roll-no-slips'
+      preLoaderRoute: typeof AuthenticatedStudentsRollNoSlipsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/academic/run-promotions': {
+      id: '/api/academic/run-promotions'
+      path: '/api/academic/run-promotions'
+      fullPath: '/api/academic/run-promotions'
+      preLoaderRoute: typeof ApiAcademicRunPromotionsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/finance/vouchers/new': {
-      id: '/_authenticated/finance/vouchers/new'
-      path: '/finance/vouchers/new'
-      fullPath: '/finance/vouchers/new'
-      preLoaderRoute: typeof AuthenticatedFinanceVouchersNewRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/api/admin/users': {
+      id: '/api/admin/users'
+      path: '/api/admin/users'
+      fullPath: '/api/admin/users'
+      preLoaderRoute: typeof ApiAdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/finance/vouchers/lookup': {
-      id: '/_authenticated/finance/vouchers/lookup'
-      path: '/finance/vouchers/lookup'
-      fullPath: '/finance/vouchers/lookup'
-      preLoaderRoute: typeof AuthenticatedFinanceVouchersLookupRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/api/auth/session': {
+      id: '/api/auth/session'
+      path: '/api/auth/session'
+      fullPath: '/api/auth/session'
+      preLoaderRoute: typeof ApiAuthSessionRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/finance/vouchers/$id': {
-      id: '/_authenticated/finance/vouchers/$id'
-      path: '/finance/vouchers/$id'
-      fullPath: '/finance/vouchers/$id'
-      preLoaderRoute: typeof AuthenticatedFinanceVouchersIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/api/board-gazette/import': {
+      id: '/api/board-gazette/import'
+      path: '/api/board-gazette/import'
+      fullPath: '/api/board-gazette/import'
+      preLoaderRoute: typeof ApiBoardGazetteImportRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/exams/tests/new': {
-      id: '/_authenticated/exams/tests/new'
-      path: '/exams/tests/new'
-      fullPath: '/exams/tests/new'
-      preLoaderRoute: typeof AuthenticatedExamsTestsNewRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/api/board-gazette/imports': {
+      id: '/api/board-gazette/imports'
+      path: '/api/board-gazette/imports'
+      fullPath: '/api/board-gazette/imports'
+      preLoaderRoute: typeof ApiBoardGazetteImportsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/exams/tests/$id': {
-      id: '/_authenticated/exams/tests/$id'
-      path: '/exams/tests/$id'
-      fullPath: '/exams/tests/$id'
-      preLoaderRoute: typeof AuthenticatedExamsTestsIdRouteImport
+    '/api/board-gazette/lookup': {
+      id: '/api/board-gazette/lookup'
+      path: '/api/board-gazette/lookup'
+      fullPath: '/api/board-gazette/lookup'
+      preLoaderRoute: typeof ApiBoardGazetteLookupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/finance/campus-incharge-collection': {
+      id: '/api/finance/campus-incharge-collection'
+      path: '/api/finance/campus-incharge-collection'
+      fullPath: '/api/finance/campus-incharge-collection'
+      preLoaderRoute: typeof ApiFinanceCampusInchargeCollectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/staff/by-role': {
+      id: '/api/staff/by-role'
+      path: '/api/staff/by-role'
+      fullPath: '/api/staff/by-role'
+      preLoaderRoute: typeof ApiStaffByRoleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/staff/profiles': {
+      id: '/api/staff/profiles'
+      path: '/api/staff/profiles'
+      fullPath: '/api/staff/profiles'
+      preLoaderRoute: typeof ApiStaffProfilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/student-documents/account': {
+      id: '/api/student-documents/account'
+      path: '/api/student-documents/account'
+      fullPath: '/api/student-documents/account'
+      preLoaderRoute: typeof ApiStudentDocumentsAccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/student-documents/zip': {
+      id: '/api/student-documents/zip'
+      path: '/api/student-documents/zip'
+      fullPath: '/api/student-documents/zip'
+      preLoaderRoute: typeof ApiStudentDocumentsZipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/whatsapp/check-number': {
+      id: '/api/whatsapp/check-number'
+      path: '/api/whatsapp/check-number'
+      fullPath: '/api/whatsapp/check-number'
+      preLoaderRoute: typeof ApiWhatsappCheckNumberRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/exams/series/$id': {
+      id: '/_authenticated/exams/series/$id'
+      path: '/exams/series/$id'
+      fullPath: '/exams/series/$id'
+      preLoaderRoute: typeof AuthenticatedExamsSeriesIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/exams/series/new': {
@@ -1257,12 +1215,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedExamsSeriesNewRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/exams/series/$id': {
-      id: '/_authenticated/exams/series/$id'
-      path: '/exams/series/$id'
-      fullPath: '/exams/series/$id'
-      preLoaderRoute: typeof AuthenticatedExamsSeriesIdRouteImport
+    '/_authenticated/exams/tests/$id': {
+      id: '/_authenticated/exams/tests/$id'
+      path: '/exams/tests/$id'
+      fullPath: '/exams/tests/$id'
+      preLoaderRoute: typeof AuthenticatedExamsTestsIdRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/exams/tests/new': {
+      id: '/_authenticated/exams/tests/new'
+      path: '/exams/tests/new'
+      fullPath: '/exams/tests/new'
+      preLoaderRoute: typeof AuthenticatedExamsTestsNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/finance/vouchers/': {
+      id: '/_authenticated/finance/vouchers/'
+      path: '/finance/vouchers'
+      fullPath: '/finance/vouchers/'
+      preLoaderRoute: typeof AuthenticatedFinanceVouchersIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/finance/vouchers/$id': {
+      id: '/_authenticated/finance/vouchers/$id'
+      path: '/finance/vouchers/$id'
+      fullPath: '/finance/vouchers/$id'
+      preLoaderRoute: typeof AuthenticatedFinanceVouchersIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/finance/vouchers/lookup': {
+      id: '/_authenticated/finance/vouchers/lookup'
+      path: '/finance/vouchers/lookup'
+      fullPath: '/finance/vouchers/lookup'
+      preLoaderRoute: typeof AuthenticatedFinanceVouchersLookupRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/finance/vouchers/new': {
+      id: '/_authenticated/finance/vouchers/new'
+      path: '/finance/vouchers/new'
+      fullPath: '/finance/vouchers/new'
+      preLoaderRoute: typeof AuthenticatedFinanceVouchersNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/public/hooks/auto-vouchers': {
+      id: '/api/public/hooks/auto-vouchers'
+      path: '/api/public/hooks/auto-vouchers'
+      fullPath: '/api/public/hooks/auto-vouchers'
+      preLoaderRoute: typeof ApiPublicHooksAutoVouchersRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }

@@ -121,7 +121,7 @@ function FinanceReports() {
       const [{ data: students, error: studentsErr }, { data: installments, error: installmentsErr }] = await Promise.all([
         supabase
           .from("students")
-          .select("id, section_id, sections(name, gender), classes(name), programs(name)")
+          .select("id, section_id, sections!students_section_id_fkey(name, gender), classes(name), programs(name)")
           .eq("status", "active"),
         supabase
           .from("student_fee_installments")
@@ -178,7 +178,7 @@ function FinanceReports() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("student_fee_installments")
-        .select("student_id, amount, paid_amount, due_date, students(id, full_name, roll_number, phone, guardian_phone, sections(name, gender), classes(name), programs(name))")
+        .select("student_id, amount, paid_amount, due_date, students(id, full_name, roll_number, phone, guardian_phone, sections!students_section_id_fkey(name, gender), classes(name), programs(name))")
         .lt("due_date", new Date().toISOString().slice(0, 10))
         .neq("status", "paid")
         .order("due_date");
@@ -254,7 +254,7 @@ function FinanceReports() {
     queryFn: async () => {
       let studentsQuery = supabase
         .from("students")
-        .select("*, programs!inner(name, type), classes(name), sections(name, gender), academic_sessions(label)")
+        .select("*, programs!inner(name, type), classes(name), sections!students_section_id_fkey(name, gender), academic_sessions(label)")
         .order("roll_number");
       if (programTypeFilter) {
         studentsQuery = studentsQuery.eq("programs.type", programTypeFilter);

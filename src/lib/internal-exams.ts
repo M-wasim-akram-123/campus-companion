@@ -197,7 +197,7 @@ export async function fetchSectionsForClassYear(
 export async function fetchSeriesSections(seriesId: string): Promise<SeriesSectionOption[]> {
   const { data, error } = await supabase
     .from("internal_test_series_sections")
-    .select("sections(id, name, gender)")
+    .select("sections!internal_tests_section_id_fkey(id, name, gender)")
     .eq("series_id", seriesId);
   if (error) throwErr(error);
 
@@ -363,7 +363,7 @@ export async function fetchTestsForSeries(seriesId: string): Promise<InternalTes
 export async function fetchInternalTests(filters: InternalTestFilters = {}): Promise<InternalTest[]> {
   let query = supabase
     .from("internal_tests")
-    .select("*, academic_sessions(label), sections(name, gender), internal_test_series(name)")
+    .select("*, academic_sessions(label), sections!internal_tests_section_id_fkey(name, gender), internal_test_series(name)")
     .order("test_date", { ascending: true })
     .order("subject_name", { ascending: true });
 
@@ -386,7 +386,7 @@ export async function fetchInternalTests(filters: InternalTestFilters = {}): Pro
 export async function fetchInternalTestById(id: string): Promise<InternalTest | null> {
   const { data, error } = await supabase
     .from("internal_tests")
-    .select("*, academic_sessions(label), sections(name, gender), internal_test_series(name)")
+    .select("*, academic_sessions(label), sections!internal_tests_section_id_fkey(name, gender), internal_test_series(name)")
     .eq("id", id)
     .maybeSingle();
   if (error) throwErr(error);
@@ -398,7 +398,7 @@ export async function fetchInternalTestSectionMeta(
 ): Promise<InternalTestSectionMeta[]> {
   const { data, error } = await supabase
     .from("internal_test_section_meta")
-    .select("*, sections(name, gender)")
+    .select("*, sections!internal_tests_section_id_fkey(name, gender)")
     .eq("internal_test_id", testId)
     .order("teacher_name_snapshot");
   if (error) throwErr(error);
@@ -410,7 +410,7 @@ export async function fetchSeriesTestSectionMeta(
 ): Promise<InternalTestSectionMeta[]> {
   const { data, error } = await supabase
     .from("internal_test_section_meta")
-    .select("*, sections(name, gender), internal_tests!inner(series_id)")
+    .select("*, sections!internal_tests_section_id_fkey(name, gender), internal_tests!inner(series_id)")
     .eq("internal_tests.series_id", seriesId)
     .order("teacher_name_snapshot");
   if (error) throwErr(error);
@@ -489,7 +489,7 @@ export async function createSeriesSubjectTest(
       status: "draft",
       created_by: createdBy ?? null,
     })
-    .select("*, academic_sessions(label), sections(name, gender), internal_test_series(name)")
+    .select("*, academic_sessions(label), sections!internal_tests_section_id_fkey(name, gender), internal_test_series(name)")
     .single();
   if (error) throwErr(error);
   return data as InternalTest;
@@ -509,7 +509,7 @@ export async function updateSeriesSubjectTest(
     .update(patch)
     .eq("id", id)
     .eq("status", "draft")
-    .select("*, academic_sessions(label), sections(name, gender), internal_test_series(name)")
+    .select("*, academic_sessions(label), sections!internal_tests_section_id_fkey(name, gender), internal_test_series(name)")
     .single();
   if (error) throwErr(error);
   return data as InternalTest;
@@ -606,7 +606,7 @@ export async function listStudentsForTest(
   let studentQuery = supabase
     .from("students")
     .select(
-      "id, roll_number, full_name, father_name, section_id, admission_year_level, sections(name, gender, classes(year_level)), classes(year_level)",
+      "id, roll_number, full_name, father_name, section_id, admission_year_level, sections!students_section_id_fkey(name, gender, classes(year_level)), classes(year_level)",
     )
     .eq("academic_session_id", test.academic_session_id)
     .eq("status", "active")
