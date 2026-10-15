@@ -413,18 +413,26 @@ function FeePoliciesPage() {
           <div>
             <Label className="mb-3 block">Fee amounts (PKR)</Label>
             <div className="grid gap-3 sm:grid-cols-2">
-              {visibleFeeComponents.map((c) => (
-                <div key={c.key} className="flex items-center gap-3">
-                  <Label className="w-44 shrink-0 text-sm">{c.label}</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    className="flex-1"
-                    value={amounts[c.key]}
-                    onChange={(e) => setAmounts((a) => ({ ...a, [c.key]: e.target.value }))}
-                  />
-                </div>
-              ))}
+              {visibleFeeComponents.map((c) => {
+                const isBsProgram = selectedProgram?.type === "bs";
+                const shouldDisable = isBsProgram && c.key === "annual_fee";
+                return (
+                  <div key={c.key} className="flex items-center gap-3">
+                    <Label className={`w-44 shrink-0 text-sm ${shouldDisable ? "text-muted-foreground" : ""}`}>
+                      {c.label}
+                      {shouldDisable && <span className="ml-1 text-xs">(N/A for BS)</span>}
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      className="flex-1"
+                      disabled={shouldDisable}
+                      value={amounts[c.key]}
+                      onChange={(e) => setAmounts((a) => ({ ...a, [c.key]: e.target.value }))}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
 
