@@ -31,6 +31,17 @@ import {
   resolveFinanceProgramScope,
 } from "@/lib/finance-scope";
 import { Eye, Plus, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/settings/fees")({
   component: FeePoliciesPage,
@@ -636,7 +647,28 @@ function FeePoliciesPage() {
                           View
                         </Button>
                         <Button type="button" variant="outline" size="sm" onClick={() => loadPolicy(p)}>Edit</Button>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => remove(p.id)}>Delete</Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button type="button" variant="ghost" size="sm">
+                              <Trash2 className="mr-1 h-4 w-4" />
+                              Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete fee policy?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete "{p.name}" and all associated components, slabs, and templates. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => remove(p.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Delete Policy
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </TableCell>
                     </TableRow>
                   );

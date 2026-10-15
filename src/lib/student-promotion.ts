@@ -37,6 +37,7 @@ type StudentRow = {
   section_id: string | null;
   academic_session_id: string | null;
   admission_year_level: number | null;
+  created_at: string;
   classes: { year_level: number } | null;
   sections: { name: string; gender: string; session_id: string } | null;
   academic_sessions: { start_year: number; end_year: number } | null;
@@ -274,7 +275,7 @@ export async function runSessionPromotions(
   let studentQuery = client
     .from("students")
     .select(
-      "id, roll_number, status, enrollment_type, program_id, class_id, section_id, academic_session_id, admission_year_level, classes(year_level), sections!students_section_id_fkey(name, gender, session_id), academic_sessions(start_year, end_year), programs(type)",
+      "id, roll_number, status, enrollment_type, program_id, class_id, section_id, academic_session_id, admission_year_level, created_at, classes(year_level), sections!students_section_id_fkey(name, gender, session_id), academic_sessions(start_year, end_year), programs(type)",
     )
     .eq("status", "active")
     .eq("enrollment_type", "regular");
@@ -332,6 +333,20 @@ export async function runSessionPromotions(
     });
 
     if (targetYear <= storedYearLevel) {
+      result.skipped += 1;
+      continue;
+    }
+
+    // BUG-06 fix: Skip promotion for students admitted mid-cohort in the current academic year
+    // to prevent double-billing. A student admitted into an older cohort (e.g., Year 1 in 2025
+    // when 2026 is running) should not be immediately promoted to Year 2.
+    const admissionDate = new Date(student.created_at);
+    const admissionAcademicYear = admissionDate.getMonth() >= 6 // July (month 6) or later
+      ? admissionDate.getFullYear()
+      : admissionDate.getFullYear() - 1;
+    
+    if (admissionAcademicYear >= academicYearStart) {
+      // Student was admitted during or after the current academic year - skip promotion
       result.skipped += 1;
       continue;
     }

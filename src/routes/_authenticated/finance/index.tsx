@@ -39,7 +39,7 @@ import {
   YAxis,
 } from "recharts";
 
-const SHOW_CASHIER_DRAWER_UI = false;
+const SHOW_CASHIER_DRAWER_UI = true;
 
 export const Route = createFileRoute("/_authenticated/finance/")({
   component: FinanceDashboard,

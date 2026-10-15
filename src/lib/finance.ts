@@ -247,10 +247,22 @@ export async function fetchStudentInstallments(studentId: string): Promise<FeeIn
 }
 
 export async function fetchVoucherByToken(qrToken: string) {
+  // BUG-21 fix: Parse token from pasted URL like /finance/scan?token=abc123
+  let token = qrToken.trim();
+  try {
+    const url = new URL(token, window.location.origin);
+    const tokenParam = url.searchParams.get("token");
+    if (tokenParam) {
+      token = tokenParam;
+    }
+  } catch {
+    // Not a URL, use as-is
+  }
+
   const { data, error } = await supabase
     .from("fee_vouchers")
     .select("*, fee_voucher_lines(*), students(full_name, roll_number, programs(name))")
-    .eq("qr_token", qrToken)
+    .eq("qr_token", token)
     .maybeSingle();
   if (error) throw error;
   return data as FeeVoucher | null;
